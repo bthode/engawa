@@ -2,7 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 import unittest
 
-from engawa.plex.parsing import Location, MediaContainer, parse_media_container
+from engawa.plex.parsing import MediaContainer, parse_media_container
 
 
 class TestMediaContainerParsing(unittest.TestCase):
@@ -13,33 +13,66 @@ class TestMediaContainerParsing(unittest.TestCase):
 
         mc: MediaContainer = parse_media_container(plex_library_data)
 
+        # Assert the parsed MediaContainer object matches the expected values
         self.assertEqual(mc.name, "Plex Library")
-        self.assertEqual(mc.size, 11)
+        self.assertEqual(mc.size, 2)
         self.assertEqual(mc.allow_sync, 0)
 
-        self.assertEqual(len(mc.directories), 4)
+        # Assert the parsed directories
+        self.assertEqual(len(mc.directories), 2)
 
-        self.assertEqual(mc.directories[0].allow_sync, 1)
-        self.assertEqual(mc.directories[0].art, "/:/resources/movie-fanart.jpg")
-        self.assertEqual(mc.directories[0].composite, "/library/sections/12/composite/1678276690")
-        self.assertEqual(mc.directories[0].filters, 1)
-        self.assertEqual(mc.directories[0].refreshing, 0)
-        self.assertEqual(mc.directories[0].thumb, "/:/resources/movie.png")
-        self.assertEqual(mc.directories[0].key, 12)
-        self.assertEqual(mc.directories[0].type_, "movie")
-        self.assertEqual(mc.directories[0].title, "Movies")
-        self.assertEqual(mc.directories[0].agent, "tv.plex.agents.movie")
-        self.assertEqual(mc.directories[0].scanner, "Plex Movie")
-        self.assertEqual(mc.directories[0].language, "en-US")
-        self.assertEqual(mc.directories[0].uuid, "5401a1c5-962d-4a4c-a496-0021139479ae")
-        self.assertEqual(mc.directories[0].updated_at, "1678276676")
-        self.assertEqual(mc.directories[0].created_at, "1678276676")
-        self.assertEqual(mc.directories[0].scanned_at, "1678276690")
-        self.assertEqual(mc.directories[0].content, 1)
-        self.assertEqual(mc.directories[0].directory, 1)
-        self.assertEqual(mc.directories[0].content_changed_at, "743145")
-        self.assertEqual(mc.directories[0].hidden, 0)
-        self.assertEqual(len(mc.directories[0].location), 1)
+        # Assertions for the first directory ("Movies")
+        movies_dir = mc.directories[0]
+        self.assertEqual(movies_dir.allow_sync, 1)
+        self.assertEqual(movies_dir.art, "/:/resources/movie-fanart.jpg")
+        self.assertEqual(movies_dir.composite, "/library/sections/3/composite/1686100533")
+        self.assertEqual(movies_dir.filters, 1)
+        self.assertEqual(movies_dir.refreshing, 0)
+        self.assertEqual(movies_dir.thumb, "/:/resources/movie.png")
+        self.assertEqual(movies_dir.key, 3)
+        self.assertEqual(movies_dir.type_, "movie")
+        self.assertEqual(movies_dir.title, "Movies")
+        self.assertEqual(movies_dir.agent, "tv.plex.agents.movie")
+        self.assertEqual(movies_dir.scanner, "Plex Movie")
+        self.assertEqual(movies_dir.language, "en-US")
+        self.assertEqual(movies_dir.uuid, "364f2ba8-254e-492d-a8d5-8658cfc90161")
+        self.assertEqual(movies_dir.updated_at, "1662601802")
+        self.assertEqual(movies_dir.created_at, "1662601802")
+        self.assertEqual(movies_dir.scanned_at, "1686100533")
+        self.assertEqual(movies_dir.content, 1)
+        self.assertEqual(movies_dir.directory, 1)
+        self.assertEqual(movies_dir.content_changed_at, "688787")
+        self.assertEqual(movies_dir.hidden, 0)
+        self.assertEqual(len(movies_dir.location), 1)
+        self.assertEqual(movies_dir.location[0].id_, 3)
+        self.assertEqual(movies_dir.location[0].path, "/media/Media/Video/Movies")
+
+        youtube_dir = mc.directories[1]
+        self.assertEqual(youtube_dir.allow_sync, 1)
+        self.assertEqual(youtube_dir.art, "/:/resources/movie-fanart.jpg")
+        self.assertEqual(youtube_dir.composite, "/library/sections/7/composite/1699802001")
+        self.assertEqual(youtube_dir.filters, 1)
+        self.assertEqual(youtube_dir.refreshing, 0)
+        self.assertEqual(youtube_dir.thumb, "/:/resources/movie.png")
+        self.assertEqual(youtube_dir.key, 7)
+        self.assertEqual(youtube_dir.type_, "movie")
+        self.assertEqual(youtube_dir.title, "YouTube")
+        self.assertEqual(youtube_dir.agent, "com.plexapp.agents.sicktube")
+        self.assertEqual(youtube_dir.scanner, "Plex Movie Scanner")
+        self.assertEqual(youtube_dir.language, "en")
+        self.assertEqual(youtube_dir.uuid, "0c717b05-2deb-419c-a2d0-e68cceddea14")
+        self.assertEqual(youtube_dir.updated_at, "1686965178")
+        self.assertEqual(youtube_dir.created_at, "1674232261")
+        self.assertEqual(youtube_dir.scanned_at, "1699802001")
+        self.assertEqual(youtube_dir.content, 1)
+        self.assertEqual(youtube_dir.directory, 1)
+        self.assertEqual(youtube_dir.content_changed_at, "1231054")
+        self.assertEqual(youtube_dir.hidden, 0)
+        self.assertEqual(len(youtube_dir.location), 2)
+        self.assertEqual(youtube_dir.location[0].id_, 17)
+        self.assertEqual(youtube_dir.location[0].path, "/index/YouTube")
+        self.assertEqual(youtube_dir.location[1].id_, 7)
+        self.assertEqual(youtube_dir.location[1].path, "/nas/media")
 
 
 if __name__ == "__main__":
