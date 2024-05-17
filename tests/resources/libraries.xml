@@ -1,0 +1,9 @@
+<MediaContainer size="2" allowSync="0" title1="Plex Library">
+    <Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/3/composite/1686100533" filters="1" refreshing="0" thumb="/:/resources/movie.png" key="3" type="movie" title="Movies" agent="tv.plex.agents.movie" scanner="Plex Movie" language="en-US" uuid="364f2ba8-254e-492d-a8d5-8658cfc90161" updatedAt="1662601802" createdAt="1662601802" scannedAt="1686100533" content="1" directory="1" contentChangedAt="688787" hidden="0">
+        <Location id="3" path="/media/Media/Video/Movies" />
+    </Directory>
+    <Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/7/composite/1699802001" filters="1" refreshing="0" thumb="/:/resources/movie.png" key="7" type="movie" title="YouTube" agent="com.plexapp.agents.sicktube" scanner="Plex Movie Scanner" language="en" uuid="0c717b05-2deb-419c-a2d0-e68cceddea14" updatedAt="1686965178" createdAt="1674232261" scannedAt="1699802001" content="1" directory="1" contentChangedAt="1231054" hidden="0">
+        <Location id="17" path="/index/YouTube" />
+        <Location id="7" path="/nas/media" />
+    </Directory>
+</MediaContainer>

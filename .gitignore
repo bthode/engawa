@@ -1,0 +1,11 @@
+# DirEnv
+.envrc
+
+# Python
+__pycache__/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
