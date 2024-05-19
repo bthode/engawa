@@ -24,3 +24,5 @@ jobs:
         run: hatch run test
       - name: Run linting
         run: hatch run lint
+      - name: Run typing check
+        run: hatch run typing
