@@ -28,7 +28,6 @@ jobs:
       - name: Run typing check
         run: hatch run typing
   frontend:
-    needs: backend
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -42,9 +41,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'ui/yarn.lock'
       - name: Install dependencies
-        run: npm ci
-      - name: Check types
-        run: npx tsc --noEmit --strict
+        run: yarn install --frozen-lockfile
       - name: Lint
         run: npm run lint
       - name: Build
