@@ -3,10 +3,11 @@ path = "src/engawa/__about__.py"
 
 
 [envs.default.scripts]
-typecheck = "pyright {args}"
+typing = "pyright {args}"
 lint = "ruff check {args:.}"
 style = ["ruff check .", "black --check --diff ."]
 fmt = ["black .", "ruff check --fix .", "style"]
+test = "pytest {args}"
 all = ["style", "typing"]
 
 # TODO: Ruff could be used to do formatting here if we want with `ruff format`
