@@ -1,0 +1,8 @@
+# Ignore https://direnv.net/
+**/.envrc
+
+
+**/.vscode/
+
+
+**/.DS_Store
