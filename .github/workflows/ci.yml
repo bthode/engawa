@@ -18,6 +18,6 @@ jobs:
       - name: Install Hatch
         run: pipx install hatch
       - name: Run tests
-        run: hatch run test:test
+        run: hatch run test
       - name: Run linting
         run: hatch run lint
