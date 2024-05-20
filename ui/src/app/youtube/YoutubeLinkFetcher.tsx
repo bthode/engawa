@@ -12,7 +12,7 @@ import Link from '@mui/material/Link';
 const urlPattern = /^(https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:@([\w-]+)|channel\/)|youtu\.be\/)([\w-]+)/i;
 
 
-const UrlTextField = () => {
+const YouTubeLinkFetcher = () => {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -104,4 +104,4 @@ return (
 );
 };
 
-export default UrlTextField;
+export default YouTubeLinkFetcher;
