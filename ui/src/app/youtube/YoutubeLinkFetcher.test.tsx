@@ -13,14 +13,11 @@ const mockSuccessResponse = {
   },
 };
 
-
-// TODO: Need to accept channel urls like https://www.youtube.com/@Codevolution
-
 const mockNetworkError = {
   message: 'Network Error',
 };
 
-describe('UrlTextField', () => {
+describe('YouTubeLinkFetcher Tests', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });

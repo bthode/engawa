@@ -8,8 +8,7 @@ import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import Link from '@mui/material/Link';
-
-const urlPattern = /^(https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:@([\w-]+)|channel\/)|youtu\.be\/)([\w-]+)/i;
+import { isValidYoutubeUrl } from './urlUtils';
 
 const YouTubeLinkFetcher = () => {
   const [url, setUrl] = useState('');
@@ -27,7 +26,7 @@ const YouTubeLinkFetcher = () => {
   };
 
   const validateUrl = (value: string) => {
-    if (!urlPattern.test(value)) {
+    if (!isValidYoutubeUrl(value)) {
       setError('Invalid URL');
     } else {
       setError('');
