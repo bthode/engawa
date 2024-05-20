@@ -21,7 +21,8 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "types": ["jest", "@testing-library/jest-dom"], // TODO: Would be ideal to not have to explicitly include these
+    // Workaround: https://github.com/testing-library/jest-dom/issues/559
+    "types": ["jest", "@testing-library/jest-dom"],
     "plugins": [
       {
         "name": "next"
