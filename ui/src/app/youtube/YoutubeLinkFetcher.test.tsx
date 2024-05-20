@@ -62,8 +62,8 @@ describe('UrlTextField', () => {
     expect(screen.getByText('Description: This is an example channel description')).toBeInTheDocument();
     expect(screen.getByText('RSS Feed')).toHaveAttribute('href', 'https://example.com/rss');
 
-const postSpy = jest.spyOn(axios, 'post').mockResolvedValueOnce(mockSuccessResponse);
-postSpy.mockRestore();
+    const postSpy = jest.spyOn(axios, 'post').mockResolvedValueOnce(mockSuccessResponse);
+    postSpy.mockRestore();
   });
 
   test('shows an error message on network error', async () => {
@@ -77,7 +77,7 @@ postSpy.mockRestore();
     fireEvent.change(inputField, { target: { value: validUrl } });
     await waitFor(() => expect(window.alert).toHaveBeenCalledWith('Error: Network Error'));
 
-const postSpy = jest.spyOn(axios, 'post').mockResolvedValueOnce(mockSuccessResponse);
-postSpy.mockRestore();
+    const postSpy = jest.spyOn(axios, 'post').mockResolvedValueOnce(mockSuccessResponse);
+    postSpy.mockRestore();
   });
 });
