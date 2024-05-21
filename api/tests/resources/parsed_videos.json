@@ -1,0 +1,26 @@
+[
+  {
+    "title": "The Flatwoods Monster",
+    "published": "2024-05-12T21:00:01+00:00",
+    "video_id": "1C7zocpEqT8",
+    "link": "https://www.youtube.com/watch?v=1C7zocpEqT8",
+    "author": "Bedtime Stories",
+    "thumbnail": {
+      "url": "https://i2.ytimg.com/vi/1C7zocpEqT8/hqdefault.jpg",
+      "width": "480",
+      "height": "360"
+    }
+  },
+  {
+    "title": "The Wavertree Bus Incident",
+    "published": "2024-05-05T21:30:37+00:00",
+    "video_id": "aGRCwZCA5vI",
+    "link": "https://www.youtube.com/watch?v=aGRCwZCA5vI",
+    "author": "Bedtime Stories",
+    "thumbnail": {
+      "url": "https://i2.ytimg.com/vi/aGRCwZCA5vI/hqdefault.jpg",
+      "width": "480",
+      "height": "360"
+    }
+  }
+]

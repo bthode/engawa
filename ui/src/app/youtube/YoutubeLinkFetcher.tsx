@@ -25,14 +25,18 @@ const YouTubeLinkFetcher = () => {
     debounce(validateUrl, 500)(value);
   };
 
-  const validateUrl = (value: string) => {
-    if (!isValidYoutubeUrl(value)) {
-      setError('Invalid URL');
-    } else {
-      setError('');
-      fetchRss(value);
+const validateUrl = async (value: string) => {
+  if (!isValidYoutubeUrl(value)) {
+    setError('Invalid URL');
+  } else {
+    setError('');
+    try {
+      await fetchRss(value);
+    } catch (error) {
+      console.error('Error fetching RSS:', error);
     }
-  };
+  }
+};
 
   const fetchRss = async (url: string) => {
     try {
