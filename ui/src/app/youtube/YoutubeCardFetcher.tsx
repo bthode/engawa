@@ -63,11 +63,14 @@ const VideoItemComponent: React.FC<{ video: VideoItem; selectedDateRange: number
           <Typography variant="subtitle2" component="span" sx={{ fontWeight: 'bold' }}>
             {video.author}
           </Typography>
-          <Typography variant="body2" component="span" sx={{ marginLeft: 1 }}>
-            - {video.title} - {formatDate(video.published)}
+          <Typography variant="body2" component="div" sx={{ marginLeft: 1 }}>
+            - {video.title}
           </Typography>
         </div>
-        <div style={{ alignSelf: 'flex-end' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Typography variant="caption" color="black" sx={{ fontWeight: 'bold' }}>
+            {formatDate(video.published)}
+          </Typography>
           <Link href={video.link} target="_blank" rel="noopener noreferrer">
             <YouTubeIcon color="error" />
           </Link>
@@ -81,8 +84,8 @@ const VideoItemComponent: React.FC<{ video: VideoItem; selectedDateRange: number
 // Or find another solution so a video showing an age of 2 months and 1 day is not dimmed when 2 months is selected
 const marks = [
   { value: 0, label: 'Forever', days: Infinity },
-  { value: 8, label: '3 years', days: 1095 },
-  { value: 16, label: '2 years', days: 730 },
+  { value: 8, label: '3 years', days: 365 * 3 },
+  { value: 16, label: '2 years', days: 365 * 2 },
   { value: 24, label: '1 year', days: 365 },
   { value: 31, label: '6 months', days: 180 },
   { value: 39, label: '3 months', days: 90 },
@@ -94,7 +97,7 @@ const marks = [
   { value: 85, label: '3 days', days: 3 },
   { value: 92, label: '2 days', days: 2 },
   { value: 98, label: '1 day', days: 1 },
-  { value: 100, label: '0 days', days: 0 },
+  { value: 100, label: 'Now', days: 0 },
 ];
 
 function valuetext(value: number) {
