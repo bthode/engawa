@@ -1,11 +1,10 @@
 import logging
 from collections.abc import Callable
 
+from engawa.api.plex_service import PlexService, Video
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
-from engawa.api.plex_service import PlexService, Video
 
 logger = logging.getLogger(__name__)
 

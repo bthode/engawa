@@ -1,7 +1,6 @@
 import pytest
-from requests import Timeout
-
 from engawa.api.plex_service import PlexService
+from requests import Timeout
 
 
 def test_fetch_rss_feed():

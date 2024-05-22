@@ -1,6 +1,7 @@
 [version]
 path = "src/engawa/__about__.py"
 
+# TODO: Split these out enough so that we can know which linter / check fails in Github Actions
 [envs.default.scripts]
 typing = "pyright {args}"
 lint = "ruff check {args:.}"

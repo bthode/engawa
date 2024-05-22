@@ -1,6 +1,6 @@
 import logging
-from dataclasses import dataclass
 from collections.abc import Callable
+from dataclasses import dataclass
 
 import requests
 from bs4 import BeautifulSoup
