@@ -25,23 +25,27 @@ const YouTubeLinkFetcher = () => {
     debounce(validateUrl, 500)(value);
   };
 
-const validateUrl = async (value: string) => {
-  if (!isValidYoutubeUrl(value)) {
-    setError('Invalid URL');
-  } else {
-    setError('');
-    try {
-      await fetchRss(value);
-    } catch (error) {
-      console.error('Error fetching RSS:', error);
+  const validateUrl = async (value: string) => {
+    if (!isValidYoutubeUrl(value)) {
+      setError('Invalid URL');
+    } else {
+      setError('');
+      try {
+        await fetchRss(value);
+      } catch (error) {
+        console.error('Error fetching RSS:', error);
+      }
     }
-  }
-};
+  };
 
   const fetchRss = async (url: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://127.0.0.1:8000/fetch_rss', {
+      const endpoint = 'https://63a60102-9e6d-45d8-9b5f-c315d0d27e7a.mock.pstmn.io/fetch_rss';
+      // const host = '127.0.0.1';
+      // const port = '8000';
+      // const endpoint = 'http://' + host + ':' + port + '/fetch_rss';
+      const response = await axios.post(endpoint, {
         channel_url: url,
       });
       setRssLink(response.data.rss_link);
