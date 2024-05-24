@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -25,6 +25,8 @@
     "@babel/preset-env": "7.24.5",
     "@babel/preset-react": "7.24.1",
     "@babel/preset-typescript": "7.24.1",
+    "@emotion/cache": "11.11.0",
+    "@mui/material-nextjs": "5.15.11",
     "@swc/core": "1.5.7",
     "@swc/jest": "0.2.36",
     "@testing-library/jest-dom": "6.4.5",

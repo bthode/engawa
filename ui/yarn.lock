@@ -1070,7 +1070,7 @@
     source-map "^0.5.7"
     stylis "4.2.0"
 
-"@emotion/cache@^11.11.0":
+"@emotion/cache@11.11.0", "@emotion/cache@^11.11.0":
   version "11.11.0"
   resolved "https://registry.yarnpkg.com/@emotion/cache/-/cache-11.11.0.tgz#809b33ee6b1cb1a625fef7a45bc568ccd9b8f3ff"
   integrity sha512-P34z9ssTCBi3e9EI1ZsWpNHcfY1r09ZO0rZbRO2ob3ZQMnFI35jB536qoXbkdesr5EUhYi22anuEJuyxifaqAQ==
@@ -1519,6 +1519,13 @@
   version "5.15.18"
   resolved "https://registry.yarnpkg.com/@mui/icons-material/-/icons-material-5.15.18.tgz#51e42958ed671589f7a1af19b59372df884bcd61"
   integrity sha512-jGhyw02TSLM0NgW+MDQRLLRUD/K4eN9rlK2pTBTL1OtzyZmQ8nB060zK1wA0b7cVrIiG+zyrRmNAvGWXwm2N9Q==
+  dependencies:
+    "@babel/runtime" "^7.23.9"
+
+"@mui/material-nextjs@5.15.11":
+  version "5.15.11"
+  resolved "https://registry.yarnpkg.com/@mui/material-nextjs/-/material-nextjs-5.15.11.tgz#bf75eece88fb088e74eb5f0eef01f9f64f8ec7f4"
+  integrity sha512-cp5RWYbBngyi7NKP91R9QITllfxumCVPFjqe4AKzNROVuCot0VpgkafxXqfbv0uFsyUU0ROs0O2M3r17q604Aw==
   dependencies:
     "@babel/runtime" "^7.23.9"
 
