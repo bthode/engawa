@@ -217,9 +217,9 @@ class MediaContainer:
         self.size: int = size
         self.allow_sync: int | None = allow_sync
         self.plugins: str | None = plugins
-        self.directories: list["Directory"] = directories or []
-        self.devices: list["Device"] = devices or []
-        self.account: list["Account"] = account or []
+        self.directories: list[Directory] = directories or []
+        self.devices: list[Device] = devices or []
+        self.account: list[Account] = account or []
         self.claimed: int | None = claimed
         self.machine_identifier: str | None = machine_identifier
         self.version: str | None = version
@@ -257,7 +257,7 @@ class MediaContainer:
         version: str | None = xml_data.attrib.get("version")
         content: str | None = xml_data.attrib.get("content")
         identifier: str | None = xml_data.attrib.get("identifier")
-        directories: list["Directory"] = [
+        directories: list[Directory] = [
             Directory.from_xml(directory_data) for directory_data in xml_data.findall("Directory")
         ]
         devices: list["Device"] = [Device.from_xml(device_data) for device_data in xml_data.findall("Device")]
