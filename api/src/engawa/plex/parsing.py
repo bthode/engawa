@@ -260,8 +260,8 @@ class MediaContainer:
         directories: list[Directory] = [
             Directory.from_xml(directory_data) for directory_data in xml_data.findall("Directory")
         ]
-        devices: list["Device"] = [Device.from_xml(device_data) for device_data in xml_data.findall("Device")]
-        account: list["Account"] = [Account.from_xml(account_data) for account_data in xml_data.findall("Account")]
+        devices: list[Device] = [Device.from_xml(device_data) for device_data in xml_data.findall("Device")]
+        account: list[Account] = [Account.from_xml(account_data) for account_data in xml_data.findall("Account")]
 
         return cls(
             name=name,
