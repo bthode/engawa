@@ -1,15 +1,10 @@
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
 import requests
-from bs4 import BeautifulSoup
-from bs4.element import Tag
+from bs4 import BeautifulSoup, Tag
 
-logger = logging.getLogger(__name__)
-
-
-TIMEOUT_IN_SECONDS = 5
+from config import TIMEOUT_IN_SECONDS
 
 
 @dataclass
@@ -29,15 +24,7 @@ class Video:
     thumbnail: Thumbnail
 
 
-class YouTubeService:  # DUPLICATED IN main.py!!!
-    @staticmethod
-    def read_from_plex_server() -> str:
-        return "Read data from Plex server"
-
-    @staticmethod
-    def update_plex_server() -> str:
-        logger.info("Making an update request to the Plex server...")
-        return "Updated data on the Plex server"
+class Youtube:
 
     @staticmethod
     def make_request(url: str, timeout: int) -> str:
