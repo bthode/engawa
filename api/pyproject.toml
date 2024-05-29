@@ -25,18 +25,22 @@ classifiers = [
 ]
 
 dependencies = [
+   "aiosqlite~=0.20.0",
     "beautifulsoup4~=4.12.3",
     "black~=24.4.0",
     "cryptography~=42.0.0",
     "fastapi~=0.111.0",
+    "greenlet~=3.0.3",
     "lxml~=5.2.2",
     "pydantic~=2.7.1",
     "pyright~=1.1.0",
     "pytest~=8.2.0",
+    "debugpy~=1.8.1",
     "requests~=2.31.0",
-    "ruff~=0.4.0",
+    "ruff~=0.4.5",
     "schedule~=1.2.1",
     "SQLAlchemy~=2.0.30",
+    "sqlmodel~=0.0.18",
     "uvicorn~=0.29.0",
     "yt-dlp-types~=0.0.7",
     "yt-dlp~=2024.4.0",

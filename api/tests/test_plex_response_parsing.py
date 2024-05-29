@@ -1,17 +1,16 @@
 import os
 import unittest
-import xml.etree.ElementTree as ElementTree
 
-from engawa.plex.parsing import MediaContainer, parse_media_container
+from engawa.plex.parsing import MediaContainer, parse_plex_data
 
 
 class TestMediaContainerParsing(unittest.TestCase):
     def test_parse_media_container(self) -> None:
         xml_file_path: str = os.path.join(os.path.dirname(__file__), "resources", "libraries.xml")
         with open(xml_file_path, encoding="utf-8") as file:
-            plex_library_data: ElementTree.Element = ElementTree.fromstring(file.read())
+            plex_library_data: str = file.read()
 
-        mc: MediaContainer = parse_media_container(plex_library_data)
+        mc: MediaContainer = parse_plex_data(plex_library_data)
 
         assert mc.name == "Plex Library"
         assert mc.size == 2

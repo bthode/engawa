@@ -303,5 +303,6 @@ def parse_devices(device_xml: ElementTree.Element) -> list[Device]:
     return devices
 
 
-def parse_media_container(xml_data: ElementTree.Element) -> MediaContainer:
+def parse_plex_data(data: str) -> MediaContainer:
+    xml_data = ElementTree.fromstring(data)
     return MediaContainer.from_xml(xml_data)

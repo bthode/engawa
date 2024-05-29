@@ -1,5 +1,5 @@
 import pytest
-from engawa.api.plex_service import PlexService
+from app.youtube_parsing import YouTubeService
 from requests import Timeout
 
 
@@ -17,7 +17,7 @@ def test_fetch_rss_feed():
         </html>
         """
 
-    result = PlexService.fetch_rss_feed("http://test.com", mock_make_request)
+    result = YouTubeService.fetch_rss_feed("http://test.com", mock_make_request)
 
     assert result == {
         "title": "Test Title",
@@ -32,7 +32,7 @@ def test_fetch_rss_feed_timeout():
         raise Timeout("Request timed out")
 
     with pytest.raises(Timeout):
-        PlexService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        YouTubeService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
 
 
 def test_fetch_rss_feed_connection_error():
@@ -40,7 +40,7 @@ def test_fetch_rss_feed_connection_error():
         raise ConnectionError("Connection refused")
 
     with pytest.raises(ConnectionError):
-        PlexService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        YouTubeService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
 
 
 def test_fetch_rss_feed_auth_required():
@@ -48,7 +48,7 @@ def test_fetch_rss_feed_auth_required():
         return "<html><body><h1>401 Unauthorized</h1></body></html>"
 
     with pytest.raises(ValueError):
-        PlexService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        YouTubeService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
 
 
 def test_fetch_rss_feed_non_html_response():
@@ -56,7 +56,7 @@ def test_fetch_rss_feed_non_html_response():
         return "This is not an HTML response"
 
     with pytest.raises(ValueError):
-        PlexService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        YouTubeService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
 
 
 def test_fetch_rss_feed_no_rss_link():
@@ -64,4 +64,4 @@ def test_fetch_rss_feed_no_rss_link():
         return "<html><head></head></html>"
 
     with pytest.raises(ValueError):
-        PlexService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        YouTubeService.fetch_rss_feed("http://example.com", request_maker=mock_make_request)

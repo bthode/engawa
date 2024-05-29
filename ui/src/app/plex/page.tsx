@@ -17,16 +17,47 @@ import {
   Link,
   InputLabel,
   Box,
+  IconButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { Input } from 'postcss';
+
+interface Location {
+  path: string;
+}
+
+interface Directory {
+  title: string;
+  uuid: string;
+  locations: Location[];
+}
+
+interface PlexServer {
+  name: string;
+  id: number;
+  directories: Directory[];
+  endpoint: string;
+  port: string;
+  error_state: null | string;
+}
+
+async function getPlexData() {
+  const res = await fetch('http://localhost:8000/api/plex_server/');
+  if (!res.ok) {
+    throw new Error('Failed to fetch Plex data');
+  }
+  return res.json();
+}
 
 const Plex: React.FC = () => {
-  const [plexData, setPlexData] = useState<PlexData | null>(null);
+  const [plexData, setPlexData] = useState<PlexServer[]>([]);
   const [open, setOpen] = useState(false);
-  const [hostname, setHostname] = useState('');
-  const [accessToken, setAccessToken] = useState('');
+  const [endpoint, setEndPoint] = useState('10.1.1.10');
+  const [port, setPort] = useState('32400');
+  const [token, setToken] = useState('nyyWbP6RfyTJZ1bSCRRZ');
   const [loading, setLoading] = useState(true);
   const [openLibraries, setOpenLibraries] = useState(false);
 
@@ -34,36 +65,17 @@ const Plex: React.FC = () => {
     setOpenLibraries(!openLibraries);
   };
 
-  interface PlexData {
-    ip: string;
-    libraries: string[];
-  }
-  const fetchPlexData = async (simulate: boolean) => {
-    if (simulate) {
-      // Simulate a delay with setTimeout wrapped in a promise
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Placeholder data
-      const data = {
-        ip: '192.168.1.100',
-        libraries: ['Movies', 'TV Shows', 'Music'],
-      };
-
-      setPlexData(data);
-    } else {
-      setPlexData(null);
-    }
-
-    setLoading(false);
-  };
-
-  //   const fetchPlexData = async () => {
-  //     const response = await axios.get('/plex');
-  //     setPlexData(response.data);
-  //   };
-
   useEffect(() => {
-    fetchPlexData(false);
+    getPlexData()
+      .then((data) => {
+        setPlexData(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        setPlexData([]);
+        setLoading(false);
+      });
   }, []);
 
   const handleAddClick = () => {
@@ -71,49 +83,86 @@ const Plex: React.FC = () => {
   };
 
   const handleTestClick = async () => {
-    const response = await axios.get(`http://${hostname}:32400/library/sections?X-Plex-Token=${accessToken}`);
+    // 'http://10.1.1.10:32400/library/sections?X-Plex-Token=nyyWbP6RfyTJZ1bSCRRZ'
+    const response = await axios.get(`http://${endpoint}:32400/library/sections?X-Plex-Token=${token}`);
     if (response.status === 200) {
       alert('Success');
     }
   };
+  // /library/sections?X-Plex-Token
 
-  const handleSaveClick = async () => {
-    await axios.post('/plex', { hostname, connectionString: accessToken });
-    fetchPlexData(true);
-    setOpen(false);
-  };
+  async function handleSaveClick() {
+    const data = { endpoint, token, port, name: 'Plex' };
+
+    const response = await fetch('http://localhost:8000/api/plex_server', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      console.error('Error:', response.statusText);
+    } else {
+      const newData: PlexServer = await response.json();
+      console.log('Success:', newData);
+      setPlexData((prevData) => [...prevData, ...newData]);
+      setOpen(false);
+    }
+  }
 
   return (
     <Navigation>
       {loading ? (
         <div>Loading...</div>
-      ) : plexData ? (
-        <List component="nav">
-          <ListItem>
-            <ListItemText primary={`Server Host: ${plexData.ip}`} />
-          </ListItem>
-          <ListItem button onClick={handleClick}>
-            {openLibraries ? (
-              <ListItemIcon>
-                <ExpandMore style={{ color: 'white' }} />
-              </ListItemIcon>
-            ) : (
-              <ListItemIcon>
-                <ExpandLess style={{ color: 'white' }} />
-              </ListItemIcon>
-            )}
-            <ListItemText primary="Libraries" />
-          </ListItem>
-          <Collapse in={openLibraries} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {plexData.libraries.map((library, index) => (
-                <ListItem key={index}>
-                  <ListItemText primary={library} />
-                </ListItem>
-              ))}
-            </List>
-          </Collapse>
-        </List>
+      ) : plexData && plexData.length > 0 ? (
+        plexData.map((server) => (
+          <List component="nav" key={server.id}>
+            <ListItem>
+              <ListItemText primary={`Server Host: ${server.endpoint}`} />
+              <IconButton
+                edge="end"
+                aria-label="delete"
+                style={{ color: 'white' }}
+                onClick={async () => {
+                  const response = await fetch(`http://localhost:8000/api/plex_server/${server.id}`, {
+                    method: 'DELETE',
+                  });
+                  if (!response.ok) {
+                    console.error('Error:', response.statusText);
+                  } else {
+                    console.log('Deleted:', server.id);
+                    setPlexData(plexData.filter((plex) => plex.id !== server.id)); // Remove the deleted server from state
+                  }
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </ListItem>
+            <ListItem button onClick={handleClick}>
+              {openLibraries ? (
+                <ListItemIcon>
+                  <ExpandMore style={{ color: 'white' }} />
+                </ListItemIcon>
+              ) : (
+                <ListItemIcon>
+                  <ExpandLess style={{ color: 'white' }} />
+                </ListItemIcon>
+              )}
+              <ListItemText primary="Libraries" />
+            </ListItem>
+            <Collapse in={openLibraries} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {plexData[0].directories.map((directory, index) => (
+                  <ListItem key={index}>
+                    <ListItemText primary={directory.title} />
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+          </List>
+        ))
       ) : (
         <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleAddClick}>
           Add Plex Server
@@ -122,20 +171,21 @@ const Plex: React.FC = () => {
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Add Plex Server</DialogTitle>
         <DialogContent>
-          <InputLabel shrink>Hostname/IP</InputLabel>
+          <InputLabel shrink>Endpoint</InputLabel>
           <Tooltip title="Use the endpoint as accessible from where Engawa is running.">
             <TextField
-              value={hostname}
-              onChange={(e) => setHostname(e.target.value)}
+              value={endpoint}
+              onChange={(e) => setEndPoint(e.target.value)}
               fullWidth
-              placeholder="http://192.168.0.20:32400"
+              placeholder="192.168.0.20"
             />
           </Tooltip>
           <Box mt={2}>
             <InputLabel shrink>Access Token</InputLabel>
             <TextField
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
               fullWidth
               placeholder="nyyWbP6RfyTJZ1b....."
             />
@@ -147,6 +197,8 @@ const Plex: React.FC = () => {
           >
             How to find your Plex Access Token
           </Link>
+          <InputLabel shrink>Port</InputLabel>
+          <TextField value={port} onChange={(e) => setPort(e.target.value)} fullWidth />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleTestClick}>Test</Button>

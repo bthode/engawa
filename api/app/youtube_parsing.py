@@ -15,8 +15,8 @@ TIMEOUT_IN_SECONDS = 5
 @dataclass
 class Thumbnail:
     url: str
-    width: int
-    height: int
+    width: str
+    height: str
 
 
 @dataclass
@@ -29,7 +29,7 @@ class Video:
     thumbnail: Thumbnail
 
 
-class PlexService:
+class YouTubeService:  # DUPLICATED IN main.py!!!
     @staticmethod
     def read_from_plex_server() -> str:
         return "Read data from Plex server"
@@ -94,8 +94,8 @@ class PlexService:
             author = entry.find("author").find("name")
             link = entry.find("link").get("href")
             thumbnail_link: str = entry.find("media:thumbnail").get("url")
-            thumbnail_width: int = entry.find("media:thumbnail").get("width")
-            thumbnail_height: int = entry.find("media:thumbnail").get("height")
+            thumbnail_width: str = entry.find("media:thumbnail").get("width")
+            thumbnail_height: str = entry.find("media:thumbnail").get("height")
 
             if title and published and video_id and author:
                 videos.append(

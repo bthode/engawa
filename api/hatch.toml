@@ -8,4 +8,6 @@ lint = "ruff check {args:.}"
 style = ["ruff check .", "black --check --diff ."]
 fmt = ["black .", "ruff check --fix .", "style"]
 test = "pytest {args}"
+dev = "uvicorn src.engawa.main:app --reload"
+debug = "python -Xfrozen_modules=off -m debugpy --listen 5678 --wait-for-client -m uvicorn src.engawa.main:app --reload"
 all = ["style", "typing"]
