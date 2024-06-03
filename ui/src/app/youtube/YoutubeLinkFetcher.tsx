@@ -41,7 +41,7 @@ const YouTubeLinkFetcher = () => {
   const fetchRss = async (url: string) => {
     try {
       setLoading(true);
-      const endpoint = 'https://63a60102-9e6d-45d8-9b5f-c315d0d27e7a.mock.pstmn.io/fetch_rss';
+      const endpoint = '/api/fetch_rss?';
       // const host = '127.0.0.1';
       // const port = '8000';
       // const endpoint = 'http://' + host + ':' + port + '/fetch_rss';

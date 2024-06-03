@@ -112,7 +112,7 @@ const VideoList: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('https://63a60102-9e6d-45d8-9b5f-c315d0d27e7a.mock.pstmn.io/get_videos', {
+        const response = await axios.get('/api/get_videos', {
           params: {
             rss_url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCCD4-G3Aokt2sM7TYQV2HmA',
           },

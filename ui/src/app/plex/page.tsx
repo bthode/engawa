@@ -45,7 +45,7 @@ interface PlexServer {
 }
 
 async function getPlexData() {
-  const res = await fetch('http://localhost:8000/api/plex_server/');
+  const res = await fetch('/api/plex_server/');
   if (!res.ok) {
     throw new Error('Failed to fetch Plex data');
   }
@@ -94,7 +94,7 @@ const Plex: React.FC = () => {
   async function handleSaveClick() {
     const data = { endpoint, token, port, name: 'Plex' };
 
-    const response = await fetch('http://localhost:8000/api/plex_server', {
+    const response = await fetch('/api/plex_server', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ const Plex: React.FC = () => {
                 aria-label="delete"
                 style={{ color: 'white' }}
                 onClick={async () => {
-                  const response = await fetch(`http://localhost:8000/api/plex_server/${server.id}`, {
+                  const response = await fetch(`/api/plex_server/${server.id}`, {
                     method: 'DELETE',
                   });
                   if (!response.ok) {
