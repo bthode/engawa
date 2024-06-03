@@ -65,7 +65,6 @@ async def create_plex_server(plex: PlexServerCreate, session: Annotated[AsyncSes
     return [result.scalars().one()]
 
 
-# BUG: sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: directory.plex_id
 @router.delete("/plex_server/{plex_id}")
 async def delete_plex_server(plex_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
     result = await session.execute(select(Plex).where(Plex.id == plex_id))

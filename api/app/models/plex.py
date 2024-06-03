@@ -17,8 +17,7 @@ class PlexBase(SQLModel):
 class Plex(PlexBase, table=True):
     id: int = Field(default=None, primary_key=True)
     directories: Mapped[list["Directory"]] = Relationship(
-        back_populates="plex"
-        # , sa_relationship_kwargs={"cascade": "delete"}
+        back_populates="plex", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
     endpoint: str
     port: str
@@ -53,7 +52,7 @@ class Directory(DirectoryBase, table=True):
     plex_id: int = Field(default=None, foreign_key="plex.id")
     locations: Mapped[list["Location"]] = Relationship(
         back_populates="directory",
-        sa_relationship_kwargs={"lazy": "selectin"},
+        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
     )
 
 
