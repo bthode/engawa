@@ -6,9 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 
-from routers import youtube, plex
-
-# from app.routers import plex, youtube
+from app.routers.router import base_router as router
 
 # Database setup
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
@@ -23,17 +21,16 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # pylint: disable=unused-argument
+async def lifespan(_app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     yield
     await engine.dispose()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title="Engawa", lifespan=lifespan)
+app.include_router(router=router, prefix="/api")
 
-app.include_router(plex.router, prefix="/api")
-app.include_router(youtube.router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,29 +39,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
-# from contextlib import asynccontextmanager
-
-# from fastapi import FastAPI
-
-# from .database import engine
-# from .models import plex, youtube
-# from .routers import plex
-
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):  # pylint: disable=unused-argument
-#     async with engine.begin() as conn:
-#         await conn.run_sync(SQLModel.metadata.create_all)
-#     yield
-#     await engine.dispose()
-
-
-# app = FastAPI(lifespan=lifespan)
-# app.include_router(plex.router, prefix="/api")

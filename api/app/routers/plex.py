@@ -7,15 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlmodel import select  # type: ignore
 
-from database.session import get_session
-from models.plex import (
+# from database.session import get_session
+from app.database.session import get_session
+from app.models.plex import (
     Directory,
     Location,
     Plex,
     PlexPublicWithDirectories,
     PlexServerCreate,
 )
-from utils import build_path
+from app.utils import build_path
 
 router = APIRouter()
 

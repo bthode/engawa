@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import requests
 from bs4 import BeautifulSoup, Tag
 
-from config import TIMEOUT_IN_SECONDS
+from app.config import TIMEOUT_IN_SECONDS
 
 
 @dataclass

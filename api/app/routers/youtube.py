@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from models.youtube import Video, Youtube
+from app.models.youtube import Video, Youtube
 
 router = APIRouter()
 

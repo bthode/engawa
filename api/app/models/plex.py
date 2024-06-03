@@ -54,7 +54,6 @@ class Directory(DirectoryBase, table=True):
     locations: Mapped[list["Location"]] = Relationship(
         back_populates="directory",
         sa_relationship_kwargs={"lazy": "selectin"},
-        # sa_relationship_kwargs={"lazy": "selectin", "cascade": "delete"}
     )
 
 
