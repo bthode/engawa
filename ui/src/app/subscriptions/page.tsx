@@ -1,7 +1,7 @@
 import React from 'react';
 import Navigation from '../navigation';
-import VideoCard from '../youtube/VideoCard';
-import YoutubeLink from '../youtube/YoutubeLink';
+import VideoCard from '@components/VideoCard';
+import YoutubeLink from '@components/YoutubeLink';
 
 const Subscriptions: React.FC = () => {
   return (

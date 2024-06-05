@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import Link from '@mui/material/Link';
-import { isValidYoutubeUrl } from './urlUtils';
+import { isValidYoutubeUrl } from '@utilities/urlUtils';
 
 const YouTubeLinkFetcher = () => {
   const [url, setUrl] = useState('');
@@ -42,9 +42,6 @@ const YouTubeLinkFetcher = () => {
     try {
       setLoading(true);
       const endpoint = '/api/fetch_rss?';
-      // const host = '127.0.0.1';
-      // const port = '8000';
-      // const endpoint = 'http://' + host + ':' + port + '/fetch_rss';
       const response = await axios.post(endpoint, {
         channel_url: url,
       });

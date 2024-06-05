@@ -23,7 +23,7 @@ import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Input } from 'postcss';
+import { savePlexServer } from '../../actions/savePlexServer';
 
 interface Location {
   path: string;
@@ -43,6 +43,8 @@ interface PlexServer {
   port: string;
   error_state: null | string;
 }
+
+export type { PlexServer };
 
 async function getPlexData() {
   const res = await fetch('/api/plex_server/');
@@ -83,34 +85,23 @@ const Plex: React.FC = () => {
   };
 
   const handleTestClick = async () => {
-    // 'http://10.1.1.10:32400/library/sections?X-Plex-Token=nyyWbP6RfyTJZ1bSCRRZ'
     const response = await axios.get(`http://${endpoint}:32400/library/sections?X-Plex-Token=${token}`);
     if (response.status === 200) {
       alert('Success');
     }
   };
-  // /library/sections?X-Plex-Token
 
-  async function handleSaveClick() {
-    const data = { endpoint, token, port, name: 'Plex' };
+  const handleSaveClick = async () => {
+    try {
+      const data = { endpoint, token, port, name: 'Plex' };
+      const newData = await savePlexServer(data);
 
-    const response = await fetch('/api/plex_server', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      console.error('Error:', response.statusText);
-    } else {
-      const newData: PlexServer = await response.json();
-      console.log('Success:', newData);
       setPlexData((prevData) => [...prevData, ...newData]);
       setOpen(false);
+    } catch (error) {
+      console.error('Error:', error);
     }
-  }
+  };
 
   return (
     <Navigation>
@@ -121,6 +112,8 @@ const Plex: React.FC = () => {
           <List component="nav" key={server.id}>
             <ListItem>
               <ListItemText primary={`Server Host: ${server.endpoint}`} />
+              <br />
+              <ListItemText primary={`Name: ${server.name} `} />
               <IconButton
                 edge="end"
                 aria-label="delete"
@@ -154,11 +147,17 @@ const Plex: React.FC = () => {
             </ListItem>
             <Collapse in={openLibraries} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                {plexData[0].directories.map((directory, index) => (
-                  <ListItem key={index}>
-                    <ListItemText primary={directory.title} />
+                {server.directories && server.directories.length > 0 ? (
+                  server.directories.map((directory) => (
+                    <ListItem key={directory.uuid}>
+                      <ListItemText primary={directory.title} />
+                    </ListItem>
+                  ))
+                ) : (
+                  <ListItem key="no-directories">
+                    <ListItemText primary="No directories available" />
                   </ListItem>
-                ))}
+                )}
               </List>
             </Collapse>
           </List>
