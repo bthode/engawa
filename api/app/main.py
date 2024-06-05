@@ -31,10 +31,13 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="Engawa", lifespan=lifespan)
 app.include_router(router=router, prefix="/api")
 
+endpoint = "http://localhost"
+port = "3000"
+url = f"{endpoint}:{port}"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

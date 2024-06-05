@@ -26,11 +26,13 @@ class Video:
 
 class Youtube:
 
+    # TODO: Seperate network request from parsing
     @staticmethod
     def make_request(url: str, timeout: int) -> str:
         response = requests.get(url, timeout=timeout)
         return response.content.decode("utf-8")
 
+    # TODO: Move out of model
     @staticmethod
     def fetch_rss_feed(channel_url: str, request_maker: Callable[[str, int], str] = make_request) -> dict[str, str]:
         response_content = request_maker(channel_url, TIMEOUT_IN_SECONDS)
@@ -65,6 +67,7 @@ class Youtube:
 
         return {"title": title, "rss_link": rss_href, "image_link": image_href, "description": description_content}
 
+    # TODO: Move out of model
     @staticmethod
     def fetch_videos_from_rss_feed(
         rss_url: str, request_maker: Callable[[str, int], str] = make_request

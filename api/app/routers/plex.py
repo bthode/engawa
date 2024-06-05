@@ -5,9 +5,8 @@ from engawa.plex.parsing import parse_plex_data
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlmodel import select  # type: ignore
+from sqlmodel import select
 
-# from database.session import get_session
 from app.database.session import get_session
 from app.models.plex import (
     Directory,

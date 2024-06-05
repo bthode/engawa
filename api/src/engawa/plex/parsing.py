@@ -1,6 +1,7 @@
 from xml.etree import ElementTree
 
 
+# TODO: Need to unify this back into the app structure, and also need to break out crud / model / parsing
 class Location:
     def __init__(self, id_: int, path: str) -> None:
         self.id_: int = id_

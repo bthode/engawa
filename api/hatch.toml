@@ -7,6 +7,7 @@ typing = "pyright {args}"
 lint = "ruff check {args:.}"
 style = ["ruff check .", "black --check --diff ."]
 fmt = ["black .", "ruff check --fix .", "style"]
+ptw = "pytest-watch {args}"
 test = "pytest {args}"
 dev = "uvicorn app.main:app --port 8000 --reload"
 debug = "python -Xfrozen_modules=off -m debugpy --listen 5678 --wait-for-client -m uvicorn app.main:app --reload"
