@@ -47,6 +47,7 @@ interface PlexServer {
 export type { PlexServer };
 
 async function getPlexData() {
+  // TODO: Replace with server action?
   const res = await fetch('/api/plex_server/');
   if (!res.ok) {
     throw new Error('Failed to fetch Plex data');

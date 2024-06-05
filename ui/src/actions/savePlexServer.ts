@@ -1,6 +1,11 @@
 import { PlexServer } from '../app/plex/page';
 
-export async function savePlexServer(data: { endpoint: string; token: string; port: string; name: string }) {
+export async function savePlexServer(data: {
+  endpoint: string;
+  token: string;
+  port: string;
+  name: string;
+}): Promise<PlexServer[]> {
   try {
     const response = await fetch('/api/plex_server', {
       method: 'POST',
@@ -14,10 +19,10 @@ export async function savePlexServer(data: { endpoint: string; token: string; po
       throw new Error(response.statusText);
     }
 
-    const newData: PlexServer = await response.json();
+    const newData: PlexServer[] = await response.json();
     return newData;
   } catch (error) {
     console.error('Error:', error);
-    return error;
+    return [];
   }
 }
