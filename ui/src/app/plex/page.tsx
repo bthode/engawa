@@ -24,27 +24,7 @@ import axios from 'axios';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { savePlexServer } from '../../actions/savePlexServer';
-
-interface Location {
-  path: string;
-}
-
-interface Directory {
-  title: string;
-  uuid: string;
-  locations: Location[];
-}
-
-interface PlexServer {
-  name: string;
-  id: number;
-  directories: Directory[];
-  endpoint: string;
-  port: string;
-  error_state: null | string;
-}
-
-export type { PlexServer };
+import { PlexServer } from '@/types/plexTypes';
 
 async function getPlexData() {
   // TODO: Replace with server action?

@@ -32,7 +32,9 @@
     "paths": {
       "@/*": ["./src/*"],
       "@components/*": ["src/components/*"],
-      "@utilities/*": ["src/utilities/*"]
+      "@utilities/*": ["src/utilities/*"],
+      "@types/*": ["types/index.ts"],
+      "@css/*": ["src/css/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

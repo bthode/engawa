@@ -24,9 +24,17 @@ class Video:
     thumbnail: Thumbnail
 
 
+@dataclass
+class ChannelInfo:
+    title: str
+    rss_link: str
+    image_link: str
+    description: str
+
+
 class Youtube:
 
-    # TODO: Seperate network request from parsing
+    # TODO: Separate network request from parsing
     @staticmethod
     def make_request(url: str, timeout: int) -> str:
         response = requests.get(url, timeout=timeout)
@@ -34,7 +42,7 @@ class Youtube:
 
     # TODO: Move out of model
     @staticmethod
-    def fetch_rss_feed(channel_url: str, request_maker: Callable[[str, int], str] = make_request) -> dict[str, str]:
+    def fetch_rss_feed(channel_url: str, request_maker: Callable[[str, int], str] = make_request) -> ChannelInfo:
         response_content = request_maker(channel_url, TIMEOUT_IN_SECONDS)
         soup = BeautifulSoup(response_content, "html.parser")
 
@@ -65,7 +73,7 @@ class Youtube:
         image_href = image_link["href"]
         image_href = image_href[0] if isinstance(image_href, list) else image_href
 
-        return {"title": title, "rss_link": rss_href, "image_link": image_href, "description": description_content}
+        return ChannelInfo(title=title, rss_link=rss_href, image_link=image_href, description=description_content)
 
     # TODO: Move out of model
     @staticmethod

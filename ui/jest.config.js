@@ -9,5 +9,6 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
     '^@utilities/(.*)$': '<rootDir>/src/utilities/$1',
+    '^types/(.*)$': '<rootDir>/src/types/$1',
   },
 };

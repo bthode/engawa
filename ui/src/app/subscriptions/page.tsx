@@ -1,13 +1,11 @@
 import React from 'react';
 import Navigation from '../navigation';
-import VideoCard from '@components/VideoCard';
-import YoutubeLink from '@components/YoutubeLink';
+import SubscriptionList from '@components/SubscriptionList';
 
 const Subscriptions: React.FC = () => {
   return (
     <Navigation>
-      <VideoCard />
-      <YoutubeLink />
+      <SubscriptionList />
     </Navigation>
   );
 };

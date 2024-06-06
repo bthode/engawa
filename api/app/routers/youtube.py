@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 
-from app.models.youtube import Video, Youtube
+from app.models.youtube import ChannelInfo, Video, Youtube
 
 router = APIRouter()
 
 
-@router.post("/fetch_rss")
-async def fetch_rss_route(channel_url: str) -> dict[str, str]:
+@router.post("/get_channel_info")
+async def fetch_rss_route(channel_url: str) -> ChannelInfo:
     return Youtube.fetch_rss_feed(channel_url)
 
 

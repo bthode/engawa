@@ -1,4 +1,4 @@
-import { PlexServer } from '../app/plex/page';
+import { PlexServer } from '@/types/plexTypes';
 
 export async function savePlexServer(data: {
   endpoint: string;
