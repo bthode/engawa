@@ -1,7 +1,7 @@
 import pytest
 from requests import Timeout
 
-from app.models.youtube import Youtube
+from app.models.youtube import ChannelInfo, Youtube
 
 
 def test_fetch_rss_feed():
@@ -20,12 +20,12 @@ def test_fetch_rss_feed():
 
     result = Youtube.fetch_rss_feed("http://test.com", mock_make_request)
 
-    assert result == {
-        "title": "Test Title",
-        "description": "Test Description",
-        "rss_link": "http://test.com/rss",
-        "image_link": "http://test.com/image.jpg",
-    }
+    assert result == ChannelInfo(
+        title="Test Title",
+        rss_link="http://test.com/rss",
+        image_link="http://test.com/image.jpg",
+        description="Test Description",
+    )
 
 
 def test_fetch_rss_feed_timeout():
