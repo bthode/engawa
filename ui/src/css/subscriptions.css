@@ -1,36 +1,5 @@
-.wapper {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 1rem;
-  margin-top: 5rem;
-}
-
 .box {
-  flex: 0 1 250px;
-  max-width: 250px;
-  border: 1px solid #ccc;
   border-radius: 6px;
-  padding: 2rem;
-  text-align: center;
-  display: grid;
+  padding: 3rem;
   grid-template-rows: subgrid;
-  grid-row: span 6;
-}
-
-.box img {
-  max-height: calc(100% - 2em);
-  border-radius: 10px;
-  object-fit: cover;
-}
-
-.title {
-  bottom: 10px;
-  left: 0;
-  right: 0;
-  width: 100%;
-  text-align: center;
-  padding: 0.5em;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: var(--clr-light);
-  border-radius: 0 0 10px 10px;
 }
