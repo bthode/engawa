@@ -8,5 +8,5 @@ windows:
         -
         - cd ui && yarn dev
         - cd ui && yarn test --watch
-        - cd api && hatch run ptw
+        - cd api && hatch run watch
         - cd api && hatch run dev
