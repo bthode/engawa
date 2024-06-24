@@ -61,5 +61,9 @@ async def get_subscription(subscription_id: int, session: Annotated[AsyncSession
 
 
 @router.delete("/subscription/{subscription_id}")
-async def delete_subscription(subscription_id: int):
-    return {"message": f"subscription {subscription_id} deleted"}
+async def delete_subscription(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
+    result = await session.execute(select(Subscription).where(Subscription.id == subscription_id))
+    subscription = result.scalars().first()
+    await session.delete(subscription)
+    await session.commit()
+    return {"message": "subscription deleted"}
