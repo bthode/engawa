@@ -3,7 +3,8 @@ from enum import StrEnum
 from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship, SQLModel  # type: ignore
 
-# TODO: Just because we get back Directory/Location in a confusing manner from Plex doesn't mean we should make the naming confusing in our model/db.
+# TODO: Just because we get back Directory/Location in a confusing manner from Plex doesn't mean
+# we should make the naming confusing in our model/db.
 
 
 class ErrorState(StrEnum):

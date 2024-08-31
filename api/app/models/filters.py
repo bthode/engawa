@@ -22,41 +22,5 @@ class StringCriteria(SQLModel):
 
 class FilterCriteria(SQLModel):
     __visit_name__ = "filter_criteria"
-    duration: Mapped[DurationCriteria] | None = Relationship(
-        one_side=True, sa_relationship_kwargs={"cascade": "all, delete-orphan"}
-    )
-    string: Mapped[StringCriteria] | None = Relationship(
-        one_side=True, sa_relationship_kwargs={"cascade": "all, delete-orphan"}
-    )
-
-
-# class Filter(PlexBase, SQLModel):
-#     name: str = Field(index=True)
-#     operation: FilterOperation
-#     criteria: FilterCriteria
-
-
-# class DurationFilter(Filter):
-#     __visit_name__ = 'duration_filter'
-#     criteria: Mapped[DurationCriteria] = Relationship(back_populates="filter")
-
-
-# class TitleFilter(Filter):
-#     __visit_name__ = 'title_filter'
-#     criteria: Mapped[StringCriteria] = Relationship(back_populates="filter")
-
-
-# class AnyFilter(SQLModel):
-#     __visit_name__ = 'any_filter'
-#     duration: Mapped[DurationFilter] | None = Relationship(one_side=True, sa_relationship_kwargs={"cascade": "all, delete-orphan"})
-#     title: Mapped[TitleFilter] | None = Relationship(one_side=True, sa_relationship_kwargs={"cascade": "all, delete-orphan"})
-
-
-# class PlexServerCreate(PlexBase):
-#     endpoint: str
-#     port: str
-#     token: str
-
-
-# class PlexServerPublic(PlexBase):
-#     id: int
+    duration: Mapped[DurationCriteria] | None = Relationship(sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    string: Mapped[StringCriteria] | None = Relationship(sa_relationship_kwargs={"cascade": "all, delete-orphan"})
