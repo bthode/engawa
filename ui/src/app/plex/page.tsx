@@ -38,9 +38,9 @@ async function getPlexData() {
 const Plex: React.FC = () => {
   const [plexData, setPlexData] = useState<PlexServer[]>([]);
   const [open, setOpen] = useState(false);
-  const [endpoint, setEndPoint] = useState('10.1.1.10');
+  const [endpoint, setEndPoint] = useState(process.env.NEXT_PUBLIC_PLEX_HOST || '192.168.1.10');
   const [port, setPort] = useState('32400');
-  const [token, setToken] = useState('nyyWbP6RfyTJZ1bSCRRZ');
+  const [token, setToken] = useState(process.env.NEXT_PUBLIC_PLEX_TOKEN || '');
   const [loading, setLoading] = useState(true);
   const [openLibraries, setOpenLibraries] = useState(false);
 

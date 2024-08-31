@@ -1,11 +1,16 @@
 import React from 'react';
 import Navigation from '../navigation';
-import SubscriptionList from '@components/SubscriptionList';
+import AddSubscriptionForm from '@/components/AddSubscriptionForm';
+import SubscriptionList from '@/components/SubscriptionList';
+import { SubscriptionProvider } from '@/components/SubscriptionContext';
 
 const Subscriptions: React.FC = () => {
   return (
     <Navigation>
-      <SubscriptionList />
+      <SubscriptionProvider>
+        <AddSubscriptionForm />
+        <SubscriptionList />
+      </SubscriptionProvider>
     </Navigation>
   );
 };
