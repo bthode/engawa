@@ -1,105 +1,103 @@
 'use client';
 import React, { useState } from 'react';
-import TextField from '@mui/material/TextField';
+import {
+  TextField,
+  CircularProgress,
+  Card,
+  CardContent,
+  CardMedia,
+  Typography,
+  Link,
+  Button,
+  Box,
+} from '@mui/material';
 import axios from 'axios';
-import CircularProgress from '@mui/material/CircularProgress';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
-import Card from '@mui/material/Card';
-import CardMedia from '@mui/material/CardMedia';
-import Link from '@mui/material/Link';
 import { isValidYoutubeUrl } from '@utilities/urlUtils';
+import { useSnackbar } from 'notistack';
 
-const YouTubeLinkFetcher = () => {
+interface ChannelInfo {
+  title: string;
+  rss_link: string;
+  image_link: string;
+  description: string;
+}
+
+const YouTubeLinkFetcher: React.FC = () => {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [imageLink, setImageLink] = useState('');
-  const [rssLink, setRssLink] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [channelInfo, setChannelInfo] = useState<ChannelInfo | null>(null);
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUrl(value);
-    debounce(validateUrl, 500)(value);
+    setError('');
   };
 
-  const validateUrl = async (value: string) => {
-    if (!isValidYoutubeUrl(value)) {
+  const validateAndFetch = async () => {
+    if (!isValidYoutubeUrl(url)) {
       setError('Invalid URL');
-    } else {
-      setError('');
-      try {
-        await fetchRss(value);
-      } catch (error) {
-        console.error('Error fetching RSS:', error);
-      }
+      return;
     }
-  };
 
-  const fetchRss = async (url: string) => {
+    setError('');
+    setLoading(true);
+
     try {
-      setLoading(true);
-      const endpoint = '/api/fetch_rss?';
-      const response = await axios.post(endpoint, {
-        channel_url: url,
-      });
-      setRssLink(response.data.rss_link);
-      setImageLink(response.data.image_link);
-      setTitle(response.data.title);
-      setDescription(response.data.description);
-      setUrl('');
-      setError('');
-    } catch (error: any) {
-      setError(error.message);
-      alert(`Error: ${error.message}`);
+      const response = await axios.post('/api/fetch_rss', { channel_url: url });
+      setChannelInfo(response.data);
+      enqueueSnackbar('Channel information fetched successfully!', { variant: 'success' });
+    } catch (error) {
+      console.error('Error fetching RSS:', error);
+      setError('Failed to fetch channel information');
+      enqueueSnackbar('Error fetching channel information', { variant: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const debounce = (func: Function, delay: number) => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-    return (...args: any[]) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func(...args), delay);
-    };
-  };
-
   return (
-    <div>
+    <Box sx={{ maxWidth: 600, margin: 'auto', mt: 4 }}>
       <TextField
         fullWidth
-        autoFocus
-        autoComplete="off"
-        placeholder="Enter URL"
+        label="YouTube Channel URL"
+        variant="outlined"
         value={url}
         onChange={handleChange}
         error={!!error}
         helperText={error}
         disabled={loading}
-        InputProps={{
-          endAdornment: loading && <CircularProgress size={20} />,
-        }}
+        sx={{ mb: 2 }}
       />
-      {title && rssLink && imageLink && (
-        <Card sx={{ maxWidth: 345 }}>
-          <CardMedia sx={{ height: 140 }} image={imageLink} title={title} />
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={validateAndFetch}
+        disabled={loading || !url}
+        startIcon={loading && <CircularProgress size={20} color="inherit" />}
+        sx={{ mb: 2 }}
+      >
+        {loading ? 'Fetching...' : 'Fetch Channel Info'}
+      </Button>
+
+      {channelInfo && (
+        <Card>
+          <CardMedia component="img" height="140" image={channelInfo.image_link} alt={channelInfo.title} />
           <CardContent>
             <Typography gutterBottom variant="h5" component="div">
-              {title}
+              {channelInfo.title}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Description: {description}
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {channelInfo.description}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              <Link href={rssLink}>RSS Feed</Link>
-            </Typography>
+            <Link href={channelInfo.rss_link} target="_blank" rel="noopener noreferrer">
+              RSS Feed
+            </Link>
           </CardContent>
         </Card>
       )}
-    </div>
+    </Box>
   );
 };
 

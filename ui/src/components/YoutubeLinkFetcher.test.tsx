@@ -1,83 +1,101 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
-import YouTubeLinkFetcher from './YoutubeLinkFetcher';
+import { SnackbarProvider } from 'notistack';
 import axios from 'axios';
+import YoutubeLinkFetcher from './YouTubeLinkFetcher';
 import '@testing-library/jest-dom';
 
-const mockSuccessResponse = {
-  data: {
-    rss_link: 'https://example.com/rss',
-    image_link: 'https://example.com/image.jpg',
-    title: 'Example Channel',
-    description: 'This is an example channel description',
-  },
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+const mockChannelInfo = {
+  title: 'Test Channel',
+  rss_link: 'https://example.com/rss',
+  image_link: 'https://example.com/image.jpg',
+  description: 'This is a test channel description',
 };
 
-const mockNetworkError = {
-  message: 'Network Error',
+const renderWithSnackbar = (component: React.ReactElement) => {
+  return render(<SnackbarProvider maxSnack={3}>{component}</SnackbarProvider>);
 };
 
-describe('YouTubeLinkFetcher Tests', () => {
+describe('YoutubeLinkFetcher Component', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    (console.error as jest.Mock).mockRestore();
+  test('renders the input field and fetch button', () => {
+    renderWithSnackbar(<YoutubeLinkFetcher />);
+    expect(screen.getByLabelText('YouTube Channel URL')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fetch Channel Info' })).toBeInTheDocument();
   });
 
-  test('renders the input field', () => {
-    render(<YouTubeLinkFetcher />);
-    const inputField = screen.getByPlaceholderText('Enter URL');
-    expect(inputField).toBeInTheDocument();
+  test('shows error for invalid URL', async () => {
+    renderWithSnackbar(<YoutubeLinkFetcher />);
+    const input = screen.getByLabelText('YouTube Channel URL');
+    const fetchButton = screen.getByRole('button', { name: 'Fetch Channel Info' });
+
+    fireEvent.change(input, { target: { value: 'invalid-url' } });
+    fireEvent.click(fetchButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Invalid URL')).toBeInTheDocument();
+    });
   });
 
-  test('validates valid channel or playlist URLs', async () => {
-    const validUrl = 'https://www.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw';
-    render(<YouTubeLinkFetcher />);
-    const inputField = screen.getByPlaceholderText('Enter URL');
+  test('fetches channel info for valid URL', async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockChannelInfo });
+    renderWithSnackbar(<YoutubeLinkFetcher />);
 
-    fireEvent.change(inputField, { target: { value: validUrl } });
-    await waitFor(() => expect(screen.queryByText('Invalid URL')).not.toBeInTheDocument());
+    const input = screen.getByLabelText('YouTube Channel URL');
+    const fetchButton = screen.getByRole('button', { name: 'Fetch Channel Info' });
+
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw' } });
+    fireEvent.click(fetchButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Channel')).toBeInTheDocument();
+      expect(screen.getByText('This is a test channel description')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'RSS Feed' })).toHaveAttribute('href', 'https://example.com/rss');
+      expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.com/image.jpg');
+    });
   });
 
-  test('validates invalid URLs', async () => {
-    const invalidUrl = 'https://example.com';
-    render(<YouTubeLinkFetcher />);
-    const inputField = screen.getByPlaceholderText('Enter URL');
+  test('shows error message on fetch failure', async () => {
+    mockedAxios.post.mockRejectedValueOnce(new Error('Network Error'));
+    renderWithSnackbar(<YoutubeLinkFetcher />);
 
-    fireEvent.change(inputField, { target: { value: invalidUrl } });
-    await waitFor(() => expect(screen.getByText('Invalid URL')).toBeInTheDocument());
+    const input = screen.getByLabelText('YouTube Channel URL');
+    const fetchButton = screen.getByRole('button', { name: 'Fetch Channel Info' });
+
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw' } });
+    fireEvent.click(fetchButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to fetch channel information')).toBeInTheDocument();
+    });
   });
 
-  test('fetches RSS data and renders the card on successful API response', async () => {
-    const validUrl = 'https://www.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw';
-    jest.spyOn(axios, 'post').mockResolvedValueOnce(mockSuccessResponse);
+  test('disables input and button while fetching', async () => {
+    mockedAxios.post.mockImplementationOnce(
+      () => new Promise((resolve) => setTimeout(() => resolve({ data: mockChannelInfo }), 100)),
+    );
+    renderWithSnackbar(<YoutubeLinkFetcher />);
 
-    render(<YouTubeLinkFetcher />);
-    const inputField = screen.getByPlaceholderText('Enter URL');
+    const input = screen.getByLabelText('YouTube Channel URL');
+    const fetchButton = screen.getByRole('button', { name: 'Fetch Channel Info' });
 
-    fireEvent.change(inputField, { target: { value: validUrl } });
-    await waitFor(() => expect(screen.getByText('Example Channel')).toBeInTheDocument());
-    expect(screen.getByText('Description: This is an example channel description')).toBeInTheDocument();
-    expect(screen.getByText('RSS Feed')).toHaveAttribute('href', 'https://example.com/rss');
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw' } });
+    fireEvent.click(fetchButton);
 
-    const postSpy = jest.spyOn(axios, 'post').mockResolvedValueOnce(mockSuccessResponse);
-    postSpy.mockRestore();
-  });
+    expect(input).toBeDisabled();
+    expect(fetchButton).toBeDisabled();
+    expect(screen.getByText('Fetching...')).toBeInTheDocument();
 
-  test('shows an error message on network error', async () => {
-    const validUrl = 'https://www.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw';
-    jest.spyOn(axios, 'post').mockRejectedValueOnce(mockNetworkError);
-    window.alert = jest.fn();
-
-    render(<YouTubeLinkFetcher />);
-    const inputField = screen.getByPlaceholderText('Enter URL');
-
-    fireEvent.change(inputField, { target: { value: validUrl } });
-    await waitFor(() => expect(window.alert).toHaveBeenCalledWith('Error: Network Error'));
-
-    const postSpy = jest.spyOn(axios, 'post').mockResolvedValueOnce(mockSuccessResponse);
-    postSpy.mockRestore();
+    await waitFor(() => {
+      expect(input).not.toBeDisabled();
+      expect(fetchButton).not.toBeDisabled();
+      expect(screen.getByText('Fetch Channel Info')).toBeInTheDocument();
+    });
   });
 });
