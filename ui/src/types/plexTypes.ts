@@ -13,6 +13,7 @@ export type PlexServer = {
   id: number;
   directories: Directory[];
   endpoint: string;
+  token: string;
   port: string;
   error_state: null | string;
 };

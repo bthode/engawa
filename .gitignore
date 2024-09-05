@@ -3,10 +3,20 @@
 
 
 **/.vscode/
-
+**/node_modules/
+**/.pytest_cache/
+**/.ruff_cache/
 
 **/.DS_Store
 
 .idea/
 
 api/test.db
+ui/node_modules/
+ui/.next
+
+
+api/.pytest_cache/
+api/.ruff_cache/
+
+.claudesync/config.local.json

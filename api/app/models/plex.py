@@ -34,13 +34,16 @@ class PlexServerCreate(PlexBase):
     token: str
 
 
+class PlexServerUpdate(PlexBase):
+    id: int
+    name: str
+    endpoint: str
+    port: str
+    token: str
+
+
 class PlexServerPublic(PlexBase):
     id: int
-
-
-class PlexServerUpdate(SQLModel):
-    id: int | None = None
-    name: str
 
 
 class DirectoryBase(SQLModel):

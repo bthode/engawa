@@ -1,11 +1,12 @@
 'use client';
 import React, { useState } from 'react';
-import { TextField, Button, Grid, Box } from '@mui/material';
+import { TextField, Button, Grid, Box, Alert } from '@mui/material';
 import { useSubscriptions } from './SubscriptionContext';
 
 const AddSubscriptionForm: React.FC = () => {
   const [subscriptionUrl, setSubscriptionUrl] = useState<string>('');
-  const { addSubscription } = useSubscriptions();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { addSubscription, subscriptions } = useSubscriptions();
 
   const validateUrl = (url: string): boolean => {
     const urlPattern =
@@ -19,35 +20,50 @@ const AddSubscriptionForm: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setErrorMessage(null);
+
     if (validateUrl(subscriptionUrl)) {
       try {
-        await addSubscription(subscriptionUrl);
-        setSubscriptionUrl(''); // Clear the input after successful addition
+        const existingSubscription = subscriptions.find(sub => sub.url === subscriptionUrl);
+        if (existingSubscription) {
+          setErrorMessage('This subscription already exists.');
+        } else {
+          await addSubscription(subscriptionUrl);
+          setSubscriptionUrl(''); // Clear the input after successful addition
+        }
       } catch (error) {
         console.error('Error adding subscription:', error);
+        setErrorMessage('An error occurred while adding the subscription.');
       }
     }
   };
-
   return (
     <Box component="form" noValidate autoComplete="off" onSubmit={handleSubmit}>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} sm={9}>
           <TextField
             fullWidth
             label="Subscription URL"
             value={subscriptionUrl}
             onChange={handleSubscriptionUrlChange}
-            error={!validateUrl(subscriptionUrl) && subscriptionUrl !== ''}
-            helperText={!validateUrl(subscriptionUrl) && subscriptionUrl !== '' ? 'Invalid URL' : ''}
+            error={(!validateUrl(subscriptionUrl) && subscriptionUrl !== '') || !!errorMessage}
+            helperText={
+              (!validateUrl(subscriptionUrl) && subscriptionUrl !== '' ? 'Invalid URL' : '') ||
+              errorMessage
+            }
           />
         </Grid>
+        <Grid item xs={12} sm={3}>
+          <Button variant="contained" color="primary" type="submit">
+            Submit
+          </Button>
+        </Grid>
       </Grid>
-      <Box mt={2}>
-        <Button variant="contained" color="primary" type="submit">
-          Submit
-        </Button>
-      </Box>
+      {errorMessage && (
+        <Box mt={2}>
+          <Alert severity="error">{errorMessage}</Alert>
+        </Box>
+      )}
     </Box>
   );
 };

@@ -1,7 +1,8 @@
 import pytest
 from requests import Timeout
 
-from app.models.youtube import ChannelInfo, Youtube
+from app.models.youtube import ChannelInfo
+from app.routers import youtube
 
 
 def test_fetch_rss_feed():
@@ -18,7 +19,7 @@ def test_fetch_rss_feed():
         </html>
         """
 
-    result = Youtube.fetch_rss_feed("http://test.com", mock_make_request)
+    result = youtube.fetch_rss_feed("http://test.com", mock_make_request)
 
     assert result == ChannelInfo(
         title="Test Title",
@@ -33,7 +34,7 @@ def test_fetch_rss_feed_timeout():
         raise Timeout("Request timed out")
 
     with pytest.raises(Timeout):
-        Youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
 
 
 def test_fetch_rss_feed_connection_error():
@@ -41,7 +42,7 @@ def test_fetch_rss_feed_connection_error():
         raise ConnectionError("Connection refused")
 
     with pytest.raises(ConnectionError):
-        Youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
 
 
 def test_fetch_rss_feed_auth_required():
@@ -49,7 +50,7 @@ def test_fetch_rss_feed_auth_required():
         return "<html><body><h1>401 Unauthorized</h1></body></html>"
 
     with pytest.raises(ValueError):
-        Youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
 
 
 def test_fetch_rss_feed_non_html_response():
@@ -57,7 +58,7 @@ def test_fetch_rss_feed_non_html_response():
         return "This is not an HTML response"
 
     with pytest.raises(ValueError):
-        Youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
 
 
 def test_fetch_rss_feed_no_rss_link():
@@ -65,4 +66,4 @@ def test_fetch_rss_feed_no_rss_link():
         return "<html><head></head></html>"
 
     with pytest.raises(ValueError):
-        Youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)
+        youtube.fetch_rss_feed("http://example.com", request_maker=mock_make_request)

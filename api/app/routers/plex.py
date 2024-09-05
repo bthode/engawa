@@ -1,12 +1,12 @@
 from typing import Annotated
 
 import requests
-from engawa.plex.parsing import parse_plex_data
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
+from engawa.plex.parsing import parse_plex_data
 from app.database.session import get_session
 from app.models.plex import (
     Directory,
@@ -73,7 +73,7 @@ async def delete_plex_server(plex_id: int, session: Annotated[AsyncSession, Depe
     result = await session.execute(select(Plex).where(Plex.id == plex_id))
     plex = result.scalars().first()
     if not plex:
-        raise HTTPException(status_code=404, detail="Plex not found")
+        raise HTTPException(status_code=404, detail="Plex Server Not Found")
     await session.delete(plex)
     await session.commit()
     return plex

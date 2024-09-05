@@ -4,11 +4,13 @@ from typing import Annotated
 import requests
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from sqlmodel import select
 
 from app.database.session import get_session
 from app.models.subscription import Subscription, SubscriptionCreate
-from app.models.youtube import Youtube
+from app.models.youtube import Thumbnail, Video
+from app.routers import youtube
 
 router = APIRouter()
 
@@ -26,7 +28,7 @@ async def create_subscription(create: SubscriptionCreate, session: Annotated[Asy
     if existing_subscription.scalars().first():
         return {"message": "subscription already exists"}
 
-    channel_info = Youtube.fetch_rss_feed(create.url)
+    channel_info = youtube.fetch_rss_feed(create.url)
     image_link = channel_info.image_link
 
     image_data = None
@@ -67,3 +69,43 @@ async def delete_subscription(subscription_id: int, session: Annotated[AsyncSess
     await session.delete(subscription)
     await session.commit()
     return {"message": "subscription deleted"}
+
+
+@router.post("/subscription/{subscription_id}/sync", response_model=Subscription)
+async def sync_subscription(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
+    subscription = await get_subscription(subscription_id, session)
+    results: list[Video] = youtube.fetch_videos_from_rss_feed(subscription.rss_feed_url)
+    for video in results:
+        existing_video = await session.execute(
+            select(Video).where(Video.video_id == video.video_id)
+        )
+        if not existing_video.scalars().first():
+            new_video = Video(
+                title=video.title,
+                published=video.published,
+                video_id=video.video_id,
+                link=video.link,
+                author=video.author,
+                thumbnail=Thumbnail(
+                    url=video.thumbnail.url,
+                    width=video.thumbnail.width,
+                    height=video.thumbnail.height
+                ),
+                subscription_id=subscription.id
+            )
+            session.add(new_video)
+    
+    await session.commit()
+    return {"message": "subscription synced"}
+
+
+@router.get("/subscription/{subscription_id}/videos", response_model=list[Video])
+async def get_subscription_videos(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
+    result = await session.execute(
+        select(Video)
+        .options(joinedload(Video.thumbnail))
+        .where(Video.subscription_id == subscription_id)
+    )
+    videos = result.scalars().all()
+
+    return videos

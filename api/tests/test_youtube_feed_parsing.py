@@ -2,7 +2,8 @@ import json
 import os
 import unittest
 
-from app.models.youtube import Video, Youtube
+from app.models.youtube import Video
+from app.routers import youtube
 
 
 def mock_make_request(url: str, timeout: int) -> str:  # pylint: disable=W0613
@@ -14,7 +15,7 @@ def mock_make_request(url: str, timeout: int) -> str:  # pylint: disable=W0613
 
 class TestFetchVideosFromRssFeed(unittest.TestCase):
     def test_fetch_videos_from_rss_feed(self) -> None:
-        result: list[Video] = Youtube.fetch_videos_from_rss_feed("http://test.com", request_maker=mock_make_request)
+        result: list[Video] = youtube.fetch_videos_from_rss_feed("http://test.com", request_maker=mock_make_request)
 
         parsed_videos_path: str = os.path.join(os.path.dirname(__file__), "resources", "parsed_videos.json")
         with open(parsed_videos_path, encoding="utf-8") as f:

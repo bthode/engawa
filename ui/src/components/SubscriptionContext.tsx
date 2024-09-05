@@ -8,6 +8,7 @@ interface SubscriptionContextType {
   error: string | null;
   fetchSubscriptions: () => Promise<void>;
   addSubscription: (url: string) => Promise<void>;
+  syncSubscription: (id: string) => Promise<void>;
   deleteSubscription: (id: string) => Promise<void>;
 }
 
@@ -40,6 +41,23 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
+  const syncSubscription = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(`/api/subscription/${id}/sync`, {
+          method: 'POST',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to sync subscription');
+        }
+        await fetchSubscriptions();
+      } catch (error) {
+        setError('Failed to sync subscription');
+      }
+    },
+    [fetchSubscriptions],
+  );
+
   const addSubscription = useCallback(
     async (url: string) => {
       try {
@@ -60,6 +78,8 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     },
     [fetchSubscriptions],
   );
+
+  
 
   const deleteSubscription = useCallback(
     async (id: string) => {
@@ -88,6 +108,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     error,
     fetchSubscriptions,
     addSubscription,
+    syncSubscription,
     deleteSubscription,
   };
 
