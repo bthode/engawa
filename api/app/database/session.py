@@ -24,5 +24,6 @@ async def init_db():
 async def dispose_db():
     await engine.dispose()
 
+
 # Export the engine
 __all__ = ["engine", "get_session", "init_db", "dispose_db"]

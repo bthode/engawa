@@ -96,4 +96,3 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
 async def get_subscription_videos(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
     result = await session.execute(select(Video).where(Video.subscription_id == subscription_id))
     return result.scalars().all()
-
