@@ -1,23 +1,22 @@
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 
+from app.database.session import engine
 from app.routers.router import base_router as router
 
-# Database setup
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
-engine = create_async_engine(DATABASE_URL, echo=True)
-SessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# # Database setup
+# DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+# engine = create_async_engine(DATABASE_URL, echo=True)
+# SessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# Dependency to get the session
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    async with SessionLocal() as session:
-        yield session
+# # Dependency to get the session
+# async def get_session() -> AsyncGenerator[AsyncSession, None]:
+#     async with SessionLocal() as session:
+#         yield session
 
 
 @asynccontextmanager
