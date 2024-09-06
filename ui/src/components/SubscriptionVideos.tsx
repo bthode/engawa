@@ -88,7 +88,7 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
                 <Typography variant="body2" color="textSecondary">
                   Published: {new Date(video.published).toLocaleDateString()}
                 </Typography>
-                <img src={video.thumbnail_url} />
+                <img src={video.thumbnail_url} alt={video.title} />
                 <Box mt={2}>
                   <a href={video.link} target="_blank" rel="noopener noreferrer">
                     Watch on YouTube
