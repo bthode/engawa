@@ -79,8 +79,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [fetchSubscriptions],
   );
 
-  
-
   const deleteSubscription = useCallback(
     async (id: string) => {
       try {

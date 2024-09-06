@@ -1,6 +1,8 @@
 from enum import StrEnum
 
-from sqlmodel import Field, SQLModel  # type: ignore
+from sqlmodel import Field, Relationship, SQLModel  # type: ignore
+
+from app.models.youtube import Video  # type: ignore
 
 
 class VideoStatus(StrEnum):
@@ -43,3 +45,5 @@ class Subscription(SQLModel, table=True):
     image: str | None = None
     type: SubscriptionType = Field(default=SubscriptionType.CHANNEL)
     error_state: SubscriptionDirectoryError | None = None
+    # videos: list["Video"] = Relationship(back_populates="subscription",
+    #                                    sa_relationship_kwargs={"cascade": "all, delete-orphan"})

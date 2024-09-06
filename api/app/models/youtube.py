@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Mapped
-from sqlmodel import Field, Relationship, SQLModel  # type: ignore
+from sqlmodel import Field, SQLModel  # type: ignore
+
 
 
 class Thumbnail(SQLModel, table=True):
@@ -7,7 +7,6 @@ class Thumbnail(SQLModel, table=True):
     url: str
     width: str
     height: str
-    video_id: int = Field(default=None, foreign_key="video.id")
 
 
 class Video(SQLModel, table=True):
@@ -17,8 +16,9 @@ class Video(SQLModel, table=True):
     video_id: str = Field(unique=True)
     link: str
     author: str
-    thumbnail: Mapped[Thumbnail] = Relationship(sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    thumbnail_url: str
     subscription_id: int = Field(default=None, foreign_key="subscription.id")
+    # subscription: Subscription = Relationship(back_populates="videos")
 
 
 class ChannelInfo(SQLModel, table=True):

@@ -6,5 +6,6 @@ export type Video = {
     link: string;
     author: string;
     subscription_id: number;
+    thumbnail_url: string;
   };
   

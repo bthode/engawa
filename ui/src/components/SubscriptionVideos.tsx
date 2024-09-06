@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Typography, Grid, Box, CardContent, Card } from '@mui/material';
@@ -65,12 +66,13 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
       <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 2 }}>Videos</Typography>
       <Grid container spacing={3}>
         {videos.map((video) => (
-          <Grid item xs={12} sm={6} md={4} key={video.id}>
+          <Grid item xs={12} sm={6} md={4} key={video.video_id}>
             <Card component={motion.div} whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>{video.title}</Typography>
                 <Typography variant="body2" color="textSecondary">Author: {video.author}</Typography>
                 <Typography variant="body2" color="textSecondary">Published: {new Date(video.published).toLocaleDateString()}</Typography>
+                <img src={video.thumbnail_url} />
                 <Box mt={2}>
                   <a href={video.link} target="_blank" rel="noopener noreferrer">
                     Watch on YouTube

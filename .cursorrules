@@ -1,0 +1,109 @@
+Frontend (TypeScript/React):
+- Use functional components with TypeScript interfaces
+- Prefer named exports for components
+- Use declarative programming patterns; avoid classes where possible
+- Structure files: exported component, subcomponents, helpers, static content, types
+- Use descriptive variable names (e.g., isLoading, hasError)
+- Implement responsive design with MUI (Material-UI)
+- Use dynamic imports for non-critical components
+- Optimize images: use appropriate formats, include size data, implement lazy loading
+- Minimize use of useEffect; favor React Server Components where applicable
+- Wrap client components in Suspense with fallback for better loading experience
+
+TypeScript Usage:
+- Use TypeScript for all frontend code
+- Prefer interfaces over types for better extensibility
+- Avoid enums; use string literal unions or const objects instead
+- Enable strict mode in tsconfig.json
+
+Naming Conventions:
+- Use PascalCase for component files (e.g., SubscriptionList.tsx)
+- Use camelCase for non-component files (e.g., urlUtils.ts)
+- Use lowercase with dashes for directories (e.g., components/add-subscription)
+
+Syntax and Formatting:
+- Use arrow functions for component definitions and callbacks
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements
+- Use optional chaining (?.) and nullish coalescing (??) operators
+- Prefer template literals over string concatenation
+
+Error Handling and Validation:
+- Handle errors and edge cases early in the function
+- Use try/catch blocks for async operations
+- Implement proper error logging and user-friendly messages
+- Use appropriate form validation (consider using a library like Formik or react-hook-form)
+
+State Management:
+- Use React hooks (useState, useContext) for local and shared state
+- Consider using a state management library for complex state (e.g., Redux, Recoil)
+
+Backend (Python):
+- Use Python 3.8+ features
+- Follow PEP 8 style guide with a line length of 120 characters
+- Use type hints consistently
+- Prefer functional programming patterns where appropriate
+- Use async/await for asynchronous operations
+- Structure code into modular, reusable functions
+
+Python Specifics:
+- Use f-strings for string formatting
+- Do not use f-strings for log messages (use 'Message with %s', expensive_func1())')
+- Use list/dict/set comprehensions where they improve readability
+- Utilize dataclasses or Pydantic models for data structures
+- Use pytest for testing
+
+Naming Conventions:
+- Use snake_case for function and variable names
+- Use PascalCase for class names
+- Use UPPER_CASE for constants
+
+Error Handling:
+- Use specific exception types
+- Implement proper logging
+- Return meaningful error messages and appropriate HTTP status codes in API responses
+
+API Design:
+- Follow RESTful principles
+- Use FastAPI for API development
+- Implement proper request validation and error handling
+- Use Pydantic models for request/response schemas
+
+Database:
+- Use SQLModel for ORM (https://sqlmodel.tiangolo.com/)
+- Use SQLAlchemy for database operations when needed but prefer to use SQLModel
+- Implement database migrations for schema changes
+- Use async database operations where possible
+
+General:
+- Write clear, concise comments and docstrings
+- Keep functions and methods small and focused
+- Follow the DRY (Don't Repeat Yourself) principle
+- Implement proper error logging and monitoring
+- Use environment variables for configuration
+- Implement proper security measures (e.g., input validation, CORS, authentication)
+
+Version Control:
+- Write meaningful commit messages
+- Use feature branches and pull requests for new features or significant changes
+- Keep commits small and focused
+
+Testing:
+- Write unit tests for both frontend and backend code
+- Aim for high test coverage, especially for critical paths
+- Use mocking for external dependencies in tests
+
+Performance:
+- Optimize database queries
+- Implement caching where appropriate
+- Use pagination for large datasets
+
+Accessibility:
+- Ensure proper keyboard navigation
+- Use semantic HTML elements
+- Provide alternative text for images
+
+Documentation:
+- Maintain up-to-date README files
+- Document API endpoints and their usage
+- Keep inline documentation current with code changes
+

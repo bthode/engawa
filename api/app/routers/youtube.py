@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 
 import requests
@@ -10,11 +11,15 @@ from app.models.youtube import ChannelInfo, Thumbnail, Video
 router = APIRouter()
 
 
+logger = logging.getLogger(__name__)
+
+
 # TODO: Separate network request from parsing
 @staticmethod
 def make_request(url: str, timeout: int) -> str:
     response = requests.get(url, timeout=timeout)
     return response.content.decode("utf-8")
+
 
 @staticmethod
 def fetch_rss_feed(channel_url: str, request_maker: Callable[[str, int], str] = make_request) -> ChannelInfo:
@@ -50,38 +55,44 @@ def fetch_rss_feed(channel_url: str, request_maker: Callable[[str, int], str] = 
 
     return ChannelInfo(title=title, rss_link=rss_href, image_link=image_href, description=description_content)
 
+
 @staticmethod
-def fetch_videos_from_rss_feed(
-    rss_url: str, request_maker: Callable[[str, int], str] = make_request
-) -> list[Video]:
-    response_content = request_maker(rss_url, TIMEOUT_IN_SECONDS)
-    soup = BeautifulSoup(response_content, "xml")
+def fetch_videos_from_rss_feed(rss_url: str, request_maker: Callable[[str, int], str] = make_request) -> list[Video]:
+    try:
+        response_content = request_maker(rss_url, TIMEOUT_IN_SECONDS)
+        soup = BeautifulSoup(response_content, "xml")
 
-    entries = soup.find_all("entry")
-    videos: list[Video] = []
-    for entry in entries:
-        title = entry.find("title")
-        published = entry.find("published")
-        video_id = entry.find("yt:videoId")
-        author = entry.find("author").find("name")
-        link = entry.find("link").get("href")
-        thumbnail_link: str = entry.find("media:thumbnail").get("url")
-        thumbnail_width: str = entry.find("media:thumbnail").get("width")
-        thumbnail_height: str = entry.find("media:thumbnail").get("height")
+        entries = soup.find_all("entry")
+        videos: list[Video] = []
+        for entry in entries:
+            try:
+                title = entry.find("title")
+                published = entry.find("published")
+                video_id = entry.find("yt:videoId")
+                author = entry.find("author").find("name")
+                link = entry.find("link").get("href")
+                thumbnail_link: str = entry.find("media:thumbnail").get("url")
 
-        if title and published and video_id and author:
-            thumbnail = Thumbnail(url=thumbnail_link, width=thumbnail_width, height=thumbnail_height)
-            video = Video(
-                title=title.text,
-                published=published.text,
-                video_id=video_id.text,
-                link=link,
-                author=author.text,
-            )
-            video.thumbnail = thumbnail
-            videos.append(video)
+                if title and published and video_id and author:
+                    video: Video = Video(
+                        title=title.text,
+                        published=published.text,
+                        video_id=video_id.text,
+                        link=link,
+                        author=author.text,
+                        thumbnail_url=thumbnail_link,
+                    )
+                    videos.append(video)
+                else:
+                    logging.warning("Skipping entry due to missing required fields: %s", entry)
+            except Exception as e:  # pylint: disable=broad-except
+                logging.error("Error processing entry: %s", e)
 
-    return videos
+        return videos
+    except Exception as e:  # pylint: disable=broad-except
+        logging.error("Error fetching videos from RSS feed: %s", e)
+        return []
+
 
 @router.post("/get_channel_info")
 async def fetch_rss_route(channel_url: str) -> ChannelInfo:

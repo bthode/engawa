@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import '@css/subscriptions.css';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -13,13 +13,15 @@ import { useSubscriptions } from './SubscriptionContext';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { IconButton } from '@mui/material';
 import SyncIcon from '@mui/icons-material/Sync';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface SubscriptionListProps {
   onSubscriptionSelect: (subscriptionId: string) => void;
 }
 
 const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelect }) => {
-  const { subscriptions, loading, error, syncSubscription, deleteSubscription} = useSubscriptions();
+  const { subscriptions, loading, error, syncSubscription, deleteSubscription } = useSubscriptions();
+  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
 
   if (loading) {
     return <div>Loading...</div>;
@@ -33,10 +35,19 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelec
     deleteSubscription(id);
   };
 
-  function handleSync(id: string): void {
-    syncSubscription(id);
+  async function handleSync(id: string, event: React.MouseEvent): Promise<void> {
+    event.stopPropagation();
+    setSyncingIds(prev => new Set(prev).add(id));
+    try {
+      await syncSubscription(id);
+    } finally {
+      setSyncingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    }
   }
-
 
   return (
     <TableContainer component={Paper} className="box">
@@ -69,8 +80,16 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelec
                 </a>
               </TableCell>
               <TableCell align="right">
-                <IconButton aria-label="sync" onClick={() => handleSync(subscription.id)}>
-                  <SyncIcon />
+                <IconButton 
+                  aria-label="sync" 
+                  onClick={(e) => handleSync(subscription.id, e)}
+                  disabled={syncingIds.has(subscription.id)}
+                >
+                  {syncingIds.has(subscription.id) ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    <SyncIcon />
+                  )}
                 </IconButton>
               </TableCell>
               <TableCell align="right">

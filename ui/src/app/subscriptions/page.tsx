@@ -27,7 +27,7 @@ const Subscriptions: React.FC = () => {
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
           <Tabs value={selectedTab} onChange={handleTabChange}>
             <Tab label="Subscriptions" />
-            <Tab label="Videos" disabled={!selectedSubscriptionId} />
+            {/* <Tab label="Videos" disabled={!selectedSubscriptionId} /> */}
           </Tabs>
         </Box>
         {selectedTab === 0 && (

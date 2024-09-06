@@ -20,3 +20,5 @@ api/.pytest_cache/
 api/.ruff_cache/
 
 .claudesync/config.local.json
+.mocks
+api/dist
