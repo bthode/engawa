@@ -31,17 +31,18 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelec
     return <div>{error}</div>;
   }
 
-  const handleDelete = (id: string) => {
-    deleteSubscription(id);
+  const handleDelete = async (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    await deleteSubscription(id);
   };
 
   async function handleSync(id: string, event: React.MouseEvent): Promise<void> {
     event.stopPropagation();
-    setSyncingIds(prev => new Set(prev).add(id));
+    setSyncingIds((prev) => new Set(prev).add(id));
     try {
       await syncSubscription(id);
     } finally {
-      setSyncingIds(prev => {
+      setSyncingIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
         return newSet;
@@ -62,10 +63,11 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelec
         </TableHead>
         <TableBody>
           {subscriptions.map((subscription) => (
-            <TableRow 
-              key={subscription.id} 
+            <TableRow
+              key={subscription.id}
               sx={{ '&:last-child td, &:last-child th': { border: 0 }, cursor: 'pointer' }}
-              onClick={() => onSubscriptionSelect(subscription.id)}>
+              onClick={() => onSubscriptionSelect(subscription.id)}
+            >
               <TableCell align="right">
                 <img
                   src={`data:image/png;base64,${subscription.image}`}
@@ -80,20 +82,16 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelec
                 </a>
               </TableCell>
               <TableCell align="right">
-                <IconButton 
-                  aria-label="sync" 
+                <IconButton
+                  aria-label="sync"
                   onClick={(e) => handleSync(subscription.id, e)}
                   disabled={syncingIds.has(subscription.id)}
                 >
-                  {syncingIds.has(subscription.id) ? (
-                    <CircularProgress size={24} />
-                  ) : (
-                    <SyncIcon />
-                  )}
+                  {syncingIds.has(subscription.id) ? <CircularProgress size={24} /> : <SyncIcon />}
                 </IconButton>
               </TableCell>
               <TableCell align="right">
-                <IconButton aria-label="delete" onClick={() => handleDelete(subscription.id)}>
+                <IconButton aria-label="delete" onClick={(e) => handleDelete(subscription.id, e)}>
                   <DeleteIcon />
                 </IconButton>
               </TableCell>

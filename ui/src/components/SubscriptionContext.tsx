@@ -6,10 +6,10 @@ interface SubscriptionContextType {
   subscriptions: Subscription[];
   loading: boolean;
   error: string | null;
-  fetchSubscriptions: () => Promise<void>;
   addSubscription: (url: string) => Promise<void>;
-  syncSubscription: (id: string) => Promise<void>;
   deleteSubscription: (id: string) => Promise<void>;
+  fetchSubscriptions: () => Promise<void>;
+  syncSubscription: (id: string) => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -32,7 +32,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setLoading(true);
       const response = await fetch('/api/subscription');
       const data: Subscription[] = await response.json();
-      setSubscriptions(data);
+      setSubscriptions(data.sort((a, b) => a.title.localeCompare(b.title)));
       setError(null);
     } catch (error) {
       setError('Failed to fetch subscriptions');
@@ -82,6 +82,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const deleteSubscription = useCallback(
     async (id: string) => {
       try {
+        setLoading(true);
         const response = await fetch(`/api/subscription/${id}`, {
           method: 'DELETE',
         });

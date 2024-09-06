@@ -31,7 +31,7 @@ export async function editPlexServer(data: PlexServer): Promise<PlexServer[]> {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({endpoint, port, name, token }),
+      body: JSON.stringify({ endpoint, port, name, token }),
     });
 
     if (!response.ok) {
@@ -46,14 +46,13 @@ export async function editPlexServer(data: PlexServer): Promise<PlexServer[]> {
   }
 }
 
-
 export async function deletePlexServer(data: PlexServer): Promise<PlexServer[]> {
   try {
     const response = await fetch(`/api/plex_server/${data.id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
     });
 
     if (!response.ok) {

@@ -1,6 +1,28 @@
 import React, { useState } from 'react';
-import { Card, CardContent, Typography, Grid, Box, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Alert, Tooltip } from '@mui/material';
-import { Movie as MovieIcon, Tv as TvIcon, Photo as PhotoIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  Box,
+  Chip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Alert,
+  Tooltip,
+} from '@mui/material';
+import {
+  Movie as MovieIcon,
+  Tv as TvIcon,
+  Photo as PhotoIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
 import { PlexServer, Directory } from '@/types/plexTypes';
@@ -8,14 +30,21 @@ import { deletePlexServer, savePlexServer } from '@/actions/savePlexServer';
 
 const getLibraryIcon = (type: string) => {
   switch (type.toLowerCase()) {
-    case 'movie': return <MovieIcon />;
-    case 'show': return <TvIcon />;
-    case 'photo': return <PhotoIcon />;
-    default: return <MovieIcon />;
+    case 'movie':
+      return <MovieIcon />;
+    case 'show':
+      return <TvIcon />;
+    case 'photo':
+      return <PhotoIcon />;
+    default:
+      return <MovieIcon />;
   }
 };
 
-const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null, onServerUpdate: () => void }> = ({ plexServer, onServerUpdate }) => {
+const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpdate: () => void }> = ({
+  plexServer,
+  onServerUpdate,
+}) => {
   const [] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newServer, setNewServer] = useState<Partial<PlexServer>>({});
@@ -50,7 +79,6 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null, onServerUpd
     }
   };
 
-
   const handleDeleteServer = async () => {
     if (!plexServer) return;
 
@@ -75,14 +103,14 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null, onServerUpd
         onChange={(e) => setServer({ ...server, name: e.target.value })}
       />
       <Tooltip title="Use the endpoint as accessible from where Engawa is running.">
-      <TextField
-        margin="dense"
-        label="Endpoint"
-        type="text"
-        fullWidth
-        value={server.endpoint || ''}
-        onChange={(e) => setServer({ ...server, endpoint: e.target.value })}
-      />
+        <TextField
+          margin="dense"
+          label="Endpoint"
+          type="text"
+          fullWidth
+          value={server.endpoint || ''}
+          onChange={(e) => setServer({ ...server, endpoint: e.target.value })}
+        />
       </Tooltip>
       <TextField
         margin="dense"
@@ -100,7 +128,6 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null, onServerUpd
         value={server.token || ''}
         onChange={(e) => setServer({ ...server, token: e.target.value })}
       />
-
     </>
   );
 
@@ -108,35 +135,53 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null, onServerUpd
     <Box>
       {plexServer ? (
         <>
-          <Card component={motion.div} whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 300 }}>
+          <Card component={motion.div} whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 300 }}>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h4" gutterBottom>{plexServer.name}</Typography>
+                <Typography variant="h4" gutterBottom>
+                  {plexServer.name}
+                </Typography>
                 <Box>
-                  <IconButton onClick={handleDeleteServer}><DeleteIcon /></IconButton>
+                  <IconButton onClick={handleDeleteServer}>
+                    <DeleteIcon />
+                  </IconButton>
                 </Box>
               </Box>
-              <Typography variant="subtitle1" gutterBottom>Endpoint: {plexServer.endpoint}</Typography>
-              <Typography variant="subtitle1" gutterBottom>Port: {plexServer.port}</Typography>
-              <Chip 
-                label={plexServer.error_state ? 'Error' : 'Connected'} 
-                color={plexServer.error_state ? 'error' : 'success'} 
+              <Typography variant="subtitle1" gutterBottom>
+                Endpoint: {plexServer.endpoint}
+              </Typography>
+              <Typography variant="subtitle1" gutterBottom>
+                Port: {plexServer.port}
+              </Typography>
+              <Chip
+                label={plexServer.error_state ? 'Error' : 'Connected'}
+                color={plexServer.error_state ? 'error' : 'success'}
                 sx={{ mt: 1 }}
               />
             </CardContent>
           </Card>
 
-          <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 2 }}>Libraries</Typography>
+          <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 2 }}>
+            Libraries
+          </Typography>
           <Grid container spacing={3}>
             {plexServer.directories.map((directory: Directory) => (
               <Grid item xs={12} sm={6} md={4} key={directory.uuid}>
-                <Card component={motion.div} whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card
+                  component={motion.div}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
                   <CardContent>
                     <Box display="flex" alignItems="center" mb={2}>
                       {getLibraryIcon(directory.title)}
-                      <Typography variant="h6" sx={{ ml: 1 }}>{directory.title}</Typography>
+                      <Typography variant="h6" sx={{ ml: 1 }}>
+                        {directory.title}
+                      </Typography>
                     </Box>
-                    <Typography variant="body2" color="textSecondary">UUID: {directory.uuid}</Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      UUID: {directory.uuid}
+                    </Typography>
                     {directory.locations.map((location, index) => (
                       <Typography key={index} variant="body2" color="textSecondary">
                         Path: {location.path}
@@ -151,7 +196,9 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null, onServerUpd
       ) : (
         <Card>
           <CardContent>
-            <Typography variant="h5" gutterBottom>No Plex Server Configured</Typography>
+            <Typography variant="h5" gutterBottom>
+              No Plex Server Configured
+            </Typography>
           </CardContent>
         </Card>
       )}
@@ -167,12 +214,18 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null, onServerUpd
       <Dialog open={isAddModalOpen} onClose={handleCloseAddModal}>
         <DialogTitle>Add Plex Server</DialogTitle>
         <DialogContent>
-          {errorMessage && <Alert severity="error" sx={{ mb: 2 }}>{errorMessage}</Alert>}
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
           {renderServerForm(newServer, setNewServer)}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseAddModal}>Cancel</Button>
-          <Button onClick={handleSaveNewServer} color="primary">Add</Button>
+          <Button onClick={handleSaveNewServer} color="primary">
+            Add
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

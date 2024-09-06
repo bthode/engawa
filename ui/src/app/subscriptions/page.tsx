@@ -7,7 +7,6 @@ import { SubscriptionProvider } from '@/components/SubscriptionContext';
 import { Box, Tabs, Tab } from '@mui/material';
 import SubscriptionVideos from '@/components/SubscriptionVideos';
 
-
 const Subscriptions: React.FC = () => {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const [selectedSubscriptionId, setSelectedSubscriptionId] = React.useState<string | null>(null);
@@ -36,9 +35,7 @@ const Subscriptions: React.FC = () => {
             <SubscriptionList onSubscriptionSelect={handleSubscriptionSelect} />
           </>
         )}
-        {selectedTab === 1 && selectedSubscriptionId && (
-          <SubscriptionVideos subscriptionId={selectedSubscriptionId} />
-        )}
+        {selectedTab === 1 && selectedSubscriptionId && <SubscriptionVideos subscriptionId={selectedSubscriptionId} />}
       </SubscriptionProvider>
     </Navigation>
   );

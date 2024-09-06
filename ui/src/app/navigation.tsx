@@ -1,7 +1,18 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography, ThemeProvider, CssBaseline } from '@mui/material';
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+  ThemeProvider,
+  CssBaseline,
+} from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import MovieIcon from '@mui/icons-material/Movie';
@@ -38,7 +49,7 @@ const Layout = ({ children }: LayoutProps) => {
             '& .MuiDrawer-paper': {
               width: drawerWidth,
               boxSizing: 'border-box',
-              borderRight: '1px solid rgba(255, 255, 255, 0.12)', 
+              borderRight: '1px solid rgba(255, 255, 255, 0.12)',
             },
           }}
         >
@@ -50,8 +61,8 @@ const Layout = ({ children }: LayoutProps) => {
           <List>
             {navigationItems.map((item) => (
               <Link key={item.text} href={item.href} passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-                <ListItem 
-                  button 
+                <ListItem
+                  button
                   selected={pathname === item.href}
                   sx={{
                     '&.Mui-selected': {
@@ -68,11 +79,11 @@ const Layout = ({ children }: LayoutProps) => {
                   <ListItemIcon sx={{ color: pathname === item.href ? 'primary.main' : 'inherit' }}>
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    sx={{ 
+                  <ListItemText
+                    primary={item.text}
+                    sx={{
                       color: pathname === item.href ? 'primary.main' : 'inherit',
-                    }} 
+                    }}
                   />
                 </ListItem>
               </Link>

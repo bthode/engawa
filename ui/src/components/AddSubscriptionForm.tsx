@@ -24,7 +24,7 @@ const AddSubscriptionForm: React.FC = () => {
 
     if (validateUrl(subscriptionUrl)) {
       try {
-        const existingSubscription = subscriptions.find(sub => sub.url === subscriptionUrl);
+        const existingSubscription = subscriptions.find((sub) => sub.url === subscriptionUrl);
         if (existingSubscription) {
           setErrorMessage('This subscription already exists.');
         } else {
@@ -47,10 +47,7 @@ const AddSubscriptionForm: React.FC = () => {
             value={subscriptionUrl}
             onChange={handleSubscriptionUrlChange}
             error={(!validateUrl(subscriptionUrl) && subscriptionUrl !== '') || !!errorMessage}
-            helperText={
-              (!validateUrl(subscriptionUrl) && subscriptionUrl !== '' ? 'Invalid URL' : '') ||
-              errorMessage
-            }
+            helperText={(!validateUrl(subscriptionUrl) && subscriptionUrl !== '' ? 'Invalid URL' : '') || errorMessage}
           />
         </Grid>
         <Grid item xs={12} sm={3}>
