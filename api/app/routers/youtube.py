@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup, Tag
 from fastapi import APIRouter
 
 from app.config import TIMEOUT_IN_SECONDS
-from app.models.youtube import ChannelInfo, Video, VideoStatus
+from app.models.subscription import ChannelInfo, Video, VideoStatus
 
 router = APIRouter()
 

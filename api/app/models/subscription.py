@@ -1,8 +1,7 @@
 from enum import StrEnum
 
-from sqlmodel import Field, Relationship, SQLModel  # type: ignore
-
-from app.models.youtube import Video
+from sqlalchemy.orm import Mapped
+from sqlmodel import Field, Relationship, SQLModel  # type: ignore  # type: ignore
 
 
 class Retention(StrEnum):
@@ -36,5 +35,44 @@ class Subscription(SQLModel, table=True):
     image: str | None = None
     type: SubscriptionType = Field(default=SubscriptionType.CHANNEL)
     error_state: SubscriptionDirectoryError | None = None
-    videos: list[Video] = Relationship(back_populates="subscription",
-                                       sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    videos: Mapped[list["Video"]] = Relationship(
+        back_populates="subscription",
+        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
+    )
+
+
+class VideoStatus(StrEnum):
+    PENDING = "Pending"
+    IN_PROGRESS = "In Progress"
+    FAILED = "Failed"
+    DELETED = "Deleted"
+    COMPLETE = "Complete"
+    EXCLUDED = "Excluded"
+
+
+class Thumbnail(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    url: str
+    width: str
+    height: str
+
+
+class Video(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    title: str
+    published: str
+    video_id: str = Field(unique=True)
+    link: str
+    author: str
+    thumbnail_url: str
+    subscription: Mapped[Subscription] = Relationship(back_populates="videos")
+    subscription_id: int = Field(default=None, foreign_key="subscription.id")
+    status: VideoStatus = Field(sa_column_kwargs={"default": VideoStatus.PENDING})
+
+
+class ChannelInfo(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    title: str
+    rss_link: str
+    image_link: str
+    description: str

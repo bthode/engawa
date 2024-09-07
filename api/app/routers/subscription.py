@@ -7,8 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.database.session import get_session
-from app.models.subscription import Subscription, SubscriptionCreate
-from app.models.youtube import Video, VideoStatus
+from app.models.subscription import Subscription, SubscriptionCreate, Video, VideoStatus
 from app.routers import youtube
 
 router = APIRouter()
