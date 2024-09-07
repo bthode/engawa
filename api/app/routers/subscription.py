@@ -8,7 +8,7 @@ from sqlmodel import select
 
 from app.database.session import get_session
 from app.models.subscription import Subscription, SubscriptionCreate
-from app.models.youtube import Video
+from app.models.youtube import Video, VideoStatus
 from app.routers import youtube
 
 router = APIRouter()
@@ -85,6 +85,7 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
                 author=video.author,
                 thumbnail_url=video.thumbnail_url,
                 subscription_id=subscription.id,
+                status=VideoStatus.PENDING,
             )
             session.add(new_video)
 

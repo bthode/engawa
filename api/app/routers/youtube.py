@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup, Tag
 from fastapi import APIRouter
 
 from app.config import TIMEOUT_IN_SECONDS
-from app.models.youtube import ChannelInfo, Video
+from app.models.youtube import ChannelInfo, Video, VideoStatus
 
 router = APIRouter()
 
@@ -81,6 +81,7 @@ def fetch_videos_from_rss_feed(rss_url: str, request_maker: Callable[[str, int],
                         link=link,
                         author=author.text,
                         thumbnail_url=thumbnail_link,
+                        status=VideoStatus.PENDING,
                     )
                     videos.append(video)
                 else:

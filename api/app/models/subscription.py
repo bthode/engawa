@@ -5,13 +5,6 @@ from sqlmodel import Field, Relationship, SQLModel  # type: ignore
 from app.models.youtube import Video  # type: ignore
 
 
-class VideoStatus(StrEnum):
-    PENDING = "Pending"
-    IN_PROGRESS = "In Progress"
-    FAILED = "Failed"
-    DELETED = "Deleted"
-    COMPLETE = "Complete"
-    EXCLUDED = "Excluded"
 
 
 class Retention(StrEnum):

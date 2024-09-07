@@ -1,4 +1,15 @@
+from enum import Enum
+
 from sqlmodel import Field, SQLModel  # type: ignore
+
+
+class VideoStatus(str, Enum):
+    PENDING = "Pending"
+    IN_PROGRESS = "In Progress"
+    FAILED = "Failed"
+    DELETED = "Deleted"
+    COMPLETE = "Complete"
+    EXCLUDED = "Excluded"
 
 
 class Thumbnail(SQLModel, table=True):
@@ -17,6 +28,7 @@ class Video(SQLModel, table=True):
     author: str
     thumbnail_url: str
     subscription_id: int = Field(default=None, foreign_key="subscription.id")
+    status: VideoStatus = Field(sa_column_kwargs={"default": VideoStatus.PENDING})
     # subscription: Subscription = Relationship(back_populates="videos")
 
 

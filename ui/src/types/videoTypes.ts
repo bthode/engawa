@@ -7,4 +7,5 @@ export type Video = {
   author: string;
   subscription_id: number;
   thumbnail_url: string;
+  status: 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded';
 };

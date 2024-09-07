@@ -1,22 +1,117 @@
-/* eslint-disable @next/next/no-img-element */
-'use client';
-import React, { useState, useEffect } from 'react';
-import { Typography, Grid, Box, CardContent, Card, CircularProgress } from '@mui/material';
-import { motion } from 'framer-motion';
-import { Subscription } from '@/types/subscriptionTypes';
+import React from 'react';
+import { Typography, Box, Paper } from '@mui/material';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import { TableVirtuoso, TableComponents } from 'react-virtuoso';
 import { Video } from '@/types/videoTypes';
+import { Subscription } from '@/types/subscriptionTypes';
 
 interface SubscriptionVideosProps {
   subscriptionId: string;
 }
 
-const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId }) => {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface ColumnData {
+  dataKey: keyof Video;
+  label: string;
+  numeric?: boolean;
+  width: number;
+  duration?: number;
+}
 
-  useEffect(() => {
+const columns: ColumnData[] = [
+  {
+    width: 250,
+    label: 'Title',
+    dataKey: 'title',
+  },
+  {
+    width: 150,
+    label: 'Author',
+    dataKey: 'author',
+  },
+  {
+    width: 100,
+    label: 'Published',
+    dataKey: 'published',
+  },
+  {
+    width: 100,
+    label: 'Link',
+    dataKey: 'link',
+  },
+  {
+    width: 100,
+    label: 'Status',
+    dataKey: 'status',
+  },
+];
+
+const VirtuosoTableComponents: TableComponents<Video> = {
+  Scroller: React.forwardRef<HTMLDivElement>((props, ref) => (
+    <TableContainer component={Paper} {...props} ref={ref} />
+  )),
+  Table: (props) => (
+    <Table {...props} sx={{ borderCollapse: 'separate', tableLayout: 'fixed' }} />
+  ),
+  TableHead,
+  TableRow,
+  TableBody: React.forwardRef<HTMLTableSectionElement>((props, ref) => (
+    <TableBody {...props} ref={ref} />
+  )),
+};
+
+function fixedHeaderContent() {
+  return (
+    <TableRow>
+      {columns.map((column) => (
+        <TableCell
+          key={column.dataKey}
+          variant="head"
+          align={column.numeric || false ? 'right' : 'left'}
+          style={{ width: column.width }}
+          sx={{ backgroundColor: 'background.paper' }}
+        >
+          {column.label}
+        </TableCell>
+      ))}
+    </TableRow>
+  );
+}
+
+function rowContent(_index: number, row: Video) {
+  return (
+    <React.Fragment>
+      {columns.map((column) => (
+        <TableCell
+          key={column.dataKey}
+          align={column.numeric || false ? 'right' : 'left'}
+        >
+          {column.dataKey === 'link' ? (
+            <a href={row[column.dataKey]} target="_blank" rel="noopener noreferrer">
+              Watch on YouTube
+            </a>
+          ) : column.dataKey === 'published' ? (
+            new Date(row[column.dataKey]).toLocaleDateString()
+          ) : (
+            row[column.dataKey]
+          )}
+        </TableCell>
+      ))}
+    </React.Fragment>
+  );
+}
+
+const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId }) => {
+  const [subscription, setSubscription] = React.useState<Subscription | null>(null);
+  const [videos, setVideos] = React.useState<Video[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
     const fetchSubscriptionAndVideos = async () => {
       try {
         setLoading(true);
@@ -27,10 +122,6 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
 
         if (!subscriptionResponse.ok || !videosResponse.ok) {
           throw new Error('Failed to fetch data');
-        }
-
-        if (subscriptionResponse.status === 404) {
-          throw new Error('Subscription not found');
         }
 
         const subscriptionData: Subscription = await subscriptionResponse.json();
@@ -49,8 +140,9 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
 
     fetchSubscriptionAndVideos();
   }, [subscriptionId]);
+
   if (loading) {
-    return <CircularProgress />;
+    return <Typography>Loading...</Typography>;
   }
 
   if (error || !subscription) {
@@ -59,46 +151,27 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
 
   return (
     <Box>
-      <Card component={motion.div} whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 300 }}>
-        <CardContent>
-          <Typography variant="h4" gutterBottom>
-            {subscription.title}
-          </Typography>
-          <Typography variant="subtitle1" gutterBottom>
-            URL: {subscription.url}
-          </Typography>
-          <Typography variant="body2">{subscription.description}</Typography>
-        </CardContent>
-      </Card>
+      <Typography variant="h4" gutterBottom>
+        {subscription.title}
+      </Typography>
+      <Typography variant="subtitle1" gutterBottom>
+        URL: {subscription.url}
+      </Typography>
+      <Typography variant="body2" paragraph>
+        {subscription.description}
+      </Typography>
 
-      <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 2 }}>
+      <Typography variant="h5" gutterBottom>
         Videos
       </Typography>
-      <Grid container spacing={3}>
-        {videos.map((video) => (
-          <Grid item xs={12} sm={6} md={4} key={video.video_id}>
-            <Card component={motion.div} whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {video.title}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Author: {video.author}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Published: {new Date(video.published).toLocaleDateString()}
-                </Typography>
-                <img src={video.thumbnail_url} alt={video.title} />
-                <Box mt={2}>
-                  <a href={video.link} target="_blank" rel="noopener noreferrer">
-                    Watch on YouTube
-                  </a>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      <Paper style={{ height: 800, width: '100%' }}>
+        <TableVirtuoso
+          data={videos}
+          components={VirtuosoTableComponents}
+          fixedHeaderContent={fixedHeaderContent}
+          itemContent={rowContent}
+        />
+      </Paper>
     </Box>
   );
 };
