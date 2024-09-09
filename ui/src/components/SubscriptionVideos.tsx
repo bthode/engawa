@@ -7,7 +7,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { TableVirtuoso, TableComponents } from 'react-virtuoso';
-import { Video } from '@/types/videoTypes';
+import { Video, VideoStatus } from '@/types/videoTypes';
 import { Subscription } from '@/types/subscriptionTypes';
 
 interface SubscriptionVideosProps {
@@ -20,6 +20,7 @@ interface ColumnData {
   numeric?: boolean;
   width: number;
   duration?: number;
+  status?: VideoStatus;
 }
 
 const columns: ColumnData[] = [

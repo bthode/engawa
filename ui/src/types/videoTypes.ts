@@ -9,3 +9,5 @@ export type Video = {
   thumbnail_url: string;
   status: 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded';
 };
+
+export type VideoStatus = 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded';

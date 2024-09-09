@@ -14,7 +14,6 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-# TODO: Separate network request from parsing
 @staticmethod
 def make_request(url: str, timeout: int) -> str:
     response = requests.get(url, timeout=timeout)

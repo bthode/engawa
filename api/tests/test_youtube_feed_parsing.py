@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 
-from app.models.youtube import Video
+from app.models.subscription import Video
 from app.routers import youtube
 
 
@@ -29,6 +29,4 @@ class TestFetchVideosFromRssFeed(unittest.TestCase):
             assert video.video_id == expected_result[i]["video_id"]
             assert video.link == expected_result[i]["link"]
             assert video.author == expected_result[i]["author"]
-            assert video.thumbnail.url == expected_result[i]["thumbnail"]["url"]
-            assert video.thumbnail.width == expected_result[i]["thumbnail"]["width"]
-            assert video.thumbnail.height == expected_result[i]["thumbnail"]["height"]
+            assert video.thumbnail_url == expected_result[i]["thumbnail"]["url"]

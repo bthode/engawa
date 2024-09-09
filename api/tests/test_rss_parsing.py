@@ -1,7 +1,7 @@
 import pytest
 from requests import Timeout
 
-from app.models.youtube import ChannelInfo
+from app.models.subscription import ChannelInfo
 from app.routers import youtube
 
 
