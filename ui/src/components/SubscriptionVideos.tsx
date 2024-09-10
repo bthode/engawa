@@ -49,6 +49,11 @@ const columns: ColumnData[] = [
     label: 'Status',
     dataKey: 'status',
   },
+  {
+    width: 100,
+    label: 'Duration',
+    dataKey: 'duration',
+  },
 ];
 
 const VirtuosoTableComponents: TableComponents<Video> = {
@@ -97,6 +102,8 @@ function rowContent(_index: number, row: Video) {
             </a>
           ) : column.dataKey === 'published' ? (
             new Date(row[column.dataKey]).toLocaleDateString()
+          ) : column.dataKey === 'duration' ? (
+            new Date(row[column.dataKey] * 1000).toISOString().substr(11, 8)
           ) : (
             row[column.dataKey]
           )}
