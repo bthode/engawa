@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import StrEnum
 
 from sqlalchemy.orm import Mapped
@@ -27,14 +28,15 @@ class SubscriptionDirectoryError(StrEnum):
 
 
 class Subscription(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    title: str = Field(default=None)
-    url: str = Field(default=None, unique=True)
     description: str = Field(default=None)
-    rss_feed_url: str = Field(default=None)
-    image: str | None = None
-    type: SubscriptionType = Field(default=SubscriptionType.CHANNEL)
     error_state: SubscriptionDirectoryError | None = None
+    id: int = Field(default=None, primary_key=True)
+    image: str | None = None
+    last_updated: datetime | None = None
+    rss_feed_url: str = Field(default=None)
+    title: str = Field(default=None)
+    type: SubscriptionType = Field(default=SubscriptionType.CHANNEL)
+    url: str = Field(default=None, unique=True)
     videos: Mapped[list["Video"]] = Relationship(
         back_populates="subscription",
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
@@ -43,11 +45,15 @@ class Subscription(SQLModel, table=True):
 
 class VideoStatus(StrEnum):
     PENDING = "Pending"
-    IN_PROGRESS = "In Progress"
+    OBTAINING_METADATA = "Obtaining Metadata"
+    OBTAINED_METADATA = "Obtained Metadata"
+    DOWNLOADING = "Downloading"
     FAILED = "Failed"
     DELETED = "Deleted"
     COMPLETE = "Complete"
     EXCLUDED = "Excluded"
+    COPYWRITE_STRIKE = "Copywrite Strike"
+    DMCA = "DMCA"
 
 
 class Thumbnail(SQLModel, table=True):
@@ -59,15 +65,17 @@ class Thumbnail(SQLModel, table=True):
 
 class Video(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
-    title: str
-    published: str
-    video_id: str = Field(unique=True)
-    link: str
     author: str
-    thumbnail_url: str
-    subscription: Mapped[Subscription] = Relationship(back_populates="videos")
-    subscription_id: int = Field(default=None, foreign_key="subscription.id")
+    duration: int | None = Field(default=None, alias="duration")
+    link: str
+    published: str
+    retry_count: int = Field(default=0)
     status: VideoStatus = Field(sa_column_kwargs={"default": VideoStatus.PENDING})
+    subscription_id: int = Field(default=None, foreign_key="subscription.id")
+    subscription: Mapped[Subscription] = Relationship(back_populates="videos")
+    thumbnail_url: str
+    title: str
+    video_id: str = Field(unique=True)
 
 
 class ChannelInfo(SQLModel, table=True):

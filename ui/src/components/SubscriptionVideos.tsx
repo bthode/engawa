@@ -1,5 +1,6 @@
 import React from 'react';
-import { Typography, Box, Paper } from '@mui/material';
+import { Typography, Box, Paper, Button } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -103,7 +104,10 @@ function rowContent(_index: number, row: Video) {
           ) : column.dataKey === 'published' ? (
             new Date(row[column.dataKey]).toLocaleDateString()
           ) : column.dataKey === 'duration' ? (
-            new Date(row[column.dataKey] * 1000).toISOString().substr(11, 8)
+            row[column.dataKey] ? 
+              // Convert the number directly to seconds, then to ISO string
+              new Date(row[column.dataKey] * 1000).toISOString().slice(11, 19) :
+              'N/A'
           ) : (
             row[column.dataKey]
           )}
@@ -119,35 +123,42 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    const fetchSubscriptionAndVideos = async () => {
-      try {
-        setLoading(true);
-        const [subscriptionResponse, videosResponse] = await Promise.all([
-          fetch(`/api/subscription/${subscriptionId}`),
-          fetch(`/api/subscription/${subscriptionId}/videos`),
-        ]);
+  // Function to fetch subscription and videos data
+  const fetchSubscriptionAndVideos = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [subscriptionResponse, videosResponse] = await Promise.all([
+        fetch(`/api/subscription/${subscriptionId}`),
+        fetch(`/api/subscription/${subscriptionId}/videos`),
+      ]);
 
-        if (!subscriptionResponse.ok || !videosResponse.ok) {
-          throw new Error('Failed to fetch data');
-        }
-
-        const subscriptionData: Subscription = await subscriptionResponse.json();
-        const videosData: Video[] = await videosResponse.json();
-
-        setSubscription(subscriptionData);
-        setVideos(videosData);
-        setError(null);
-      } catch (err) {
-        console.error('Error:', err);
-        setError('Failed to load subscription data. Please try again later.');
-      } finally {
-        setLoading(false);
+      if (!subscriptionResponse.ok || !videosResponse.ok) {
+        throw new Error('Failed to fetch data');
       }
-    };
 
-    fetchSubscriptionAndVideos();
+      const subscriptionData: Subscription = await subscriptionResponse.json();
+      const videosData: Video[] = await videosResponse.json();
+
+      setSubscription(subscriptionData);
+      setVideos(videosData);
+      setError(null);
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to load subscription data. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   }, [subscriptionId]);
+
+  // Initial data fetch
+  React.useEffect(() => {
+    fetchSubscriptionAndVideos();
+  }, [fetchSubscriptionAndVideos]);
+
+  // Refresh button handler
+  const handleRefresh = () => {
+    fetchSubscriptionAndVideos();
+  };
 
   if (loading) {
     return <Typography>Loading...</Typography>;
@@ -159,16 +170,19 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        {subscription.title}
-      </Typography>
-      <Typography variant="subtitle1" gutterBottom>
-        URL: {subscription.url}
-      </Typography>
-      <Typography variant="body2" paragraph>
-        {subscription.description}
-      </Typography>
-
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4">
+          {subscription.title}
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<RefreshIcon />}
+          onClick={handleRefresh}
+          disabled={loading}
+        >
+          Refresh
+        </Button>
+      </Box>
       <Typography variant="h5" gutterBottom>
         Videos
       </Typography>

@@ -1,5 +1,6 @@
 export type Video = {
   id: number;
+  duration: number;
   title: string;
   published: string;
   video_id: string;

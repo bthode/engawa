@@ -1,8 +1,10 @@
 import base64
+from datetime import datetime
 from typing import Annotated
 
 import requests
 from fastapi import APIRouter, Depends
+from pytz import utc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -87,6 +89,10 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
                 status=VideoStatus.PENDING,
             )
             session.add(new_video)
+
+            # Update the subscription's last_updated value to now
+            session.add(subscription)
+        subscription.last_updated = datetime.now(utc)
 
     await session.commit()
     return {"message": "subscription synced"}

@@ -5,7 +5,7 @@ from sqlmodel import SQLModel
 
 SQLITE_FILE_NAME = "test.db"
 sqlite_url = f"sqlite+aiosqlite:///{SQLITE_FILE_NAME}"
-engine = create_async_engine(sqlite_url, echo=True)
+engine = create_async_engine(sqlite_url, echo=False)
 
 
 # Setup dependency for getting a session
