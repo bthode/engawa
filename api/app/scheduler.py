@@ -27,7 +27,7 @@ async def async_sync_and_update_videos():
                 select(Subscription).where(
                     or_(
                         Subscription.last_updated == None,  # noqa: E711 pylint: disable=singleton-comparison
-                        Subscription.last_updated < fifteen_minutes_ago,
+                        Subscription.last_updated < fifteen_minutes_ago,  # type: ignore
                     )  # type: ignore
                 )
             )
