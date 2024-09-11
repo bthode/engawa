@@ -8,17 +8,17 @@ from app.yt_downloader import VideoError, VideoMetadataError, obtain_metadata
 
 
 class MockDownloader:
-    def __init__(self, mock_data):
+    def __init__(self, mock_data: dict[str, dict[str, str | int]]):
         self.mock_data = mock_data
 
-    def extract_info(self, url: str, download: bool = False) -> dict[str, Any]:
+    def extract_info(self, url: str) -> dict[str, Any]:
         if url in self.mock_data:
             return self.mock_data[url]
-        raise yt_dlp.utils.DownloadError("Video not found")
+        raise yt_dlp.utils.DownloadError("Video not found")  # type: ignore
 
 
 def test_obtain_metadata_success():
-    mock_data = {
+    mock_data: dict[str, dict[str, str | int]] = {
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ": {
             "id": "dQw4w9WgXcQ",
             "title": "Rick Astley - Never Gonna Give You Up (Official Music Video)",
@@ -36,7 +36,7 @@ def test_obtain_metadata_success():
 
 def test_obtain_metadata_live_event_not_started():
     downloader = Mock()
-    downloader.extract_info.side_effect = yt_dlp.utils.DownloadError("This live event will begin in a few moments")
+    downloader.extract_info.side_effect = yt_dlp.utils.DownloadError("This live event will begin in a few moments")  # type: ignore
 
     with pytest.raises(VideoMetadataError) as exc_info:
         obtain_metadata("https://www.youtube.com/watch?v=live", downloader)
@@ -46,7 +46,7 @@ def test_obtain_metadata_live_event_not_started():
 
 def test_obtain_metadata_video_unavailable():
     downloader = Mock()
-    downloader.extract_info.side_effect = yt_dlp.utils.DownloadError("This video is unavailable")
+    downloader.extract_info.side_effect = yt_dlp.utils.DownloadError("This video is unavailable")  # type: ignore
 
     with pytest.raises(VideoMetadataError) as exc_info:
         obtain_metadata("https://www.youtube.com/watch?v=unavailable", downloader)
@@ -66,9 +66,9 @@ def test_obtain_metadata_unknown_error():
 
 def test_obtain_metadata_content_strike():
     downloader = Mock()
-    downloader.extract_info.side_effect = yt_dlp.utils.DownloadError("This video contains content from")
+    downloader.extract_info.side_effect = yt_dlp.utils.DownloadError("This video contains content from")  # type: ignore
 
     with pytest.raises(VideoMetadataError) as exc_info:
         obtain_metadata("https://www.youtube.com/watch?v=content_strike", downloader)
 
-    assert exc_info.value.error_type == VideoError.CONTENT_STRIKE
+    assert exc_info.value.error_type == VideoError.COPYRIGHT_STRIKE

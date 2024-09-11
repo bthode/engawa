@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class VideoFormat:
+class VideoFormat:  # ignore:too-many-instance-attributes
     format_id: str
     format_note: str | None
     ext: str
@@ -38,7 +38,7 @@ class VideoError(Enum):
     LIVE_EVENT_NOT_STARTED = auto()
     VIDEO_UNAVAILABLE = auto()
     UNKNOWN_ERROR = auto()
-    CONTENT_STRIKE = auto()
+    COPYRIGHT_STRIKE = auto()
 
 
 class VideoMetadataError(Exception):
@@ -49,7 +49,7 @@ class VideoMetadataError(Exception):
 
 
 class Downloader(Protocol):
-    def extract_info(self, url: str, download: bool = False) -> dict[str, Any]: ...
+    def extract_info(self, url: str) -> dict[str, Any]: ...
 
 
 class YoutubeDLDownloader:
@@ -58,23 +58,19 @@ class YoutubeDLDownloader:
             "logger": logger,
         }
 
-    def extract_info(self, url: str, download: bool = False) -> dict[str, Any]:
+    def extract_info(self, url: str) -> dict[str, Any]:
         with yt_dlp.YoutubeDL(self.ydl_opts) as ydl:  # type: ignore
-            return ydl.extract_info(url, download=download)  # type: ignore
+            return ydl.extract_info(url, download=False)  # type: ignore
 
 
 def obtain_metadata(video_url: str, downloader: Downloader = YoutubeDLDownloader()) -> dict[str, Any]:
     print(f"Obtaining metadata for {video_url}")
-    ydl_opts: dict[str, Any] = {
-        "logger": logger,  # type: ignore
-    }
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
-            info_dict = downloader.extract_info(video_url, download=False)  # type: ignore
-            logger.info("Obtained metadata for %s: %s", video_url, info_dict)
-            return info_dict
+        info_dict = downloader.extract_info(video_url)
+        logger.info("Obtained metadata for %s: %s", video_url, info_dict)
+        return info_dict
     except yt_dlp.utils.DownloadError as e:  # type: ignore
-        error_message = str(e)
+        error_message = str(e)  # type: ignore
         match error_message:
             case _ if "This live event will begin in a few moments" in error_message:
                 raise VideoMetadataError(
@@ -83,7 +79,7 @@ def obtain_metadata(video_url: str, downloader: Downloader = YoutubeDLDownloader
             case _ if "This video is unavailable" in error_message:
                 raise VideoMetadataError(VideoError.VIDEO_UNAVAILABLE, f"Video is unavailable for {video_url}") from e
             case _ if "This video contains content from" in error_message:
-                raise VideoMetadataError(VideoError.CONTENT_STRIKE, f"Video is unavailable for {video_url}") from e
+                raise VideoMetadataError(VideoError.COPYRIGHT_STRIKE, f"Video is unavailable for {video_url}") from e
             case _:
                 logger.error("Error obtaining metadata for %s: %s", video_url, error_message)
                 raise VideoMetadataError(

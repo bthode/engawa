@@ -1,6 +1,7 @@
 from typing import Annotated
 
 import requests
+from engawa.plex.parsing import parse_plex_data
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -15,7 +16,6 @@ from app.models.plex import (
     PlexServerCreate,
 )
 from app.utils import build_path
-from engawa.plex.parsing import parse_plex_data
 
 router = APIRouter()
 

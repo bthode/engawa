@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import utc
-from sqlalchemy.future import select
+from sqlmodel import or_, select
 
 from app.database.session import get_session
 from app.models.subscription import Subscription, Video, VideoStatus
@@ -22,27 +22,34 @@ logger = logging.getLogger(__name__)
 async def async_sync_and_update_videos():
     async for session in get_session():
         try:
-            # Step 1: Get subscriptions that need updating
-            fifteen_minutes_ago = datetime.now(utc) - timedelta(minutes=15)
-            result = await session.execute(
+            fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=15)
+            result = await session.execute(  # type: ignore
                 select(Subscription).where(
-                    (Subscription.last_updated == None) | (Subscription.last_updated < fifteen_minutes_ago)
+                    or_(
+                        Subscription.last_updated == None,  # noqa: E711 pylint: disable=singleton-comparison
+                        Subscription.last_updated < fifteen_minutes_ago,
+                    )  # type: ignore
                 )
             )
-            subscriptions_to_update: list[Subscription] = result.scalars().all()
+
+            subscriptions_to_update: list[Subscription] = result.scalars().all()  # type: ignore
+            assert subscriptions_to_update is not None, "Subscriptions list should not be None"
+            assert isinstance(subscriptions_to_update, list), "Subscriptions should be a list"
 
             if len(subscriptions_to_update) == 0:
                 logger.info("No subscriptions to update")
             else:
-                logger.info(f"Found {len(subscriptions_to_update)} subscriptions to update")
+                logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
 
             for subscription in subscriptions_to_update:
                 await sync_subscription(subscription.id, session)
 
             # Step 3: Get pending videos
-            result = await session.execute(select(Video).where(Video.status == VideoStatus.PENDING))
-            pending_videos: list[Video] = result.scalars().all()
+            result = await session.execute(select(Video).where(Video.status == VideoStatus.PENDING))  # type: ignore
+            pending_videos: list[Video] = result.scalars().all()  # type: ignore
 
+            assert pending_videos is not None, "Pending videos list should not be None"
+            assert isinstance(pending_videos, list), "Pending videos should be a list"
             if len(pending_videos) == 0:
                 logger.info("No pending videos")
             else:

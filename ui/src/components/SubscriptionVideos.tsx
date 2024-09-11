@@ -58,18 +58,23 @@ const columns: ColumnData[] = [
 ];
 
 const VirtuosoTableComponents: TableComponents<Video> = {
-  Scroller: React.forwardRef<HTMLDivElement>((props, ref) => (
-    <TableContainer component={Paper} {...props} ref={ref} />
-  )),
-  Table: (props) => (
-    <Table {...props} sx={{ borderCollapse: 'separate', tableLayout: 'fixed' }} />
-  ),
-  TableHead,
+  Scroller: React.forwardRef(function VirtuosoScroller(props, ref) {
+    return <TableContainer component={Paper} {...props} ref={ref} />;
+  }),
+  Table: function VirtuosoTable(props) {
+    return (
+      <Table {...props} sx={{ borderCollapse: 'separate', tableLayout: 'fixed' }} />
+    );
+  },
+  TableHead: React.forwardRef(function VirtuosoTableHead(props, ref) {
+    return <TableHead {...props} ref={ref} />;
+  }),
   TableRow,
-  TableBody: React.forwardRef<HTMLTableSectionElement>((props, ref) => (
-    <TableBody {...props} ref={ref} />
-  )),
+  TableBody: React.forwardRef(function VirtuosoTableBody(props, ref) {
+    return <TableBody {...props} ref={ref} />;
+  }),
 };
+
 
 function fixedHeaderContent() {
   return (
