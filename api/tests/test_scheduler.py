@@ -24,24 +24,6 @@ async def mock_get_metadata() -> VideoMetadata:
     )
 
 
-# def mock_obtain_metadata(url: str) -> dict[str, str | int]:
-#     if "live" in url:
-#         raise VideoMetadataError(VideoError.LIVE_EVENT_NOT_STARTED, "Live event not started")
-#     elif "unavailable" in url:
-#         raise VideoMetadataError(VideoError.VIDEO_UNAVAILABLE, "Video unavailable")
-#     else:
-#         return {
-#             "id": "test_id",
-#             "title": "Test Video",
-#             "uploader": "Test Uploader",
-#             "upload_date": "20230101",
-#             "duration": 100,
-#             "description": "Test description",
-#             "thumbnail": "http://example.com/thumbnail.jpg",
-#             "status": "available",
-#         }
-
-
 @pytest.fixture(scope="function")
 async def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
@@ -62,7 +44,6 @@ async def test_obtained_metadata(
 ):
     session_maker = await anext(async_session_factory)
     async with session_maker() as session:
-        monkeypatch.setattr("app.scheduler.obtain_metadata", mock_obtain_metadata)
         monkeypatch.setattr("app.scheduler.get_metadata", mock_get_metadata)
         monkeypatch.setattr("app.scheduler.get_session", lambda: session)
 
@@ -106,8 +87,7 @@ async def test_live_event_not_started(
 ):
     session_maker = await anext(async_session_factory)
     async with session_maker() as session:
-        # Setup
-        monkeypatch.setattr("app.scheduler.obtain_metadata", mock_obtain_metadata)
+        monkeypatch.setattr("app.scheduler.get_metadata", mock_get_metadata)
         monkeypatch.setattr("app.scheduler.get_session", lambda: [session])
 
         subscription = Subscription(
@@ -147,8 +127,7 @@ async def test_video_unavailable(
 ):
     session_maker = await anext(async_session_factory)
     async with session_maker() as session:
-        # Setup
-        monkeypatch.setattr("app.scheduler.obtain_metadata", mock_obtain_metadata)
+        monkeypatch.setattr("app.scheduler.get_metadata", mock_get_metadata)
         monkeypatch.setattr("app.scheduler.get_session", lambda: [session])
 
         subscription = Subscription(
@@ -174,7 +153,6 @@ async def test_video_unavailable(
         session.add(video)
         await session.commit()
 
-        # Run the function
         await async_sync_and_update_videos(session)
 
         result = await session.execute(select(Video).where(Video.id == 1))
