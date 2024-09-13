@@ -1,9 +1,13 @@
 import asyncio
 import logging
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import utc
+from sqlalchemy import ScalarResult
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlmodel import or_, select
 
 from app.database.session import get_session
@@ -17,70 +21,70 @@ from app.yt_downloader import (
 
 logger = logging.getLogger(__name__)
 
+SUBSCRIPTION_UPDATE_INTERVAL = 15
 
-async def async_sync_and_update_videos():
+
+async def sync_and_update_videos(session: AsyncSession):
     async for session in get_session():
         try:
             fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=15)
-            result = await session.execute(
+
+            # Fetch subscriptions to update
+            result: ScalarResult[Subscription] | None = await session.execute(
                 select(Subscription).where(
                     or_(
-                        Subscription.last_updated == None,  # noqa: E711 pylint: disable=singleton-comparison
-                        Subscription.last_updated < fifteen_minutes_ago,  # type: ignore
+                        Subscription.last_updated.is_(None),
+                        Subscription.last_updated < fifteen_minutes_ago,
                     )
                 )
             )
+            subscriptions_to_update: Sequence[Subscription] = result.scalars().all()
 
-            subscriptions_to_update: list[Subscription] = result.scalars().all()  # type: ignore
-            assert subscriptions_to_update is not None, "Subscriptions list should not be None"
-            assert isinstance(subscriptions_to_update, list), "Subscriptions should be a list"
-
-            if len(subscriptions_to_update) == 0:
+            if not subscriptions_to_update:
                 logger.info("No subscriptions to update")
             else:
                 logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
+                await asyncio.gather(*(sync_subscription(sub.id, session) for sub in subscriptions_to_update))
 
-            for subscription in subscriptions_to_update:
-                await sync_subscription(subscription.id, session)
+            # Fetch pending videos
+            result = await session.execute(
+                select(Video).where(Video.status == VideoStatus.PENDING).options(selectinload(Video.subscription))
+            )
+            pending_videos: Sequence[Video] = result.scalars().all()
 
-            result = await session.execute(select(Video).where(Video.status == VideoStatus.PENDING))  # type: ignore
-            pending_videos: list[Video] = result.scalars().all()  # type: ignore
-
-            assert pending_videos is not None, "Pending videos list should not be None"
-            assert isinstance(pending_videos, list), "Pending videos should be a list"
-            if len(pending_videos) == 0:
+            if not pending_videos:
                 logger.info("No pending videos")
             else:
                 logger.info("Found %s pending videos", len(pending_videos))
 
-            for video in pending_videos:
-                try:
-                    video = await session.merge(video)  # Ensure video is attached to the session
+                # TODO: Create a result "unit" that can be returned from the function
+                # and then use asyncio.gather to run them in parallel
+                for video in pending_videos:
                     try:
                         metadata = await get_metadata(video.link)
 
                         video.thumbnail_url = metadata.thumbnail_url
                         video.duration = metadata.duration_in_seconds
                         video.status = VideoStatus.OBTAINED_METADATA
-                    except VideoMetadataError as e:
-                        if e.error_type == VideoError.LIVE_EVENT_NOT_STARTED:
-                            video.status = VideoStatus.EXCLUDED
-                        elif e.error_type == VideoError.VIDEO_UNAVAILABLE:
+                    except VideoMetadataError as e:  # TODO: Think we're collapsing live event plus DMCA strikes
+                        if e.error_type in (VideoError.LIVE_EVENT_NOT_STARTED, VideoError.VIDEO_UNAVAILABLE):
                             video.status = VideoStatus.EXCLUDED
                         else:
                             video.status = VideoStatus.FAILED
-                    await session.commit()
-                except Exception as e:  # pylint: disable=broad-except
-                    print(f"Error processing video {video.id}: {str(e)}")
-                    video.status = VideoStatus.FAILED
-                    video.retry_count += 1  # type: ignore
-                    await session.commit()
-                finally:
-                    await session.close()
-        except Exception as e:  # pylint: disable=broad-except
-            print(f"Error processing session: {str(e)}")
-        finally:
-            await session.close()
+                    except Exception as e:  # pylint: disable=broad-except
+                        logger.error("Error processing video %s: %s", video.id, str(e))
+                        video.status = VideoStatus.FAILED
+                        video.retry_count += 1
+
+                    session.add(video)
+
+            # Commit all changes
+            await session.commit()
+
+        except Exception as e:
+            logger.error("Error in async_sync_and_update_videos: %s", str(e))
+            await session.rollback()
+            raise
 
 
 async def my_job():
@@ -89,10 +93,11 @@ async def my_job():
 
 scheduler = AsyncIOScheduler(timezone=utc)
 
-scheduler.add_job(
-    async_sync_and_update_videos,
+scheduler.add_job(  # type: ignore
+    sync_and_update_videos,
     "interval",
     seconds=10,
+    args=[get_session()],
 )
 
 

@@ -52,7 +52,7 @@ class VideoStatus(StrEnum):
     DELETED = "Deleted"
     COMPLETE = "Complete"
     EXCLUDED = "Excluded"
-    COPYWRITE_STRIKE = "Copywrite Strike"
+    COPYRIGHT_STRIKE = "Copyright Strike"
     DMCA = "DMCA"
 
 

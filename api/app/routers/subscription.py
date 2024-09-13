@@ -90,7 +90,6 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
             )
             session.add(new_video)
 
-            # Update the subscription's last_updated value to now
             session.add(subscription)
         subscription.last_updated = datetime.now(utc)
 

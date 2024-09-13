@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlmodel import SQLModel, select
 
 from app.models.subscription import Subscription, Video, VideoStatus
-from app.scheduler import async_sync_and_update_videos
+from app.scheduler import sync_and_update_videos
 from app.yt_downloader import (
     VideoMetadata,
 )
@@ -70,7 +70,7 @@ async def test_obtained_metadata(
         session.add(video)
         await session.commit()
 
-        await async_sync_and_update_videos(session)
+        await sync_and_update_videos(session)
 
         result = await session.execute(select(Video).where(Video.id == 1))
         updated_video = result.scalars().first()
@@ -113,7 +113,7 @@ async def test_live_event_not_started(
         session.add(video)
         await session.commit()
 
-        await async_sync_and_update_videos(session)
+        await sync_and_update_videos(session)
 
         result = await session.execute(select(Video).where(Video.id == 1))
         updated_video = result.scalars().first()
@@ -153,7 +153,7 @@ async def test_video_unavailable(
         session.add(video)
         await session.commit()
 
-        await async_sync_and_update_videos(session)
+        await sync_and_update_videos(session)
 
         result = await session.execute(select(Video).where(Video.id == 1))
         updated_video = result.scalars().first()
