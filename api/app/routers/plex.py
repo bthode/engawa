@@ -40,7 +40,7 @@ async def create_plex_server(plex: PlexServerCreate, session: Annotated[AsyncSes
     plex_response: requests.models.Response = requests.get(endpoint, timeout=15)
     plex_data = parse_plex_data(plex_response.text)
 
-    create = Plex(
+    plex_server = Plex(
         name=plex.name,
         endpoint=plex.endpoint,
         port=plex.port,
@@ -59,12 +59,14 @@ async def create_plex_server(plex: PlexServerCreate, session: Annotated[AsyncSes
         ],
     )
 
-    session.add(create)
+    session.add(plex_server)
     await session.commit()
-    await session.refresh(create)
+    await session.refresh(plex_server)
 
     # Eagerly load directories
-    result = await session.execute(select(Plex).options(selectinload(Plex.directories)).where(Plex.id == create.id))
+    result = await session.execute(
+        select(Plex).options(selectinload(Plex.directories)).where(Plex.id == plex_server.id)
+    )
     return [result.scalars().one()]
 
 
