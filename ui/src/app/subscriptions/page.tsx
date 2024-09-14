@@ -1,41 +1,44 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import Navigation from '../navigation';
 import AddSubscriptionForm from '@/components/AddSubscriptionForm';
 import SubscriptionList from '@/components/SubscriptionList';
 import { SubscriptionProvider } from '@/components/SubscriptionContext';
-import { Box, Tabs, Tab } from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import SubscriptionVideos from '@/components/SubscriptionVideos';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Subscriptions: React.FC = () => {
-  const [selectedTab, setSelectedTab] = React.useState(0);
-  const [selectedSubscriptionId, setSelectedSubscriptionId] = React.useState<string | null>(null);
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setSelectedTab(newValue);
-  };
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string | null>(null);
 
   const handleSubscriptionSelect = (subscriptionId: string) => {
     setSelectedSubscriptionId(subscriptionId);
-    setSelectedTab(1);
+  };
+
+  const handleBackToList = () => {
+    setSelectedSubscriptionId(null);
   };
 
   return (
     <Navigation>
       <SubscriptionProvider>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-          <Tabs value={selectedTab} onChange={handleTabChange}>
-            <Tab label="Subscriptions" />
-            {/* <Tab label="Videos" disabled={!selectedSubscriptionId} /> */}
-          </Tabs>
+        <Box sx={{ mb: 2 }}>
+          {selectedSubscriptionId ? (
+            <>
+              <Tooltip title="Back to Subscriptions">
+                <IconButton onClick={handleBackToList} sx={{ mb: 2 }}>
+                  <ArrowBackIcon />
+                </IconButton>
+              </Tooltip>
+              <SubscriptionVideos subscriptionId={selectedSubscriptionId} />
+            </>
+          ) : (
+            <>
+              <AddSubscriptionForm />
+              <SubscriptionList onSubscriptionSelect={handleSubscriptionSelect} />
+            </>
+          )}
         </Box>
-        {selectedTab === 0 && (
-          <>
-            <AddSubscriptionForm />
-            <SubscriptionList onSubscriptionSelect={handleSubscriptionSelect} />
-          </>
-        )}
-        {selectedTab === 1 && selectedSubscriptionId && <SubscriptionVideos subscriptionId={selectedSubscriptionId} />}
       </SubscriptionProvider>
     </Navigation>
   );

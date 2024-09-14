@@ -19,7 +19,7 @@ export async function savePlexServer(data: PlexServer): Promise<PlexServer[]> {
     return newData;
   } catch (error) {
     console.error('Error:', error);
-    throw error; // Re-throw the error instead of returning an empty array
+    throw error;
   }
 }
 
