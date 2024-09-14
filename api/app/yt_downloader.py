@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import datetime
@@ -47,7 +48,7 @@ class VideoMetadataError(Exception):
 
 
 class Downloader(Protocol):
-    def extract_info(self, url: str) -> dict[str, Any]: ...
+    async def extract_info(self, url: str) -> dict[str, Any]: ...
 
 
 class YoutubeDLDownloader:
@@ -56,9 +57,10 @@ class YoutubeDLDownloader:
             "logger": logger,
         }
 
-    def extract_info(self, url: str) -> dict[str, Any]:
+    async def extract_info(self, url: str) -> dict[str, Any]:
+        loop = asyncio.get_running_loop()
         with yt_dlp.YoutubeDL(self.ydl_opts) as ydl:  # type: ignore
-            return ydl.extract_info(url, download=False)  # type: ignore
+            return await loop.run_in_executor(None, ydl.extract_info, url, False)  # type: ignore
 
 
 async def download_content(video_url: str, output_path: str) -> str:
@@ -82,7 +84,7 @@ async def download_content(video_url: str, output_path: str) -> str:
 
 async def get_metadata(video_url: str, downloader: Downloader = YoutubeDLDownloader()) -> VideoMetadata:
     try:
-        video_metadata: dict[str, Any] = downloader.extract_info(video_url)
+        video_metadata: dict[str, Any] = await downloader.extract_info(video_url)
         return VideoMetadata(
             id=video_metadata["id"],
             title=video_metadata["title"],

@@ -57,26 +57,11 @@ async def sync_and_update_videos(session: AsyncSession):
             else:
                 logger.info("Found %s pending videos", len(pending_videos))
 
-                # TODO: Create a result "unit" that can be returned from the function
-                # and then use asyncio.gather to run them in parallel
-                for video in pending_videos:
-                    try:
-                        metadata = await get_metadata(video.link)
+                # Create tasks for each video metadata fetch
+                tasks = [process_video(video) for video in pending_videos]
 
-                        video.thumbnail_url = metadata.thumbnail_url
-                        video.duration = metadata.duration_in_seconds
-                        video.status = VideoStatus.OBTAINED_METADATA
-                    except VideoMetadataError as e:  # TODO: Think we're collapsing live event plus DMCA strikes
-                        if e.error_type in (VideoError.LIVE_EVENT_NOT_STARTED, VideoError.VIDEO_UNAVAILABLE):
-                            video.status = VideoStatus.EXCLUDED
-                        else:
-                            video.status = VideoStatus.FAILED
-                    except Exception as e:  # pylint: disable=broad-except
-                        logger.error("Error processing video %s: %s", video.id, str(e))
-                        video.status = VideoStatus.FAILED
-                        video.retry_count += 1
-
-                    session.add(video)
+                # Run tasks concurrently and wait for all to complete
+                await asyncio.gather(*tasks)
 
             # Commit all changes
             await session.commit()
@@ -86,9 +71,28 @@ async def sync_and_update_videos(session: AsyncSession):
             await session.rollback()
             raise
 
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Error in async_sync_and_update_videos: %s", str(e))
+            await session.rollback()
+            raise
 
-async def my_job():
-    logging.info("🤣🤣🤣🤣🤣🤣🤣")
+
+async def process_video(video: Video):
+    try:
+        metadata = await get_metadata(video.link)
+
+        video.thumbnail_url = metadata.thumbnail_url
+        video.duration = metadata.duration_in_seconds
+        video.status = VideoStatus.OBTAINED_METADATA
+    except VideoMetadataError as e:
+        if e.error_type in (VideoError.LIVE_EVENT_NOT_STARTED, VideoError.VIDEO_UNAVAILABLE):
+            video.status = VideoStatus.EXCLUDED
+        else:
+            video.status = VideoStatus.FAILED
+    except Exception as e:
+        logger.error("Error processing video %s: %s", video.id, str(e))
+        video.status = VideoStatus.FAILED
+        video.retry_count += 1
 
 
 scheduler = AsyncIOScheduler(timezone=utc)
