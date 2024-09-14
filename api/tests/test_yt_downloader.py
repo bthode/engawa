@@ -32,7 +32,7 @@ async def test_obtain_metadata_success():
     }
     downloader = MockDownloader(mock_data)
     result = await get_metadata("https://www.youtube.com/watch?v=dQw4w9WgXcQ", downloader)
-    assert result == mock_data["https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
+    assert result == VideoMetadata(**mock_data["https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
 
 
 @pytest.mark.asyncio
