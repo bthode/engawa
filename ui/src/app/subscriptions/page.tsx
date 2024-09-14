@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import Navigation from '../navigation';
 import AddSubscriptionForm from '@/components/AddSubscriptionForm';
 import SubscriptionList from '@/components/SubscriptionList';
@@ -9,7 +9,7 @@ import SubscriptionVideos from '@/components/SubscriptionVideos';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Subscriptions: React.FC = () => {
-  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string | null>(null);
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = React.useState<string | null>(null);
 
   const handleSubscriptionSelect = (subscriptionId: string) => {
     setSelectedSubscriptionId(subscriptionId);
@@ -20,7 +20,7 @@ const Subscriptions: React.FC = () => {
   };
 
   return (
-    <Navigation>
+    <Navigation onSubscriptionsClick={handleBackToList}>
       <SubscriptionProvider>
         <Box sx={{ mb: 2 }}>
           {selectedSubscriptionId ? (
