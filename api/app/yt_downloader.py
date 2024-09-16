@@ -90,7 +90,7 @@ async def get_metadata(video_url: str, downloader: Downloader = YoutubeDLDownloa
             title=video_metadata["title"],
             uploader=video_metadata["uploader"],
             upload_date=datetime.strptime(video_metadata["upload_date"], "%Y%m%d"),
-            duration_in_seconds=video_metadata["duration"],
+            duration_in_seconds=int(video_metadata["duration"]),
             description=video_metadata["description"],
             thumbnail_url=video_metadata["thumbnail"],
         )

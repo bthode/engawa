@@ -1,17 +1,18 @@
+from datetime import datetime
 from typing import Any
 from unittest.mock import Mock
 
 import pytest
 import yt_dlp
 
-from app.yt_downloader import VideoError, VideoMetadataError, get_metadata
+from app.yt_downloader import VideoError, VideoMetadata, VideoMetadataError, get_metadata
 
 
 class MockDownloader:
     def __init__(self, mock_data: dict[str, dict[str, str | int]]):
         self.mock_data = mock_data
 
-    def extract_info(self, url: str) -> dict[str, Any]:
+    async def extract_info(self, url: str) -> dict[str, Any]:
         if url in self.mock_data:
             return self.mock_data[url]
         raise yt_dlp.utils.DownloadError("Video not found")  # type: ignore
@@ -19,20 +20,31 @@ class MockDownloader:
 
 @pytest.mark.asyncio
 async def test_obtain_metadata_success():
-    mock_data: dict[str, dict[str, str | int]] = {
+    mock_data: dict[str, dict[str, str]] = {
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ": {
             "id": "dQw4w9WgXcQ",
             "title": "Rick Astley - Never Gonna Give You Up (Official Music Video)",
             "uploader": "Rick Astley",
-            "upload_date": "20091025",
-            "duration": 212,
+            "upload_date": "20240529",
+            "duration": "212",
             "description": "The official video for Never Gonna Give You Up by Rick Astley",
             "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
         }
     }
+
+    expected_metadata: dict[str, str | int | datetime] = {
+        "id": "dQw4w9WgXcQ",
+        "title": "Rick Astley - Never Gonna Give You Up (Official Music Video)",
+        "uploader": "Rick Astley",
+        "upload_date": datetime(2024, 5, 29),
+        "duration_in_seconds": 212,
+        "description": "The official video for Never Gonna Give You Up by Rick Astley",
+        "thumbnail_url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+    }
+    
     downloader = MockDownloader(mock_data)
     result = await get_metadata("https://www.youtube.com/watch?v=dQw4w9WgXcQ", downloader)
-    assert result == VideoMetadata(**mock_data["https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
+    assert result == VideoMetadata(**expected_metadata)
 
 
 @pytest.mark.asyncio

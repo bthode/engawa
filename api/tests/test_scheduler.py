@@ -18,7 +18,7 @@ async def mock_get_metadata() -> VideoMetadata:
         title="Test Video Title",
         uploader="Test Uploader",
         upload_date=datetime.strptime("20230101", "%Y%m%d"),
-        duration_in_seconds=300,
+        duration=300,
         description="This is a test video description",
         thumbnail_url="http://example.com/test_thumbnail.jpg",
     )

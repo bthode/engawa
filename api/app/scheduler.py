@@ -15,6 +15,7 @@ from app.models.subscription import Subscription, Video, VideoStatus
 from app.routers.subscription import sync_subscription
 from app.yt_downloader import (
     VideoError,
+    VideoMetadata,
     VideoMetadataError,
     get_metadata,
 )
@@ -79,7 +80,7 @@ async def sync_and_update_videos(session: AsyncSession):
 
 async def process_video(video: Video):
     try:
-        metadata = await get_metadata(video.link)
+        metadata: VideoMetadata = await get_metadata(video.link)
 
         video.thumbnail_url = metadata.thumbnail_url
         video.duration = metadata.duration_in_seconds
