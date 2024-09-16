@@ -62,9 +62,7 @@ const VirtuosoTableComponents: TableComponents<Video> = {
     return <TableContainer component={Paper} {...props} ref={ref} />;
   }),
   Table: function VirtuosoTable(props) {
-    return (
-      <Table {...props} sx={{ borderCollapse: 'separate', tableLayout: 'fixed' }} />
-    );
+    return <Table {...props} sx={{ borderCollapse: 'separate', tableLayout: 'fixed' }} />;
   },
   TableHead: React.forwardRef(function VirtuosoTableHead(props, ref) {
     return <TableHead {...props} ref={ref} />;
@@ -74,7 +72,6 @@ const VirtuosoTableComponents: TableComponents<Video> = {
     return <TableBody {...props} ref={ref} />;
   }),
 };
-
 
 function fixedHeaderContent() {
   return (
@@ -98,10 +95,7 @@ function rowContent(_index: number, row: Video) {
   return (
     <React.Fragment>
       {columns.map((column) => (
-        <TableCell
-          key={column.dataKey}
-          align={column.numeric || false ? 'right' : 'left'}
-        >
+        <TableCell key={column.dataKey} align={column.numeric || false ? 'right' : 'left'}>
           {column.dataKey === 'link' ? (
             <a href={row[column.dataKey]} target="_blank" rel="noopener noreferrer">
               Watch on YouTube
@@ -109,10 +103,12 @@ function rowContent(_index: number, row: Video) {
           ) : column.dataKey === 'published' ? (
             new Date(row[column.dataKey]).toLocaleDateString()
           ) : column.dataKey === 'duration' ? (
-            row[column.dataKey] ? 
+            row[column.dataKey] ? (
               // Convert the number directly to seconds, then to ISO string
-              new Date(row[column.dataKey] * 1000).toISOString().slice(11, 19) :
+              new Date(row[column.dataKey] * 1000).toISOString().slice(11, 19)
+            ) : (
               'N/A'
+            )
           ) : (
             row[column.dataKey]
           )}
@@ -128,7 +124,7 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Function to fetch subscription and videos data
+  // Function to fetch subscription and video data
   const fetchSubscriptionAndVideos = React.useCallback(async () => {
     try {
       setLoading(true);
@@ -176,15 +172,8 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h4">
-          {subscription.title}
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<RefreshIcon />}
-          onClick={handleRefresh}
-          disabled={loading}
-        >
+        <Typography variant="h4">{subscription.title}</Typography>
+        <Button variant="contained" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
           Refresh
         </Button>
       </Box>

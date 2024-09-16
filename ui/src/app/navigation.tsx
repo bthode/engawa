@@ -17,7 +17,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import MovieIcon from '@mui/icons-material/Movie';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import theme from './theme';
 
@@ -25,6 +25,7 @@ const drawerWidth = 240;
 
 type LayoutProps = {
   children: ReactNode;
+  onSubscriptionsClick?: () => void;
 };
 
 const navigationItems = [
@@ -34,8 +35,16 @@ const navigationItems = [
   { text: 'Settings', icon: <SettingsIcon />, href: '/settings' },
 ];
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children, onSubscriptionsClick }: LayoutProps) => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleItemClick = (href: string, text: string) => {
+    if (text === 'Subscriptions' && onSubscriptionsClick) {
+      onSubscriptionsClick();
+    }
+    router.push(href);
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -60,33 +69,33 @@ const Layout = ({ children }: LayoutProps) => {
           </Toolbar>
           <List>
             {navigationItems.map((item) => (
-              <Link key={item.text} href={item.href} passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-                <ListItem
-                  button
-                  selected={pathname === item.href}
-                  sx={{
-                    '&.Mui-selected': {
-                      backgroundColor: 'rgba(144, 202, 249, 0.08)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(144, 202, 249, 0.12)',
-                      },
-                    },
+              <ListItem
+                key={item.text}
+                button
+                selected={pathname === item.href}
+                onClick={() => handleItemClick(item.href, item.text)}
+                sx={{
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(144, 202, 249, 0.08)',
                     '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      backgroundColor: 'rgba(144, 202, 249, 0.12)',
                     },
+                  },
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: pathname === item.href ? 'primary.main' : 'inherit' }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  sx={{
+                    color: pathname === item.href ? 'primary.main' : 'inherit',
                   }}
-                >
-                  <ListItemIcon sx={{ color: pathname === item.href ? 'primary.main' : 'inherit' }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.text}
-                    sx={{
-                      color: pathname === item.href ? 'primary.main' : 'inherit',
-                    }}
-                  />
-                </ListItem>
-              </Link>
+                />
+              </ListItem>
             ))}
           </List>
         </Drawer>
