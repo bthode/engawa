@@ -18,7 +18,7 @@ async def mock_get_metadata() -> VideoMetadata:
         title="Test Video Title",
         uploader="Test Uploader",
         upload_date=datetime.strptime("20230101", "%Y%m%d"),
-        duration=300,
+        duration_in_seconds=300,
         description="This is a test video description",
         thumbnail_url="http://example.com/test_thumbnail.jpg",
     )
@@ -45,7 +45,7 @@ async def test_obtained_metadata(
     session_maker = await anext(async_session_factory)
     async with session_maker() as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_get_metadata)
-        monkeypatch.setattr("app.scheduler.get_session", lambda: session)
+        monkeypatch.setattr("app.scheduler.get_session", lambda: [session])
 
         subscription = Subscription(
             id=1,

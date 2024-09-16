@@ -5,7 +5,12 @@ from unittest.mock import Mock
 import pytest
 import yt_dlp
 
-from app.yt_downloader import VideoError, VideoMetadata, VideoMetadataError, get_metadata
+from app.yt_downloader import (
+    VideoError,
+    VideoMetadata,
+    VideoMetadataError,
+    get_metadata,
+)
 
 
 class MockDownloader:
@@ -89,3 +94,31 @@ async def test_obtain_metadata_content_strike():
         await get_metadata("https://www.youtube.com/watch?v=content_strike", downloader)
 
     assert exc_info.value.error_type == VideoError.COPYRIGHT_STRIKE
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason="Need to mock out the network call")
+async def test_obtain_metadata_missing_required_fields(monkeypatch: pytest.MonkeyPatch):
+    downloader = Mock()
+    downloader.extract_info.return_value = {}
+
+    with pytest.raises(VideoMetadataError) as exc_info:
+        monkeypatch.setattr("app.yt_downloader.yt_dlp.YoutubeDL", MockDownloader)
+        monkeypatch.setattr("app.yt_downloader.get_metadata", downloader)  # TODO: need to mock out the network call
+        await get_metadata("https://www.youtube.com/watch?v=missing_fields")
+
+    assert exc_info.value.error_type == VideoError.UNKNOWN_ERROR
+
+@pytest.mark.asyncio
+async def test_no_thumbnail_value(monkeypatch: pytest.MonkeyPatch):
+    downloader = Mock()
+    downloader.extract_info.return_value = {
+        "id": "dQw4w9WgXcQ",
+        "title": "Rick Astley - Never Gonna Give You Up (Official Music Video)",
+        "uploader": "Rick Astley",
+        "upload_date": "20240529",
+        "duration": "212",
+        "description": "The official video for Never Gonna Give You Up by Rick Astley",
+    }
+
+    result: VideoMetadata = await get_metadata("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    assert result.thumbnail_url is None

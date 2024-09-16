@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
-from typing import Any, Protocol
+from typing import Any
 
 import yt_dlp
 
@@ -30,7 +30,7 @@ class VideoMetadata:
     upload_date: datetime
     duration_in_seconds: int
     description: str
-    thumbnail_url: str
+    thumbnail_url: str | None
 
 
 class VideoError(Enum):
@@ -45,22 +45,6 @@ class VideoMetadataError(Exception):
         self.error_type = error_type
         self.message = message
         super().__init__(self.message)
-
-
-class Downloader(Protocol):
-    async def extract_info(self, url: str) -> dict[str, Any]: ...
-
-
-class YoutubeDLDownloader:
-    def __init__(self):
-        self.ydl_opts: dict[str, Any] = {
-            "logger": logger,
-        }
-
-    async def extract_info(self, url: str) -> dict[str, Any]:
-        loop = asyncio.get_running_loop()
-        with yt_dlp.YoutubeDL(self.ydl_opts) as ydl:  # type: ignore
-            return await loop.run_in_executor(None, ydl.extract_info, url, False)  # type: ignore
 
 
 async def download_content(video_url: str, output_path: str) -> str:
@@ -82,18 +66,42 @@ async def download_content(video_url: str, output_path: str) -> str:
     return f"{output_path}/example_video.mp4"
 
 
-async def get_metadata(video_url: str, downloader: Downloader = YoutubeDLDownloader()) -> VideoMetadata:
+async def get_metadata(video_url: str) -> VideoMetadata:
     try:
-        video_metadata: dict[str, Any] = await downloader.extract_info(video_url)
+        # Initialize yt_dlp options
+        ydl_opts: dict[str, Any] = {
+            "logger": logger,
+        }
+
+        # Extract video information
+        loop = asyncio.get_running_loop()
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
+            video_metadata: dict[str, Any] = await loop.run_in_executor(  # type: ignore
+                None, 
+                lambda: ydl.extract_info(video_url, False)  # type: ignore
+            )
+
+        # Check for required fields
+        required_fields = ["id", "title", "uploader", "upload_date", "duration", "description"]
+        for field in required_fields:
+            if field not in video_metadata:
+                raise KeyError(f"Required field '{field}' is missing from video metadata")
+
         return VideoMetadata(
-            id=video_metadata["id"],
-            title=video_metadata["title"],
-            uploader=video_metadata["uploader"],
-            upload_date=datetime.strptime(video_metadata["upload_date"], "%Y%m%d"),
-            duration_in_seconds=int(video_metadata["duration"]),
-            description=video_metadata["description"],
-            thumbnail_url=video_metadata["thumbnail"],
+            id=video_metadata["id"],  # pyright: ignore
+            title=video_metadata["title"],  # pyright: ignore
+            uploader=video_metadata["uploader"],  # pyright: ignore
+            upload_date=datetime.strptime(video_metadata["upload_date"], "%Y%m%d"),  # pyright: ignore
+            duration_in_seconds=int(video_metadata["duration"]),  # pyright: ignore
+            description=video_metadata["description"],  # pyright: ignore
+            thumbnail_url=video_metadata["thumbnail"],  # pyright: ignore
         )
+    
+    except KeyError as e:
+        logger.error("Missing required metadata for %s: %s", video_url, str(e))
+        raise VideoMetadataError(
+            VideoError.UNKNOWN_ERROR, f"Missing required metadata for {video_url}: {str(e)}"
+        ) from e
     except yt_dlp.utils.DownloadError as e:  # type: ignore
         error_message = str(e)  # type: ignore
         match error_message:

@@ -72,17 +72,12 @@ async def sync_and_update_videos(session: AsyncSession):
             await session.rollback()
             raise
 
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error("Error in async_sync_and_update_videos: %s", str(e))
-            await session.rollback()
-            raise
-
 
 async def process_video(video: Video):
     try:
         metadata: VideoMetadata = await get_metadata(video.link)
 
-        video.thumbnail_url = metadata.thumbnail_url
+        video.thumbnail_url = metadata.thumbnail_url or None
         video.duration = metadata.duration_in_seconds
         video.status = VideoStatus.OBTAINED_METADATA
     except VideoMetadataError as e:

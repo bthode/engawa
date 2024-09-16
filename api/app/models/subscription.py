@@ -73,7 +73,7 @@ class Video(SQLModel, table=True):
     status: VideoStatus = Field(sa_column_kwargs={"default": VideoStatus.PENDING})
     subscription_id: int = Field(default=None, foreign_key="subscription.id")
     subscription: Mapped[Subscription] = Relationship(back_populates="videos")
-    thumbnail_url: str
+    thumbnail_url: str | None = None
     title: str
     video_id: str = Field(unique=True)
 
