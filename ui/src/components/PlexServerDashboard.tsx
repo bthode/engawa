@@ -45,7 +45,7 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
   plexServer,
   onServerUpdate,
 }) => {
-  const [] = useState(false);
+  const [localPlexServer, setLocalPlexServer] = useState<PlexServer | null>(plexServer);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newServer, setNewServer] = useState<Partial<PlexServer>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,9 +69,9 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
     }
 
     try {
-      await savePlexServer(newServer as PlexServer);
+      const savedServer = await savePlexServer(newServer as PlexServer);
+      setLocalPlexServer(savedServer[0]);
       setIsAddModalOpen(false);
-      onServerUpdate();
       setErrorMessage(null);
     } catch (error) {
       console.error('Error saving new Plex server:', error);
@@ -133,13 +133,13 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
 
   return (
     <Box>
-      {plexServer ? (
+      {localPlexServer ? (
         <>
           <Card component={motion.div} whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 300 }}>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4" gutterBottom>
-                  {plexServer.name}
+                  {localPlexServer.name}
                 </Typography>
                 <Box>
                   <IconButton onClick={handleDeleteServer}>
@@ -148,14 +148,14 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
                 </Box>
               </Box>
               <Typography variant="subtitle1" gutterBottom>
-                Endpoint: {plexServer.endpoint}
+                Endpoint: {localPlexServer.endpoint}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                Port: {plexServer.port}
+                Port: {localPlexServer.port}
               </Typography>
               <Chip
-                label={plexServer.error_state ? 'Error' : 'Connected'}
-                color={plexServer.error_state ? 'error' : 'success'}
+                label={localPlexServer.error_state ? 'Error' : 'Connected'}
+                color={localPlexServer.error_state ? 'error' : 'success'}
                 sx={{ mt: 1 }}
               />
             </CardContent>
@@ -165,7 +165,7 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
             Libraries
           </Typography>
           <Grid container spacing={3}>
-            {plexServer.directories.map((directory: Directory) => (
+            {localPlexServer.directories.map((directory: Directory) => (
               <Grid item xs={12} sm={6} md={4} key={directory.uuid}>
                 <Card
                   component={motion.div}
