@@ -161,7 +161,7 @@ async def test_video_unavailable(
     async_session = await anext(async_session_factory)
     async with async_session() as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_get_metadata_unavailable)
-        monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))
+        monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
 
         subscription = Subscription(
             id=1,
