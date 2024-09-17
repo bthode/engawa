@@ -9,7 +9,6 @@ const Settings: React.FC = () => {
 
   return (
     <Navigation>
-      <div>Hello Settings</div>
       <Box mt={2}>
         <Button variant="contained" color="error" onClick={() => setIsResetDialogOpen(true)}>
           Reset All

@@ -1,12 +1,9 @@
 import asyncio
 import logging
-from collections.abc import Sequence
 from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import utc
-from sqlalchemy import ScalarResult
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlmodel import or_, select
 
@@ -14,9 +11,9 @@ from app.database.session import get_session
 from app.models.subscription import Subscription, Video, VideoStatus
 from app.routers.subscription import sync_subscription
 from app.yt_downloader import (
-    VideoError,
-    VideoMetadata,
-    VideoMetadataError,
+    MetadataErrorType,
+    MetadataResult,
+    MetadataSuccess,
     get_metadata,
 )
 
@@ -25,70 +22,69 @@ logger = logging.getLogger(__name__)
 SUBSCRIPTION_UPDATE_INTERVAL = 15
 
 
-async def sync_and_update_videos(session: AsyncSession):
+async def sync_and_update_videos():
     async for session in get_session():
         try:
             fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=15)
 
-            # Fetch subscriptions to update
-            result: ScalarResult[Subscription] | None = await session.execute(
-                select(Subscription).where(
+            subscriptions_to_update: list[Subscription] = (await session.execute(  # pyright: ignore
+                select(Subscription).where(  # pyright: ignore
                     or_(
-                        Subscription.last_updated.is_(None),
-                        Subscription.last_updated < fifteen_minutes_ago,
+                        Subscription.last_updated.is_(None),  # pyright: ignore
+                        Subscription.last_updated < fifteen_minutes_ago,  # pyright: ignore
                     )
                 )
-            )
-            subscriptions_to_update: Sequence[Subscription] = result.scalars().all()
+            )).scalars().all()  # pyright: ignore
+            assert isinstance(subscriptions_to_update, list), "Should have received a list of subscriptions"
 
             if not subscriptions_to_update:
                 logger.info("No subscriptions to update")
+                return
             else:
                 logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
-                await asyncio.gather(*(sync_subscription(sub.id, session) for sub in subscriptions_to_update))
 
-            # Fetch pending videos
-            result = await session.execute(
+            for subscription in subscriptions_to_update:
+                await sync_subscription(subscription.id, session)
+
+            pending_videos: list[Video] = (await session.execute(  # pyright: ignore
                 select(Video).where(Video.status == VideoStatus.PENDING).options(selectinload(Video.subscription))
-            )
-            pending_videos: Sequence[Video] = result.scalars().all()
+            )).scalars().all()  # pyright: ignore
 
             if not pending_videos:
                 logger.info("No pending videos")
+                return
             else:
                 logger.info("Found %s pending videos", len(pending_videos))
 
-                # Create tasks for each video metadata fetch
-                tasks = [process_video(video) for video in pending_videos]
+            video_urls = [video.link for video in pending_videos]
+            metadata_results: list[MetadataResult] = await get_metadata(video_urls)
 
-                # Run tasks concurrently and wait for all to complete
-                await asyncio.gather(*tasks)
+            video_dict: dict[str, Video] = {video.link: video for video in pending_videos}
 
-            # Commit all changes
+            for video_results in metadata_results:
+                video = video_dict[video_results.url]  # Move this line outside the if statement
+                if isinstance(video_results, MetadataSuccess):
+                    video.thumbnail_url = video_results.metadata.thumbnail_url
+                    video.duration = video_results.metadata.duration_in_seconds
+                    video.status = VideoStatus.OBTAINED_METADATA
+                elif video_results.error_type in (
+                    MetadataErrorType.LIVE_EVENT_NOT_STARTED,
+                    MetadataErrorType.VIDEO_UNAVAILABLE,
+                ):
+                    video.status = VideoStatus.EXCLUDED
+                elif video_results.error_type == MetadataErrorType.COPYRIGHT_STRIKE:
+                    video.status = VideoStatus.COPYRIGHT_STRIKE
+                else:
+                    video.status = VideoStatus.FAILED
+                    video.retry_count += 1
+                    logger.error("Error processing video %s: %s", video.id, video_results.message)
+
             await session.commit()
 
         except Exception as e:
-            logger.error("Error in async_sync_and_update_videos: %s", str(e))
+            logger.error("Error in sync_and_update_videos: %s", str(e))
             await session.rollback()
             raise
-
-
-async def process_video(video: Video):
-    try:
-        metadata: VideoMetadata = await get_metadata(video.link)
-
-        video.thumbnail_url = metadata.thumbnail_url or None
-        video.duration = metadata.duration_in_seconds
-        video.status = VideoStatus.OBTAINED_METADATA
-    except VideoMetadataError as e:
-        if e.error_type in (VideoError.LIVE_EVENT_NOT_STARTED, VideoError.VIDEO_UNAVAILABLE):
-            video.status = VideoStatus.EXCLUDED
-        else:
-            video.status = VideoStatus.FAILED
-    except Exception as e:
-        logger.error("Error processing video %s: %s", video.id, str(e))
-        video.status = VideoStatus.FAILED
-        video.retry_count += 1
 
 
 scheduler = AsyncIOScheduler(timezone=utc)
@@ -97,7 +93,6 @@ scheduler.add_job(  # type: ignore
     sync_and_update_videos,
     "interval",
     seconds=10,
-    args=[get_session()],
 )
 
 
