@@ -100,6 +100,7 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
 
 @router.get("/subscription/{subscription_id}/videos", response_model=list[Video])
 async def get_subscription_videos(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
-    result = await session.execute(select(Video).where(Video.subscription_id == subscription_id)
-                                   .order_by(Video.published.desc()))  # type:ignore
+    result = await session.execute(
+        select(Video).where(Video.subscription_id == subscription_id).order_by(Video.published.desc())
+    )  # type:ignore
     return result.scalars().all()
