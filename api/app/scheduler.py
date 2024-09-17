@@ -47,7 +47,6 @@ async def sync_and_update_videos():
 
             if not subscriptions_to_update:
                 logger.info("No subscriptions to update")
-                return
             else:
                 logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
 
@@ -60,6 +59,7 @@ async def sync_and_update_videos():
                         select(Video)
                         .where(Video.status == VideoStatus.PENDING)
                         .options(selectinload(Video.subscription))
+                        .limit(5)
                     )
                 )
                 .scalars()
