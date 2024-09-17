@@ -92,7 +92,7 @@ async def get_metadata(urls: list[str]) -> list[MetadataResult]:
                 upload_date=datetime.strptime(video_info["upload_date"], "%Y%m%d"),
                 duration_in_seconds=int(video_info["duration"]),
                 description=video_info["description"],
-                thumbnail_url=video_info.get("thumbnail"),
+                thumbnail_url=video_info["thumbnail"],
             )
             return MetadataSuccess(url=url, metadata=metadata)
 
@@ -107,6 +107,7 @@ async def get_metadata(urls: list[str]) -> list[MetadataResult]:
             else:
                 return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, error_message)
         except Exception as e:  # pylint: disable=broad-except
+            logging.error(e)
             return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, str(e))
 
     return await asyncio.gather(*(process_url(url) for url in urls))
