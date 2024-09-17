@@ -10,8 +10,8 @@ engine = create_async_engine(sqlite_url, echo=False)
 
 # Setup dependency for getting a session
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    session_local = async_sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    async with session_local() as session:
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with async_session() as session:
         yield session
 
 

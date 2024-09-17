@@ -81,10 +81,10 @@ async def get_metadata(urls: list[str]) -> list[MetadataResult]:
             ydl_opts: dict[str, Any] = {
                 "logger": logger,
             }
-            
+
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore
                 video_info = await asyncio.to_thread(ydl.extract_info, url, download=False)  # pyright: ignore
-            
+
             metadata = VideoMetadata(
                 id=video_info["id"],
                 title=video_info["title"],
@@ -95,7 +95,7 @@ async def get_metadata(urls: list[str]) -> list[MetadataResult]:
                 thumbnail_url=video_info.get("thumbnail"),
             )
             return MetadataSuccess(url=url, metadata=metadata)
-        
+
         except yt_dlp.utils.DownloadError as e:  # pyright: ignore
             error_message = str(e)
             if "This live event will begin in a few moments" in error_message:

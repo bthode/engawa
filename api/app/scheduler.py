@@ -27,14 +27,20 @@ async def sync_and_update_videos():
         try:
             fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=15)
 
-            subscriptions_to_update: list[Subscription] = (await session.execute(  # pyright: ignore
-                select(Subscription).where(  # pyright: ignore
-                    or_(
-                        Subscription.last_updated.is_(None),  # pyright: ignore
-                        Subscription.last_updated < fifteen_minutes_ago,  # pyright: ignore
+            subscriptions_to_update: list[Subscription] = (
+                (
+                    await session.execute(  # pyright: ignore
+                        select(Subscription).where(  # pyright: ignore
+                            or_(
+                                Subscription.last_updated.is_(None),  # pyright: ignore
+                                Subscription.last_updated < fifteen_minutes_ago,  # pyright: ignore
+                            )
+                        )
                     )
                 )
-            )).scalars().all()  # pyright: ignore
+                .scalars()
+                .all()
+            )  # pyright: ignore
             assert isinstance(subscriptions_to_update, list), "Should have received a list of subscriptions"
 
             if not subscriptions_to_update:
@@ -46,9 +52,17 @@ async def sync_and_update_videos():
             for subscription in subscriptions_to_update:
                 await sync_subscription(subscription.id, session)
 
-            pending_videos: list[Video] = (await session.execute(  # pyright: ignore
-                select(Video).where(Video.status == VideoStatus.PENDING).options(selectinload(Video.subscription))
-            )).scalars().all()  # pyright: ignore
+            pending_videos: list[Video] = (
+                (
+                    await session.execute(  # pyright: ignore
+                        select(Video)
+                        .where(Video.status == VideoStatus.PENDING)
+                        .options(selectinload(Video.subscription))
+                    )
+                )
+                .scalars()
+                .all()
+            )  # pyright: ignore
 
             if not pending_videos:
                 logger.info("No pending videos")
