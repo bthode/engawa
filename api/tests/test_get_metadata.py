@@ -13,11 +13,6 @@ from app.yt_downloader import (
 )
 
 
-# Custom exception to mock yt_dlp.utils.DownloadError
-class MockDownloadError(Exception):
-    pass
-
-
 @pytest.mark.asyncio
 async def test_get_metadata_success():
     mock_video_info = {
@@ -101,7 +96,7 @@ async def test_get_metadata_multiple_urls():
         mock_ydl_instance = MagicMock()
         mock_ydl_instance.extract_info.side_effect = [
             mock_video_info1,
-            yt_dlp.utils.DownloadError("This video is unavailable"),
+            yt_dlp.utils.DownloadError("This video is unavailable"),  # type:ignore
             mock_video_info2,
         ]
         mock_ydl_class.return_value.__enter__.return_value = mock_ydl_instance

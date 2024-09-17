@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from typing import cast
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import utc
@@ -27,7 +28,8 @@ async def sync_and_update_videos():
         try:
             fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=15)
 
-            subscriptions_to_update: list[Subscription] = (
+            subscriptions_to_update = cast(
+                list[Subscription],
                 (
                     await session.execute(  # pyright: ignore
                         select(Subscription).where(  # pyright: ignore
@@ -39,8 +41,8 @@ async def sync_and_update_videos():
                     )
                 )
                 .scalars()
-                .all()
-            )  # pyright: ignore
+                .all(),
+            )
             assert isinstance(subscriptions_to_update, list), "Should have received a list of subscriptions"
 
             if not subscriptions_to_update:

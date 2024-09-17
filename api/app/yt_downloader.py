@@ -82,7 +82,7 @@ async def get_metadata(urls: list[str]) -> list[MetadataResult]:
                 "logger": logger,
             }
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
                 video_info = await asyncio.to_thread(ydl.extract_info, url, download=False)  # pyright: ignore
 
             metadata = VideoMetadata(
@@ -96,8 +96,8 @@ async def get_metadata(urls: list[str]) -> list[MetadataResult]:
             )
             return MetadataSuccess(url=url, metadata=metadata)
 
-        except yt_dlp.utils.DownloadError as e:  # pyright: ignore
-            error_message = str(e)
+        except yt_dlp.utils.DownloadError as e:  # type: ignore[arg-type]
+            error_message: str = str(e)  # type: ignore[arg-type]
             if "This live event will begin in a few moments" in error_message:
                 return MetadataError(url, MetadataErrorType.LIVE_EVENT_NOT_STARTED, error_message)
             elif "This video is unavailable" in error_message:
