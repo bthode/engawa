@@ -1,12 +1,17 @@
 from collections.abc import AsyncGenerator
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
+from pytz import utc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel, select
 
 from app.models.subscription import Subscription, Video, VideoStatus
-from app.scheduler import sync_and_update_videos
+from app.scheduler import (
+    SUBSCRIPTION_UPDATE_INTERVAL,
+    get_subscriptions_to_update,
+    sync_and_update_videos,
+)
 from app.yt_downloader import (
     MetadataError,
     MetadataErrorType,
@@ -193,3 +198,68 @@ async def test_video_unavailable(
 
         assert updated_video is not None
         assert updated_video.status == VideoStatus.EXCLUDED
+
+
+@pytest.mark.asyncio
+async def test_new_subscription_is_picked_up(
+    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    async_session = await anext(async_session_factory)
+    async with async_session() as session:
+        monkeypatch.setattr("app.scheduler.get_metadata", mock_get_metadata_unavailable)
+        monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
+
+        subscription = Subscription(
+            id=1,
+            title="Test Subscription",
+            url="http://example.com",
+            rss_feed_url="http://example.com/rss",
+            description="Test Description",
+            image="http://example.com/image.jpg",
+        )
+        session.add(subscription)
+        await session.commit()
+
+        subscriptions_to_be_updated: list[Subscription] = await get_subscriptions_to_update(session)
+        assert len(subscriptions_to_be_updated) == 1
+        assert subscriptions_to_be_updated[0].id == 1
+        assert subscriptions_to_be_updated[0].title == "Test Subscription"
+        assert subscriptions_to_be_updated[0].url == "http://example.com"
+        assert subscriptions_to_be_updated[0].rss_feed_url == "http://example.com/rss"
+        assert subscriptions_to_be_updated[0].description == "Test Description"
+        assert subscriptions_to_be_updated[0].image == "http://example.com/image.jpg"
+
+
+@pytest.mark.asyncio
+async def test_existing_subscription_is_picked_up(
+    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    async_session = await anext(async_session_factory)
+    async with async_session() as session:
+        monkeypatch.setattr("app.scheduler.get_metadata", mock_get_metadata_unavailable)
+        monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
+
+        past_date: datetime = datetime.now(utc) - timedelta(minutes=SUBSCRIPTION_UPDATE_INTERVAL + 1)
+
+        subscription = Subscription(
+            id=1,
+            title="Test Subscription",
+            url="http://example.com",
+            rss_feed_url="http://example.com/rss",
+            description="Test Description",
+            image="http://example.com/image.jpg",
+            last_updated=past_date,
+        )
+        session.add(subscription)
+        await session.commit()
+
+        subscriptions_to_be_updated: list[Subscription] = await get_subscriptions_to_update(session)
+        assert len(subscriptions_to_be_updated) == 1
+        assert subscriptions_to_be_updated[0].id == 1
+        assert subscriptions_to_be_updated[0].title == "Test Subscription"
+        assert subscriptions_to_be_updated[0].url == "http://example.com"
+        assert subscriptions_to_be_updated[0].rss_feed_url == "http://example.com/rss"
+        assert subscriptions_to_be_updated[0].description == "Test Description"
+        assert subscriptions_to_be_updated[0].image == "http://example.com/image.jpg"

@@ -45,7 +45,7 @@ def update_video_status(video: Video, video_results: MetadataResult) -> None:
 
 
 async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscription]:
-    fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=15)
+    fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=SUBSCRIPTION_UPDATE_INTERVAL)
 
     subscriptions_to_update = cast(
         list[Subscription],
