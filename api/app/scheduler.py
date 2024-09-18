@@ -53,7 +53,7 @@ async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscriptio
             await session.execute(  # pyright: ignore
                 select(Subscription).where(  # pyright: ignore
                     or_(
-                        Subscription.last_updated.is_(None),  # pyright: ignore
+                        Subscription.last_updated == None,  # type:ignore
                         Subscription.last_updated < fifteen_minutes_ago,  # pyright: ignore
                     )
                 )

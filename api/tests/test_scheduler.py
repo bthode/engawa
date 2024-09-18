@@ -263,3 +263,51 @@ async def test_existing_subscription_is_picked_up(
         assert subscriptions_to_be_updated[0].rss_feed_url == "http://example.com/rss"
         assert subscriptions_to_be_updated[0].description == "Test Description"
         assert subscriptions_to_be_updated[0].image == "http://example.com/image.jpg"
+
+
+@pytest.mark.asyncio
+async def test_get_subscriptions_to_update(
+    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    async_session = await anext(async_session_factory)
+    async with async_session() as session:
+        monkeypatch.setattr("app.scheduler.get_metadata", mock_get_metadata_unavailable)
+        monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
+        new_subscription = Subscription(
+            title="New Subscription",
+            url="http://example.com/new",
+            rss_feed_url="http://example.com/new/rss",
+            description="Test Description",
+            image="http://example.com/image.jpg",
+        )
+
+        recent_subscription = Subscription(
+            title="Recent Subscription",
+            url="http://example.com/recent",
+            rss_feed_url="http://example.com/recent/rss",
+            description="Test Description",
+            image="http://example.com/image.jpg",
+            last_updated=datetime.now(utc),
+        )
+
+        old_subscription = Subscription(
+            title="Old Subscription",
+            url="http://example.com/old",
+            rss_feed_url="http://example.com/old/rss",
+            description="Test Description",
+            image="http://example.com/image.jpg",
+            last_updated=datetime.now(utc) - timedelta(minutes=SUBSCRIPTION_UPDATE_INTERVAL + 1),
+        )
+
+        session.add(new_subscription)
+        session.add(recent_subscription)
+        session.add(old_subscription)
+        await session.commit()
+
+        subscriptions_to_update = await get_subscriptions_to_update(session)
+
+        assert len(subscriptions_to_update) == 2
+        assert any(sub.title == "New Subscription" for sub in subscriptions_to_update)
+        assert any(sub.title == "Old Subscription" for sub in subscriptions_to_update)
+        assert all(sub.title != "Recent Subscription" for sub in subscriptions_to_update)
