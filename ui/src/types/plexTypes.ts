@@ -1,14 +1,14 @@
-export type Location = {
+export interface Location {
   path: string;
-};
+}
 
-export type Directory = {
+export interface Directory {
   title: string;
   uuid: string;
   locations: Location[];
-};
+}
 
-export type PlexServer = {
+export interface PlexServer {
   name: string;
   id: number;
   directories: Directory[];
@@ -16,4 +16,4 @@ export type PlexServer = {
   token: string;
   port: string;
   error_state: null | string;
-};
+}
