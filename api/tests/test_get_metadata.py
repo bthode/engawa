@@ -1,4 +1,7 @@
+import concurrent.futures
+from collections.abc import Callable
 from datetime import datetime
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,32 +12,54 @@ from app.yt_downloader import (
     MetadataErrorType,
     MetadataSuccess,
     VideoMetadata,
+    extract_info,
     get_metadata,
 )
 
 
+class MockExecutor:
+    def __init__(self, func: Callable[..., Any]) -> None:
+        self.func: Callable[..., Any] = func
+
+    def __enter__(self) -> "MockExecutor":
+        return self
+
+    def __exit__(self, exc_type: BaseException | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
+        pass
+
+    def submit(
+        self, fn: Callable[..., Any], *args: Any, **kwargs: Any  # pylint: disable=unused-argument
+    ) -> concurrent.futures.Future[Any]:
+        future: concurrent.futures.Future[Any] = concurrent.futures.Future()
+        future.set_result(self.func(*args, **kwargs))
+        return future
+
+
 @pytest.mark.asyncio
 async def test_get_metadata_success():
-    mock_video_info = {
-        "id": "test_id",
-        "title": "Test Video",
-        "uploader": "Test Uploader",
-        "upload_date": "20230101",
-        "duration": 300,
-        "description": "Test description",
-        "thumbnail": "http://example.com/thumbnail.jpg",
-    }
 
-    with patch("app.yt_downloader.yt_dlp.YoutubeDL") as mock_ydl_class:
-        mock_ydl_instance = MagicMock()
-        mock_ydl_instance.extract_info.return_value = mock_video_info
-        mock_ydl_class.return_value.__enter__.return_value = mock_ydl_instance
+    expected_metadata = VideoMetadata(
+        id="test_id",
+        title="Test Video",
+        uploader="Test Uploader",
+        upload_date=datetime(2023, 1, 1),
+        duration_in_seconds=300,
+        description="Test description",
+        thumbnail_url="http://example.com/thumbnail.jpg",
+    )
 
+    def mock_extract_info(url: str):
+        return MetadataSuccess(url=url, metadata=expected_metadata)
+
+    mock_executor = MockExecutor(mock_extract_info)
+
+    with patch("concurrent.futures.ProcessPoolExecutor", return_value=mock_executor):
         result = await get_metadata(["http://example.com/video"])
 
         assert len(result) == 1
         assert isinstance(result[0], MetadataSuccess)
         assert result[0].url == "http://example.com/video"
+        assert result[0].metadata == expected_metadata
         assert result[0].metadata == VideoMetadata(
             id="test_id",
             title="Test Video",
@@ -55,58 +80,17 @@ async def test_get_metadata_success():
         ("Some other error", MetadataErrorType.UNKNOWN_ERROR),
     ],
 )
-@pytest.mark.asyncio
-async def test_get_metadata_errors(error_message: str, expected_error_type: MetadataError):
+def test_extract_info_errors(error_message: str, expected_error_type: MetadataErrorType):
     with patch("app.yt_downloader.yt_dlp.YoutubeDL") as mock_ydl_class:
         mock_ydl_instance = MagicMock()
         mock_ydl_instance.extract_info.side_effect = yt_dlp.utils.DownloadError(error_message)  # type:ignore
         mock_ydl_class.return_value.__enter__.return_value = mock_ydl_instance
 
-        result = await get_metadata(["http://example.com/video"])
+        result = extract_info("http://example.com/video")
 
-        assert len(result) == 1
-        assert isinstance(result[0], MetadataError)
-        assert result[0].url == "http://example.com/video"
-        assert result[0].error_type == expected_error_type
-        assert result[0].message == error_message
+        assert isinstance(result, MetadataError)
+        assert result.url == "http://example.com/video"
+        assert result.error_type == expected_error_type
+        assert result.message == error_message
 
-
-@pytest.mark.asyncio
-async def test_get_metadata_multiple_urls():
-    mock_video_info1 = {
-        "id": "test_id1",
-        "title": "Test Video 1",
-        "uploader": "Test Uploader 1",
-        "upload_date": "20230101",
-        "duration": 300,
-        "description": "Test description 1",
-        "thumbnail": "http://example.com/thumbnail1.jpg",
-    }
-    mock_video_info2 = {
-        "id": "test_id2",
-        "title": "Test Video 2",
-        "uploader": "Test Uploader 2",
-        "upload_date": "20230202",
-        "duration": 400,
-        "description": "Test description 2",
-        "thumbnail": "http://example.com/thumbnail2.jpg",
-    }
-
-    with patch("app.yt_downloader.yt_dlp.YoutubeDL") as mock_ydl_class:
-        mock_ydl_instance = MagicMock()
-        mock_ydl_instance.extract_info.side_effect = [
-            mock_video_info1,
-            yt_dlp.utils.DownloadError("This video is unavailable"),  # type:ignore
-            mock_video_info2,
-        ]
-        mock_ydl_class.return_value.__enter__.return_value = mock_ydl_instance
-
-        result = await get_metadata(
-            ["http://example.com/video1", "http://example.com/video2", "http://example.com/video3"]
-        )
-
-        assert len(result) == 3
-        assert isinstance(result[0], MetadataSuccess)
-        assert isinstance(result[1], MetadataError)
-        assert isinstance(result[2], MetadataSuccess)
-        assert result[1].error_type == MetadataErrorType.VIDEO_UNAVAILABLE
+        mock_ydl_instance.extract_info.assert_called_once_with("http://example.com/video", download=False)

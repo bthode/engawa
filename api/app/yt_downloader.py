@@ -4,7 +4,6 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from functools import partial
 from typing import Any
 
 import yt_dlp
@@ -85,14 +84,15 @@ def extract_info(url: str) -> MetadataResult:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
             video_info = ydl.extract_info(url, download=False)  # pyright: ignore
 
+        # TODO: Validate field values
         metadata = VideoMetadata(
-            id=video_info["id"],
-            title=video_info["title"],
-            uploader=video_info["uploader"],
-            upload_date=datetime.strptime(video_info["upload_date"], "%Y%m%d"),
-            duration_in_seconds=int(video_info["duration"]),
-            description=video_info["description"],
-            thumbnail_url=video_info["thumbnail"],
+            id=video_info["id"],  # type:ignore
+            title=video_info["title"],  # type:ignore
+            uploader=video_info["uploader"],  # type:ignore
+            upload_date=datetime.strptime(video_info["upload_date"], "%Y%m%d"),  # type:ignore
+            duration_in_seconds=int(video_info["duration"]),  # type:ignore
+            description=video_info["description"],  # type:ignore
+            thumbnail_url=video_info["thumbnail"],  # type:ignore
         )
         return MetadataSuccess(url=url, metadata=metadata)
     except yt_dlp.utils.DownloadError as e:  # type: ignore[arg-type]

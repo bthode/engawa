@@ -4,6 +4,7 @@ from typing import cast
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import utc
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlmodel import or_, select
 
@@ -43,47 +44,58 @@ def update_video_status(video: Video, video_results: MetadataResult) -> None:
             logger.error("Unexpected result type: %s", type(video_results))
 
 
+async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscription]:
+    fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=15)
+
+    subscriptions_to_update = cast(
+        list[Subscription],
+        (
+            await session.execute(  # pyright: ignore
+                select(Subscription).where(  # pyright: ignore
+                    or_(
+                        Subscription.last_updated.is_(None),  # pyright: ignore
+                        Subscription.last_updated < fifteen_minutes_ago,  # pyright: ignore
+                    )
+                )
+            )
+        )
+        .scalars()
+        .all(),
+    )
+    assert isinstance(subscriptions_to_update, list), "Should have received a list of subscriptions"
+    return subscriptions_to_update
+
+
+async def get_pending_videos(session: AsyncSession) -> list[Video]:
+    results: list[Video] = (
+        (
+            await session.execute(  # pyright: ignore
+                select(Video).where(Video.status == VideoStatus.PENDING).options(selectinload(Video.subscription))
+            )
+        )
+        .scalars()
+        .all()
+    )  # pyright: ignore
+    return results
+
+
+# TODO: Does it make sense to work on one subscription at a time, or consolidate a collection of subscriptions
+# based on the library they download too?
+
+
 async def sync_and_update_videos():
     async for session in get_session():
         try:
-            fifteen_minutes_ago: datetime = datetime.now(utc) - timedelta(minutes=15)
+            subscriptions_to_update = await get_subscriptions_to_update(session)
 
-            subscriptions_to_update = cast(
-                list[Subscription],
-                (
-                    await session.execute(  # pyright: ignore
-                        select(Subscription).where(  # pyright: ignore
-                            or_(
-                                Subscription.last_updated.is_(None),  # pyright: ignore
-                                Subscription.last_updated < fifteen_minutes_ago,  # pyright: ignore
-                            )
-                        )
-                    )
-                )
-                .scalars()
-                .all(),
-            )
-            assert isinstance(subscriptions_to_update, list), "Should have received a list of subscriptions"
-
-            if not subscriptions_to_update:
+            if len(subscriptions_to_update) < 1:
                 logger.info("No subscriptions to update")
             else:
                 logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
             for subscription in subscriptions_to_update:
                 await sync_subscription(subscription.id, session)
 
-            pending_videos: list[Video] = (
-                (
-                    await session.execute(  # pyright: ignore
-                        select(Video)
-                        .where(Video.status == VideoStatus.PENDING)
-                        .options(selectinload(Video.subscription))
-                        # .limit(5)
-                    )
-                )
-                .scalars()
-                .all()
-            )  # pyright: ignore
+            pending_videos = await get_pending_videos(session)
 
             if not pending_videos:
                 logger.info("No pending videos")
@@ -105,6 +117,10 @@ async def sync_and_update_videos():
             # TODO: Need to update the plex library here once we have the library mapped.
             # Or at least once the videos have been finished downloading.
             # http://$PLEX_SERVER:32400/library/sections/$library_key/refresh?X-Plex-Token=$PLEX_TOKEN
+            updated_video_subscriptions = {video.subscription_id for video in pending_videos}
+            logger.warning("Acted on videos from subscription ids: %s", updated_video_subscriptions)
+            # TODO: Find set of libraries based on subscription
+
         except Exception as e:
             logger.error("Error in sync_and_update_videos: %s", str(e))
             await session.rollback()
