@@ -1,8 +1,10 @@
 import asyncio
+import concurrent.futures
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from functools import partial
 from typing import Any
 
 import yt_dlp
@@ -75,39 +77,42 @@ async def download_content(video_url: str, output_path: str) -> str:
     return f"{output_path}/example_video.mp4"
 
 
+def extract_info(url: str) -> MetadataResult:
+    try:
+        ydl_opts: dict[str, Any] = {
+            "logger": logger,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
+            video_info = ydl.extract_info(url, download=False)  # pyright: ignore
+
+        metadata = VideoMetadata(
+            id=video_info["id"],
+            title=video_info["title"],
+            uploader=video_info["uploader"],
+            upload_date=datetime.strptime(video_info["upload_date"], "%Y%m%d"),
+            duration_in_seconds=int(video_info["duration"]),
+            description=video_info["description"],
+            thumbnail_url=video_info["thumbnail"],
+        )
+        return MetadataSuccess(url=url, metadata=metadata)
+    except yt_dlp.utils.DownloadError as e:  # type: ignore[arg-type]
+        error_message: str = str(e)  # type: ignore[arg-type]
+        if "This live event will begin in a few moments" in error_message:
+            return MetadataError(url, MetadataErrorType.LIVE_EVENT_NOT_STARTED, error_message)
+        elif "This video is unavailable" in error_message:
+            return MetadataError(url, MetadataErrorType.VIDEO_UNAVAILABLE, error_message)
+        elif "This video contains content from" in error_message:
+            return MetadataError(url, MetadataErrorType.COPYRIGHT_STRIKE, error_message)
+        else:
+            return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, error_message)
+    except Exception as e:  # pylint: disable=broad-except
+        logging.error(e)
+        return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, str(e))
+
 async def get_metadata(urls: list[str]) -> list[MetadataResult]:
-    async def process_url(url: str) -> MetadataResult:
-        try:
-            ydl_opts: dict[str, Any] = {
-                "logger": logger,
-            }
+    loop = asyncio.get_running_loop()
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = [loop.run_in_executor(executor, extract_info, url) for url in urls]
+        results = await asyncio.gather(*futures)
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
-                video_info = await asyncio.to_thread(ydl.extract_info, url, download=False)  # pyright: ignore
-
-            metadata = VideoMetadata(
-                id=video_info["id"],
-                title=video_info["title"],
-                uploader=video_info["uploader"],
-                upload_date=datetime.strptime(video_info["upload_date"], "%Y%m%d"),
-                duration_in_seconds=int(video_info["duration"]),
-                description=video_info["description"],
-                thumbnail_url=video_info["thumbnail"],
-            )
-            return MetadataSuccess(url=url, metadata=metadata)
-
-        except yt_dlp.utils.DownloadError as e:  # type: ignore[arg-type]
-            error_message: str = str(e)  # type: ignore[arg-type]
-            if "This live event will begin in a few moments" in error_message:
-                return MetadataError(url, MetadataErrorType.LIVE_EVENT_NOT_STARTED, error_message)
-            elif "This video is unavailable" in error_message:
-                return MetadataError(url, MetadataErrorType.VIDEO_UNAVAILABLE, error_message)
-            elif "This video contains content from" in error_message:
-                return MetadataError(url, MetadataErrorType.COPYRIGHT_STRIKE, error_message)
-            else:
-                return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, error_message)
-        except Exception as e:  # pylint: disable=broad-except
-            logging.error(e)
-            return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, str(e))
-
-    return await asyncio.gather(*(process_url(url) for url in urls))
+    return results

@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import cast
@@ -58,7 +57,7 @@ async def sync_and_update_videos():
                         select(Video)
                         .where(Video.status == VideoStatus.PENDING)
                         .options(selectinload(Video.subscription))
-                        .limit(5)
+                        # .limit(5)
                     )
                 )
                 .scalars()
@@ -95,7 +94,10 @@ async def sync_and_update_videos():
                     logger.error("Error processing video %s: %s", video.id, video_results.message)
 
             await session.commit()
-
+            
+            # TODO: Need to update the plex library here once we have the library mapped.
+            # Or at least once the videos have been finished downloading.
+            # http://$PLEX_SERVER:32400/library/sections/$library_key/refresh?X-Plex-Token=$PLEX_TOKEN
         except Exception as e:
             logger.error("Error in sync_and_update_videos: %s", str(e))
             await session.rollback()
@@ -109,12 +111,3 @@ scheduler.add_job(  # type: ignore
     "interval",
     seconds=10,
 )
-
-
-async def start_scheduler():
-    scheduler.start()
-    try:
-        while True:
-            await asyncio.sleep(1)
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
