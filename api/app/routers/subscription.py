@@ -6,7 +6,7 @@ import requests
 from fastapi import APIRouter, Depends
 from pytz import utc
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.database.session import get_session
 from app.models.subscription import Subscription, SubscriptionCreate, Video, VideoStatus
@@ -101,6 +101,6 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
 @router.get("/subscription/{subscription_id}/videos", response_model=list[Video])
 async def get_subscription_videos(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
     result = await session.execute(
-        select(Video).where(Video.subscription_id == subscription_id).order_by(Video.published.desc())
-    )  # type:ignore
+        select(Video).where(Video.subscription_id == subscription_id).order_by(col(Video.published).desc())
+    )
     return result.scalars().all()
