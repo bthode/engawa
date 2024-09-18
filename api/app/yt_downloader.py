@@ -109,6 +109,7 @@ def extract_info(url: str) -> MetadataResult:
         logging.error(e)
         return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, str(e))
 
+
 async def get_metadata(urls: list[str]) -> list[MetadataResult]:
     loop = asyncio.get_running_loop()
     with concurrent.futures.ProcessPoolExecutor() as executor:

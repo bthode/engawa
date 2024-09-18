@@ -11,6 +11,7 @@ from app.database.session import get_session
 from app.models.subscription import Subscription, Video, VideoStatus
 from app.routers.subscription import sync_subscription
 from app.yt_downloader import (
+    MetadataError,
     MetadataErrorType,
     MetadataResult,
     MetadataSuccess,
@@ -20,6 +21,26 @@ from app.yt_downloader import (
 logger = logging.getLogger(__name__)
 
 SUBSCRIPTION_UPDATE_INTERVAL = 15
+
+
+def update_video_status(video: Video, video_results: MetadataResult) -> None:
+    match video_results:
+        case MetadataSuccess():
+            video.thumbnail_url = video_results.metadata.thumbnail_url
+            video.duration = video_results.metadata.duration_in_seconds
+            video.status = VideoStatus.OBTAINED_METADATA
+        case MetadataError(error_type=MetadataErrorType.LIVE_EVENT_NOT_STARTED | MetadataErrorType.VIDEO_UNAVAILABLE):
+            video.status = VideoStatus.EXCLUDED
+        case MetadataError(error_type=MetadataErrorType.COPYRIGHT_STRIKE):
+            video.status = VideoStatus.COPYRIGHT_STRIKE
+        case MetadataError(error_type=MetadataErrorType.UNKNOWN_ERROR):
+            video.status = VideoStatus.FAILED
+            video.retry_count += 1
+            logger.error("Error processing video %s: %s", video.id, video_results.message)
+        case _:
+            video.status = VideoStatus.FAILED
+            video.retry_count += 1
+            logger.error("Unexpected result type: %s", type(video_results))
 
 
 async def sync_and_update_videos():
@@ -77,24 +98,10 @@ async def sync_and_update_videos():
 
             for video_results in metadata_results:
                 video = video_dict[video_results.url]
-                if isinstance(video_results, MetadataSuccess):
-                    video.thumbnail_url = video_results.metadata.thumbnail_url
-                    video.duration = video_results.metadata.duration_in_seconds
-                    video.status = VideoStatus.OBTAINED_METADATA
-                elif video_results.error_type in (
-                    MetadataErrorType.LIVE_EVENT_NOT_STARTED,
-                    MetadataErrorType.VIDEO_UNAVAILABLE,
-                ):
-                    video.status = VideoStatus.EXCLUDED
-                elif video_results.error_type == MetadataErrorType.COPYRIGHT_STRIKE:
-                    video.status = VideoStatus.COPYRIGHT_STRIKE
-                else:
-                    video.status = VideoStatus.FAILED
-                    video.retry_count += 1
-                    logger.error("Error processing video %s: %s", video.id, video_results.message)
+                update_video_status(video, video_results)
 
             await session.commit()
-            
+
             # TODO: Need to update the plex library here once we have the library mapped.
             # Or at least once the videos have been finished downloading.
             # http://$PLEX_SERVER:32400/library/sections/$library_key/refresh?X-Plex-Token=$PLEX_TOKEN
