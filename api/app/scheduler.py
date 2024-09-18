@@ -49,7 +49,6 @@ async def sync_and_update_videos():
                 logger.info("No subscriptions to update")
             else:
                 logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
-
             for subscription in subscriptions_to_update:
                 await sync_subscription(subscription.id, session)
 
@@ -78,7 +77,7 @@ async def sync_and_update_videos():
             video_dict: dict[str, Video] = {video.link: video for video in pending_videos}
 
             for video_results in metadata_results:
-                video = video_dict[video_results.url]  # Move this line outside the if statement
+                video = video_dict[video_results.url]
                 if isinstance(video_results, MetadataSuccess):
                     video.thumbnail_url = video_results.metadata.thumbnail_url
                     video.duration = video_results.metadata.duration_in_seconds
