@@ -55,7 +55,7 @@ class DirectoryBase(SQLModel):
 class Directory(DirectoryBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     plex: Mapped[Plex] = Relationship(back_populates="directories")
-    plex_id: int = Field(default=None, foreign_key="plex.id")
+    plex_id: int = Field(default=None, foreign_key="plex.id", index=True)
     locations: Mapped[list["Location"]] = Relationship(
         back_populates="directory",
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},

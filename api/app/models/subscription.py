@@ -32,7 +32,7 @@ class Subscription(SQLModel, table=True):
     error_state: SubscriptionDirectoryError | None = None
     id: int = Field(default=None, primary_key=True)
     image: str | None = None
-    last_updated: datetime | None = None
+    last_updated: datetime | None = Field(default=None, index=True)
     rss_feed_url: str = Field(default=None)
     title: str = Field(default=None)
     type: SubscriptionType = Field(default=SubscriptionType.CHANNEL)
@@ -68,10 +68,10 @@ class Video(SQLModel, table=True):
     author: str
     duration: int | None = Field(default=None, alias="duration")
     link: str
-    published: str
+    published: str = Field(index=True)
     retry_count: int = Field(default=0)
-    status: VideoStatus = Field(sa_column_kwargs={"default": VideoStatus.PENDING})
-    subscription_id: int = Field(default=None, foreign_key="subscription.id")
+    status: VideoStatus = Field(sa_column_kwargs={"default": VideoStatus.PENDING}, index=True)
+    subscription_id: int = Field(default=None, foreign_key="subscription.id", index=True)
     subscription: Mapped[Subscription] = Relationship(back_populates="videos")
     thumbnail_url: str | None = None
     title: str
