@@ -80,10 +80,11 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
   };
 
   const handleDeleteServer = async () => {
-    if (!plexServer) return;
+    if (!localPlexServer) return;
 
     try {
-      await deletePlexServer(plexServer);
+      await deletePlexServer(localPlexServer);
+      setLocalPlexServer(null);
       onServerUpdate();
     } catch (error) {
       console.error('Error deleting Plex server:', error);
@@ -112,7 +113,7 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
           onChange={(e) => setServer({ ...server, endpoint: e.target.value })}
         />
       </Tooltip>
-      <Tooltip title="Deafult Plex port is 32400">
+      <Tooltip title="Plex default port is 32400">
         <TextField
           margin="dense"
           label="Port"
@@ -205,7 +206,7 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
         </Card>
       )}
 
-      {!plexServer && (
+      {!localPlexServer && (
         <Box mt={2}>
           <Button startIcon={<AddIcon />} variant="contained" color="primary" onClick={handleAddServer}>
             Add Plex Server
