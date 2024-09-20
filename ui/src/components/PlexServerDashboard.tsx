@@ -112,14 +112,16 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
           onChange={(e) => setServer({ ...server, endpoint: e.target.value })}
         />
       </Tooltip>
-      <TextField
-        margin="dense"
-        label="Port"
-        type="text"
-        fullWidth
-        value={server.port || ''}
-        onChange={(e) => setServer({ ...server, port: e.target.value })}
-      />
+      <Tooltip title="Deafult Plex port is 32400">
+        <TextField
+          margin="dense"
+          label="Port"
+          type="text"
+          fullWidth
+          value={server.port || ''}
+          onChange={(e) => setServer({ ...server, port: e.target.value })}
+        />
+      </Tooltip>
       <TextField
         margin="dense"
         label="Server Token"
