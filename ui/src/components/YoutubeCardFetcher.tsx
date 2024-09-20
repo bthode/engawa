@@ -17,7 +17,7 @@ interface VideoItem {
   video_id: string;
   link: string;
   author: string;
-  thumbnail: VideoThumbnail;
+  thumbnail_url: VideoThumbnail;
 }
 
 const VideoItemComponent: React.FC<{ video: VideoItem; selectedDateRange: number }> = ({
@@ -47,7 +47,7 @@ const VideoItemComponent: React.FC<{ video: VideoItem; selectedDateRange: number
       <CardMedia
         component="img"
         sx={{ width: '30%', height: '100%', objectFit: 'cover', border: '1px solid black' }}
-        image={video.thumbnail.url}
+        image={video.thumbnail_url}
         alt="Video Thumbnail"
       />
       <CardContent
@@ -114,7 +114,7 @@ const VideoList: React.FC = () => {
       try {
         const response = await axios.get('/api/get_videos', {
           params: {
-            rss_url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCCD4-G3Aokt2sM7TYQV2HmA',
+            rss_url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UConVfxXodg78Tzh5nNu85Ew',
           },
         });
         if (response.data && response.data.length) {

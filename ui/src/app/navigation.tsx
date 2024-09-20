@@ -18,7 +18,6 @@ import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import MovieIcon from '@mui/icons-material/Movie';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import theme from './theme';
 
 const drawerWidth = 240;
@@ -33,6 +32,7 @@ const navigationItems = [
   { text: 'Subscriptions', icon: <SubscriptionsIcon />, href: '/subscriptions' },
   { text: 'Plex Server', icon: <MovieIcon />, href: '/plex' },
   { text: 'Settings', icon: <SettingsIcon />, href: '/settings' },
+  { text: 'Card', icon: <SettingsIcon />, href: '/card' },
 ];
 
 const Layout = ({ children, onSubscriptionsClick }: LayoutProps) => {
