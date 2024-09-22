@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable
+from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup, Tag
@@ -71,14 +72,17 @@ def fetch_videos_from_rss_feed(rss_url: str, request_maker: Callable[[str, int],
                 author = entry.find("author").find("name")
                 link = entry.find("link").get("href")
                 thumbnail_link: str = entry.find("media:thumbnail").get("url")
+                description_tag = entry.find("media:group").find("media:description")
+                description: str = description_tag.text if description_tag else ""
 
                 if title and published and video_id and author:
                     video: Video = Video(
                         title=title.text,
-                        published=published.text,
+                        published=datetime.fromisoformat(published.text),
                         video_id=video_id.text,
                         link=link,
                         author=author.text,
+                        description=description,
                         thumbnail_url=thumbnail_link,
                         status=VideoStatus.PENDING,
                     )

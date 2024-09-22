@@ -99,9 +99,9 @@ def extract_info(url: str) -> MetadataResult:
         error_message: str = str(e)  # type: ignore[arg-type]
         if "This live event will begin in a few moments" in error_message:
             return MetadataError(url, MetadataErrorType.LIVE_EVENT_NOT_STARTED, error_message)
-        elif "This video is unavailable" in error_message:
+        if "This video is unavailable" in error_message:
             return MetadataError(url, MetadataErrorType.VIDEO_UNAVAILABLE, error_message)
-        elif "This video contains content from" in error_message:
+        if "This video contains content from" in error_message:
             return MetadataError(url, MetadataErrorType.COPYRIGHT_STRIKE, error_message)
         else:
             return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, error_message)

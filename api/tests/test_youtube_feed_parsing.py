@@ -1,13 +1,13 @@
 import json
 import os
 import unittest
+from datetime import datetime
 
 from app.models.subscription import Video
 from app.routers import youtube
 
 
 def mock_make_request(url: str, timeout: int) -> str:  # pylint: disable=W0613
-    # Load the XML file
     video_feed: str = os.path.join(os.path.dirname(__file__), "resources", "videos.xml")
     with open(video_feed, encoding="utf-8") as file:
         return file.read()
@@ -25,7 +25,7 @@ class TestFetchVideosFromRssFeed(unittest.TestCase):
 
         for i, video in enumerate(result):
             assert video.title == expected_result[i]["title"]
-            assert video.published == expected_result[i]["published"]
+            assert video.published == datetime.fromisoformat(expected_result[i]["published"])
             assert video.video_id == expected_result[i]["video_id"]
             assert video.link == expected_result[i]["link"]
             assert video.author == expected_result[i]["author"]

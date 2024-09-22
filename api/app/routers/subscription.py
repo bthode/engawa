@@ -87,6 +87,7 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
                 link=video.link,
                 author=video.author,
                 thumbnail_url=video.thumbnail_url,
+                description=video.description,
                 subscription_id=subscription.id,
                 status=VideoStatus.PENDING,
             )

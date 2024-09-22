@@ -67,8 +67,9 @@ class Video(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     author: str
     duration: int | None = Field(default=None, alias="duration")
+    description: str | None
     link: str
-    published: str = Field(index=True)
+    published: datetime | None = Field(default=None, index=True)
     retry_count: int = Field(default=0)
     status: VideoStatus = Field(sa_column_kwargs={"default": VideoStatus.PENDING}, index=True)
     subscription_id: int = Field(default=None, foreign_key="subscription.id", index=True)
