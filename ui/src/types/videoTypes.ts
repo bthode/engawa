@@ -1,4 +1,6 @@
-export type Video = {
+export type VideoStatus = 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded' | 'Filtered';
+
+export interface Video {
   id: number;
   duration: number;
   title: string;
@@ -8,7 +10,5 @@ export type Video = {
   author: string;
   subscription_id: number;
   thumbnail_url: string;
-  status: 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded';
-};
-
-export type VideoStatus = 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded';
+  status: VideoStatus;
+}

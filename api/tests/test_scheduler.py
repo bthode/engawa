@@ -33,20 +33,21 @@ async def mock_success_video_data(
     uploaded: datetime = datetime.now(),  # Default to current datetime
     duration: int = 3600,  # Default to 1 hour
     title: str = "Default Title",  # Default title
-    description: str = "Default Description"  # Default description
+    description: str = "Default Description",  # Default description
 ) -> list[MetadataSuccess]:
-    return [MetadataSuccess(
-        url="http//example.com/video",
-        metadata=VideoMetadata(
-            id="test_video_id",
-            title=title,
-            uploader="Test Uploader",
-            upload_date=uploaded,
-            duration_in_seconds=duration,
-            description=description,
-            thumbnail_url="http://example.com/test_thumbnail.jpg",
-        ),
-    )
+    return [
+        MetadataSuccess(
+            url="http//example.com/video",
+            metadata=VideoMetadata(
+                id="test_video_id",
+                title=title,
+                uploader="Test Uploader",
+                upload_date=uploaded,
+                duration_in_seconds=duration,
+                description=description,
+                thumbnail_url="http://example.com/test_thumbnail.jpg",
+            ),
+        )
     ]
 
 
@@ -205,7 +206,7 @@ async def test_video_unavailable(
         )
         session.add(subscription)
         await session.commit()
-        
+
         video = Video(
             subscription_id=subscription.id,
             status=VideoStatus.PENDING,
@@ -385,11 +386,17 @@ async def test_get_pending_videos(
 
         session.add(video)
         await session.commit()
-        
+
         videos_to_update = await get_pending_videos(session)
         assert isinstance(videos_to_update, list)
         assert isinstance(videos_to_update[0], Video)
-        assert len(videos_to_update,) == 1
+        assert (
+            len(
+                videos_to_update,
+            )
+            == 1
+        )
+
 
 @pytest.mark.asyncio
 async def test_video_filters(
@@ -436,12 +443,13 @@ async def test_video_filters(
 
         session.add(video)
         await session.commit()
-        
+
         videos_to_update = await get_pending_videos(session)
         assert isinstance(videos_to_update, list)
         assert isinstance(videos_to_update[0], Video)
-        assert len(videos_to_update,) == 1
-
-        #  TODO: Need to refactor the sync method to handle vidoes by subscription
-        #  Then we can call it for our above subscription
-        # and verify the video has been filtered out by the duration filter
+        assert (
+            len(
+                videos_to_update,
+            )
+            == 1
+        )

@@ -79,8 +79,52 @@ async def get_pending_videos(session: AsyncSession) -> list[Video]:
     return results
 
 
-# TODO: Does it make sense to work on one subscription at a time, or consolidate a collection of subscriptions
-# based on the library they download too?
+#### ----
+#### ----
+#### ----
+
+#  TODO: Need to refactor the sync method to handle vidoes by subscription
+#  Then we can call it for our above subscription
+# and verify the video has been filtered out by the duration filter
+
+
+async def get_videos_for_subscription(subscription_id: int, status: VideoStatus, session: AsyncSession) -> list[Video]:
+    results: list[Video] = (
+        (
+            await session.execute(  # pyright: ignore
+                select(Video)
+                .where(Video.status == VideoStatus.OBTAINED_METADATA)
+                .where(Video.subscription_id == subscription_id)
+                .options(selectinload(Video.subscription))
+            )
+        )
+        .scalars()
+        .all()
+    )  # pyright: ignore
+    return results
+
+
+async def handle_subscription(subscription: Subscription, session: AsyncSession) -> None:
+    await sync_subscription(subscription.id, session)
+    videos_with_metadata = await get_videos_for_subscription(subscription.id, VideoStatus.OBTAINED_METADATA, session)
+    video_urls = [video.link for video in videos_with_metadata]
+    metadata_results: list[MetadataResult] = await get_metadata(video_urls)
+    video_dict: dict[str, Video] = {video.link: video for video in videos_with_metadata}
+    for video_results in metadata_results:
+        video = video_dict[video_results.url]
+        update_video_status(video, video_results)
+
+# TODO: We need to act on all vidoes that we've obtained metadata for. 
+# Other videos that have failed can likely be excluded without filters
+
+# Update the Subscription
+# Update the subscription's videos metadata
+# Apply filtering to that collection of videos
+
+#### ----
+#### ----
+#### ----
+#### ----
 
 
 async def sync_and_update_videos():
@@ -92,6 +136,7 @@ async def sync_and_update_videos():
                 logger.info("No subscriptions to update")
             else:
                 logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
+
             for subscription in subscriptions_to_update:
                 await sync_subscription(subscription.id, session)
 
