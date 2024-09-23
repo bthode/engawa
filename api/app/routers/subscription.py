@@ -10,7 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.database.session import get_session
-from app.models.subscription import Subscription, SubscriptionCreate, Video, VideoStatus
+from app.models.subscription import (
+    ComparisonOperator,
+    Filter,
+    FilterType,
+    Subscription,
+    SubscriptionCreate,
+    Video,
+    VideoStatus,
+)
 from app.routers import youtube
 
 router = APIRouter()
@@ -47,6 +55,17 @@ async def create_subscription(create: SubscriptionCreate, session: Annotated[Asy
     )
 
     session.add(subscription)
+    await session.commit()
+
+    subscription_id = subscription.id
+
+    new_filter = Filter(
+        subscription_id=subscription_id,
+        filter_type=FilterType.DURATION,
+        comparison_operator=ComparisonOperator.GT,
+        threshold_seconds=1800,
+    )
+    session.add(new_filter)
     await session.commit()
     return {"message": "subscription created"}
 
@@ -101,8 +120,8 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
 
 
 @router.get("/subscription/{subscription_id}/videos", response_model=list[Video])
-async def get_subscription_videos(subscription_id: int, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(
+async def get_subscription_videos(subscription_id: int, session: AsyncSession = Depends(get_session)) -> list[Video]:
+    result = await session.execute(  # type:ignore
         select(Video).where(Video.subscription_id == subscription_id).order_by(desc(Video.published))
     )
     return result.scalars().all()

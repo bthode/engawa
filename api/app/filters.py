@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from app.models.subscription import ComparisonOperator, Filter, FilterType, Video
 

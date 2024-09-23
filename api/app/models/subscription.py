@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from enum import StrEnum
 
 from sqlalchemy.orm import Mapped
-from sqlmodel import Field, Relationship, SQLModel  # type: ignore  # type: ignore
+from sqlmodel import Field, Relationship, SQLModel  # type:ignore
 
 
 class Retention(StrEnum):
@@ -107,8 +107,6 @@ class ComparisonOperator(StrEnum):
 
 class Filter(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    # name: str = Field(index=True)
-    # description: str | None = Field(default=None)
     filter_type: FilterType
 
     keyword: str | None = Field(default=None)
@@ -146,6 +144,11 @@ class Filter(SQLModel, table=True):
     def _compare(
         self, value: timedelta | datetime, operator: ComparisonOperator, threshold: timedelta | datetime
     ) -> bool:
+        # if isinstance(value, (datetime, timedelta)) and isinstance(threshold, (datetime, timedelta)):
+        #     if isinstance(value, datetime) and isinstance(threshold, timedelta):
+        #         threshold = datetime.now() + threshold
+        #     elif isinstance(value, timedelta) and isinstance(threshold, datetime):
+        #         value = datetime.now() + value
         if operator == ComparisonOperator.LT:
             return value < threshold
         elif operator == ComparisonOperator.LE:
