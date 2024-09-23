@@ -131,8 +131,8 @@ class Filter(SQLModel, table=True):
         else:
             raise ValueError(f"Unknown filter type: {self.filter_type}")
 
-    def _compare_duration(self, duration: int) -> bool:
-        if self.threshold_seconds is None or self.comparison_operator is None:
+    def _compare_duration(self, duration: int | None) -> bool:
+        if duration is None or self.threshold_seconds is None or self.comparison_operator is None:
             return False
         return self._compare(
             timedelta(seconds=duration), self.comparison_operator, timedelta(seconds=self.threshold_seconds)
@@ -155,7 +155,6 @@ class Filter(SQLModel, table=True):
         elif operator == ComparisonOperator.NE:
             return value != threshold
         elif operator == ComparisonOperator.GE:
-
             return value >= threshold
         elif operator == ComparisonOperator.GT:
             return value > threshold

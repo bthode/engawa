@@ -1,16 +1,13 @@
-from datetime import datetime, timedelta
-
 import pytest
-
+from datetime import datetime, timedelta
+from app.models.subscription import Video, Filter, VideoStatus
 from app.filters import (
-    apply_filters,
-    create_description_contains_filter,
     create_duration_filter,
-    create_published_after_filter,
     create_title_contains_filter,
+    create_description_contains_filter,
+    create_published_after_filter,
+    apply_filters
 )
-from app.models.subscription import Filter, Video, VideoStatus
-
 
 @pytest.fixture
 def sample_videos() -> list[Video]:
