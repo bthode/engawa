@@ -1,44 +1,35 @@
-import operator
-from collections.abc import Callable, Generator
-from datetime import datetime, timedelta
+from collections.abc import Callable
+from datetime import datetime
 
-from app.models.subscription import Video
-
-
-@staticmethod
-def duration_filter(duration: str, comparison: str, threshold: timedelta) -> bool:
-    duration_td = datetime.strptime(duration, "%H:%M:%S") - datetime(1900, 1, 1)
-    comparison_ops = {
-        "lt": operator.lt,
-        "le": operator.le,
-        "eq": operator.eq,
-        "ne": operator.ne,
-        "ge": operator.ge,
-        "gt": operator.gt,
-    }
-    if comparison not in comparison_ops:
-        raise ValueError(f"Invalid comparison operator: {comparison}")
-    return comparison_ops[comparison](duration_td, threshold)
+from app.models.subscription import ComparisonOperator, Filter, FilterType, Video
 
 
-@staticmethod
-def title_contains_filter(keyword: str) -> Callable[[Video], bool]:
-    return lambda video: keyword.lower() in video.title.lower()
+def create_duration_filter(name: str, operator: str, threshold: int) -> Filter:
+    return Filter(
+        name=name,
+        filter_type=FilterType.DURATION,
+        comparison_operator=ComparisonOperator(operator),
+        threshold_seconds=threshold,
+    )
 
 
-@staticmethod
-def description_contains_filter(keyword: str) -> Callable[[Video], bool]:
-    return lambda video: keyword.lower() in video.description.lower()
+def create_title_contains_filter(name: str, keyword: str) -> Filter:
+    return Filter(name=name, filter_type=FilterType.TITLE_CONTAINS, keyword=keyword)
 
 
-@staticmethod
-def published_after_filter(date: datetime) -> Callable[[Video], bool]:
-    return lambda video: isinstance(video.published, datetime) and video.published > date
+def create_description_contains_filter(name: str, keyword: str) -> Filter:
+    return Filter(name=name, filter_type=FilterType.DESCRIPTION_CONTAINS, keyword=keyword)
 
 
-@staticmethod
-def apply_filters(videos: list[Video], filters: list[Callable[[Video], bool]]) -> Generator[Video, None, None]:
-    valid_filters = [f for f in filters if callable(f)]
-    if len(valid_filters) != len(filters):
-        raise TypeError("All filters must be callable")
-    return (video for video in videos if all(f(video) for f in valid_filters))
+def create_published_after_filter(name: str, operator: str, date: datetime) -> Filter:
+    return Filter(
+        name=name,
+        filter_type=FilterType.PUBLISHED_AFTER,
+        comparison_operator=ComparisonOperator(operator),
+        threshold_date=date,
+    )
+
+
+def apply_filters(videos: list[Video], filters: list[Filter]) -> list[Video]:
+    filter_callables: list[Callable[[Video], bool]] = [f.to_callable() for f in filters]
+    return [video for video in videos if all(f(video) for f in filter_callables)]

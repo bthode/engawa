@@ -1,4 +1,5 @@
-from datetime import datetime
+from collections.abc import Callable
+from datetime import datetime, timedelta
 from enum import StrEnum
 
 from sqlalchemy.orm import Mapped
@@ -29,6 +30,7 @@ class SubscriptionDirectoryError(StrEnum):
 
 class Subscription(SQLModel, table=True):
     description: str = Field(default=None)
+    filters: list["Filter"] = Relationship(back_populates="subscription")
     error_state: SubscriptionDirectoryError | None = None
     id: int = Field(default=None, primary_key=True)
     image: str | None = None
@@ -85,3 +87,75 @@ class ChannelInfo(SQLModel, table=True):
     rss_link: str
     image_link: str
     description: str
+
+
+class FilterType(StrEnum):
+    DURATION = "duration"
+    TITLE_CONTAINS = "title_contains"
+    DESCRIPTION_CONTAINS = "description_contains"
+    PUBLISHED_AFTER = "published_after"
+
+
+class ComparisonOperator(StrEnum):
+    LT = "lt"
+    LE = "le"
+    EQ = "eq"
+    NE = "ne"
+    GE = "ge"
+    GT = "gt"
+
+
+class Filter(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    description: str | None = Field(default=None)
+    filter_type: FilterType
+
+    keyword: str | None = Field(default=None)
+    comparison_operator: ComparisonOperator | None = Field(default=None)
+    threshold_seconds: int | None = Field(default=None)
+    threshold_date: datetime | None = Field(default=None)
+
+    subscription_id: int | None = Field(default=None, foreign_key="subscription.id")
+    subscription: Subscription = Relationship(back_populates="filters")
+
+    def to_callable(self) -> Callable[["Video"], bool]:
+        if self.filter_type == FilterType.DURATION:
+            return lambda v: self._compare_duration(v.duration)
+        elif self.filter_type == FilterType.TITLE_CONTAINS:
+            return lambda v: self.keyword.lower() in v.title.lower() if self.keyword else False
+        elif self.filter_type == FilterType.DESCRIPTION_CONTAINS:
+            return lambda v: self.keyword.lower() in v.description.lower() if self.keyword and v.description else False
+        elif self.filter_type == FilterType.PUBLISHED_AFTER:
+            return lambda v: self._compare_datetime(v.published)
+        else:
+            raise ValueError(f"Unknown filter type: {self.filter_type}")
+
+    def _compare_duration(self, duration: int) -> bool:
+        if self.threshold_seconds is None or self.comparison_operator is None:
+            return False
+        return self._compare(
+            timedelta(seconds=duration), self.comparison_operator, timedelta(seconds=self.threshold_seconds)
+        )
+
+    def _compare_datetime(self, date: datetime | None) -> bool:
+        if self.threshold_date is None or self.comparison_operator is None or date is None:
+            return False
+        return self._compare(date, self.comparison_operator, self.threshold_date)
+
+    def _compare(
+        self, value: timedelta | datetime, operator: ComparisonOperator, threshold: timedelta | datetime
+    ) -> bool:
+        if operator == ComparisonOperator.LT:
+            return value < threshold
+        elif operator == ComparisonOperator.LE:
+            return value <= threshold
+        elif operator == ComparisonOperator.EQ:
+            return value == threshold
+        elif operator == ComparisonOperator.NE:
+            return value != threshold
+        elif operator == ComparisonOperator.GE:
+
+            return value >= threshold
+        elif operator == ComparisonOperator.GT:
+            return value > threshold
