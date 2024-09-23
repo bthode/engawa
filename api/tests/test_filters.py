@@ -1,13 +1,16 @@
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timedelta
-from app.models.subscription import Video, Filter, VideoStatus
+
 from app.filters import (
-    create_duration_filter,
-    create_title_contains_filter,
+    apply_filters,
     create_description_contains_filter,
+    create_duration_filter,
     create_published_after_filter,
-    apply_filters
+    create_title_contains_filter,
 )
+from app.models.subscription import Video, VideoStatus
+
 
 @pytest.fixture
 def sample_videos() -> list[Video]:
@@ -55,48 +58,48 @@ def sample_videos() -> list[Video]:
 
 
 def test_duration_filter(sample_videos: list[Video]) -> None:
-    duration_filter = create_duration_filter("Long videos", "gt", 1800)
+    duration_filter = create_duration_filter("gt", 1800)
     filtered = apply_filters(sample_videos, [duration_filter])
     assert len(filtered) == 1
     assert filtered[0].title == "Learn Python Programming"
 
 
 def test_title_contains_filter(sample_videos: list[Video]) -> None:
-    title_filter = create_title_contains_filter("Python videos", "Python")
+    title_filter = create_title_contains_filter("Python")
     filtered = apply_filters(sample_videos, [title_filter])
     assert len(filtered) == 1
     assert filtered[0].title == "Learn Python Programming"
 
 
 def test_description_contains_filter(sample_videos: list[Video]) -> None:
-    desc_filter = create_description_contains_filter("ML videos", "machine learning")
+    desc_filter = create_description_contains_filter("machine learning")
     filtered = apply_filters(sample_videos, [desc_filter])
     assert len(filtered) == 1
     assert filtered[0].title == "Machine Learning Basics"
 
 
 def test_published_after_filter(sample_videos: list[Video]) -> None:
-    date_filter = create_published_after_filter("Recent videos", "gt", datetime(2023, 2, 1))
+    date_filter = create_published_after_filter("gt", datetime(2023, 2, 1))
     filtered = apply_filters(sample_videos, [date_filter])
     assert len(filtered) == 2
     assert [v.title for v in filtered] == ["TypeScript in 10 minutes", "Machine Learning Basics"]
 
 
 def test_multiple_filters(sample_videos: list[Video]) -> None:
-    duration_filter = create_duration_filter("Short videos", "lt", 1800)
-    title_filter = create_title_contains_filter("TypeScript videos", "TypeScript")
+    duration_filter = create_duration_filter("lt", 1800)
+    title_filter = create_title_contains_filter("TypeScript")
     filtered = apply_filters(sample_videos, [duration_filter, title_filter])
     assert len(filtered) == 1
     assert filtered[0].title == "TypeScript in 10 minutes"
 
 
 def test_no_matching_filters(sample_videos: list[Video]) -> None:
-    non_existent_filter = create_title_contains_filter("Non-existent", "Rust")
+    non_existent_filter = create_title_contains_filter("Rust")
     filtered = apply_filters(sample_videos, [non_existent_filter])
     assert len(filtered) == 0
 
 
 def test_all_matching_filters(sample_videos: list[Video]) -> None:
-    all_match_filter = create_duration_filter("All videos", "gt", 0)
+    all_match_filter = create_duration_filter("gt", 0)
     filtered = apply_filters(sample_videos, [all_match_filter])
     assert len(filtered) == len(sample_videos)

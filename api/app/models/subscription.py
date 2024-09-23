@@ -107,8 +107,8 @@ class ComparisonOperator(StrEnum):
 
 class Filter(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(index=True)
-    description: str | None = Field(default=None)
+    # name: str = Field(index=True)
+    # description: str | None = Field(default=None)
     filter_type: FilterType
 
     keyword: str | None = Field(default=None)
