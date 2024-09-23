@@ -45,6 +45,7 @@ class Subscription(SQLModel, table=True):
     )
 
 
+#  TODO: We should split out the reasons for filtering or excluding a video.
 class VideoStatus(StrEnum):
     PENDING = "Pending"
     OBTAINING_METADATA = "Obtaining Metadata"
