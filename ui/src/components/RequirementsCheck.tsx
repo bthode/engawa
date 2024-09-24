@@ -28,6 +28,7 @@ const RequirementsCheck: React.FC = () => {
         const data: RequirementsResponse = await response.json();
         setRequirements(data);
       } catch (err) {
+        console.error('Error checking requirements:', err);
         setError('Failed to check requirements. Please try again later.');
       }
     };

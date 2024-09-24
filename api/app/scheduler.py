@@ -93,7 +93,7 @@ async def get_videos_for_subscription(subscription_id: int, status: VideoStatus,
         (
             await session.execute(  # pyright: ignore
                 select(Video)
-                .where(Video.status == VideoStatus.OBTAINED_METADATA)
+                .where(Video.status == status)
                 .where(Video.subscription_id == subscription_id)
                 .options(selectinload(Video.subscription))
             )
