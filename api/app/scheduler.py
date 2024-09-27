@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import or_, select
 
 from app.database.session import get_session
+from app.filters import apply_filters
 from app.models.plex import Plex
 from app.models.subscription import Subscription, Video, VideoStatus
 from app.routers.subscription import sync_subscription
@@ -22,27 +23,30 @@ from app.yt_downloader import (
 )
 
 logger = logging.getLogger(__name__)
-
 SUBSCRIPTION_UPDATE_INTERVAL = 15
 
 
 def update_video_status(video: Video, video_results: MetadataResult) -> Video:
+    updates = {}
     match video_results:
         case MetadataSuccess():
-            return Video(
-                **video.model_dump(),
-                thumbnail_url=video_results.metadata.thumbnail_url,
-                duration=video_results.metadata.duration_in_seconds,
-                status=VideoStatus.OBTAINED_METADATA,
-            )
+            updates = {
+                "thumbnail_url": video_results.metadata.thumbnail_url,
+                "duration": video_results.metadata.duration_in_seconds,
+                "status": VideoStatus.OBTAINED_METADATA,
+            }
         case MetadataError(error_type=MetadataErrorType.LIVE_EVENT_NOT_STARTED | MetadataErrorType.VIDEO_UNAVAILABLE):
-            return Video(**video.model_dump(), status=VideoStatus.EXCLUDED)
+            updates = {"status": VideoStatus.EXCLUDED}
         case MetadataError(error_type=MetadataErrorType.COPYRIGHT_STRIKE):
-            return Video(**video.model_dump(), status=VideoStatus.COPYRIGHT_STRIKE)
+            updates = {"status": VideoStatus.COPYRIGHT_STRIKE}
         case MetadataError(error_type=MetadataErrorType.UNKNOWN_ERROR):
-            return Video(**video.model_dump(), status=VideoStatus.FAILED, retry_count=video.retry_count + 1)
+            updates = {"status": VideoStatus.FAILED, "retry_count": video.retry_count + 1}
         case _:
-            return Video(**video.model_dump(), status=VideoStatus.FAILED, retry_count=video.retry_count + 1)
+            updates = {"status": VideoStatus.FAILED, "retry_count": video.retry_count + 1}
+
+    for key, value in updates.items():
+        setattr(video, key, value)
+    return video
 
 
 async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscription]:
@@ -52,9 +56,11 @@ async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscriptio
         list[Subscription],
         (
             await session.execute(  # pyright: ignore
-                select(Subscription).where(  # pyright: ignore
+                select(Subscription)
+                .options(selectinload(Subscription.filters))
+                .where(  # pyright: ignore
                     or_(
-                        Subscription.last_updated == None,  # pylint: disable=singleton-comparison  noqa: E712
+                        Subscription.last_updated == None,  # noqa: E711 pylint: disable=singleton-comparison
                         Subscription.last_updated < fifteen_minutes_ago,  # pyright: ignore
                     )
                 )
@@ -78,15 +84,6 @@ async def get_pending_videos(session: AsyncSession) -> list[Video]:
         .all()
     )  # pyright: ignore
     return results
-
-
-#### ----
-#### ----
-#### ----
-
-#  TODO: Need to refactor the sync method to handle vidoes by subscription
-#  Then we can call it for our above subscription
-# and verify the video has been filtered out by the duration filter
 
 
 async def get_videos_for_subscription(subscription_id: int, status: VideoStatus, session: AsyncSession) -> list[Video]:
@@ -116,68 +113,40 @@ async def handle_videos_for_subscription(subscription: Subscription, session: As
         update_video_status(video, video_results)
 
 
-# TODO: Only use as a reference for how we might refactor
-async def handle_subscription2(subscription_id: int, session: AsyncSession) -> None:
-    await sync_subscription(subscription_id, session)
-    videos_with_metadata = await get_videos_for_subscription(subscription_id, VideoStatus.PENDING, session)
-
-    updated_videos = [
-        update_video_status(video, metadata_result)
-        for video, metadata_result in await get_metadata(videos_with_metadata)
-    ]
-
-    for video in updated_videos:
-        session.add(video)
-    await session.commit()
-
-
-# TODO: We need to act on all vidoes that we've obtained metadata for.
-# Other videos that have failed can likely be excluded without filters
-
-# Update the Subscription
-# Update the subscription's videos metadata
-# Apply filtering to that collection of videos
-
-#### ----
-#### ----
-#### ----
-#### ----
-
-
 async def sync_and_update_videos():
     async for session in get_session():
         try:
             subscriptions_to_update = await get_subscriptions_to_update(session)
 
-            # region LOGGING
             if len(subscriptions_to_update) < 1:
                 logger.info("No subscriptions to update")
             else:
                 logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
-            # endregion
-
-            updated_videos: list[Video] = []
 
             for subscription in subscriptions_to_update:
                 await sync_subscription(subscription.id, session)
                 videos_to_obtain_metadata = await get_videos_for_subscription(
                     subscription.id, VideoStatus.PENDING, session
                 )
-                # region LOGGING
-                if not pending_videos:
-                    logger.info("No pending videos")
-                    return
-                else:
-                    logger.info("Found %s pending videos", len(pending_videos))
-                #  endregion
-                updated_videos = [
-                    update_video_status(video, metadata_result)
-                    for video, metadata_result in await get_metadata(videos_to_obtain_metadata)
-                ]
 
-            # updated_video_subscriptions = {video.subscription_id for video in pending_videos}
-            # logger.warning("Acted on videos from subscription ids: %s", updated_video_subscriptions)
-            await update_plex_library(session)
+                video_urls = [video.link for video in videos_to_obtain_metadata]
+                metadata_results = await get_metadata(video_urls)
+
+                updated_videos: list[Video] = []
+                for video, metadata_result in zip(videos_to_obtain_metadata, metadata_results):
+                    updated_video = update_video_status(video, metadata_result)
+                    updated_videos.append(updated_video)
+
+                # Apply filters to the updated videos
+                filtered_videos = apply_filters(updated_videos, subscription.filters)
+
+                for video in filtered_videos:
+                    if video.status == VideoStatus.OBTAINED_METADATA:
+                        video.status = VideoStatus.PENDING_DOWNLOAD
+                    session.add(video)
+
+                subscription.last_updated = datetime.now(utc)
+                session.add(subscription)
 
             await session.commit()
 
@@ -188,6 +157,8 @@ async def sync_and_update_videos():
 
 
 async def update_plex_library(session: AsyncSession) -> None:
+    # updated_video_subscriptions = {video.subscription_id for video in pending_videos}
+    # logger.warning("Acted on videos from subscription ids: %s", updated_video_subscriptions)
     result = await session.execute(select(Plex).limit(1))
     plex: Plex | None = result.scalars().first()
 

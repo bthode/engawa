@@ -4,12 +4,38 @@ import pytest
 
 from app.filters import (
     apply_filters,
-    create_description_contains_filter,
-    create_duration_filter,
-    create_published_after_filter,
-    create_title_contains_filter,
 )
-from app.models.subscription import Video, VideoStatus
+from app.models.subscription import (
+    ComparisonOperator,
+    Filter,
+    FilterType,
+    Video,
+    VideoStatus,
+)
+
+
+def create_duration_filter(operator: str, threshold: int) -> Filter:
+    return Filter(
+        filter_type=FilterType.DURATION,
+        comparison_operator=ComparisonOperator(operator),
+        threshold_seconds=threshold,
+    )
+
+
+def create_title_contains_filter(keyword: str) -> Filter:
+    return Filter(filter_type=FilterType.TITLE_CONTAINS, keyword=keyword)
+
+
+def create_description_contains_filter(keyword: str) -> Filter:
+    return Filter(filter_type=FilterType.DESCRIPTION_CONTAINS, keyword=keyword)
+
+
+def create_published_after_filter(operator: str, date: datetime) -> Filter:
+    return Filter(
+        filter_type=FilterType.PUBLISHED_AFTER,
+        comparison_operator=ComparisonOperator(operator),
+        threshold_date=date,
+    )
 
 
 @pytest.fixture
@@ -18,7 +44,7 @@ def sample_videos() -> list[Video]:
         Video(
             id=1,
             subscription_id=1,
-            status=VideoStatus.PENDING,
+            status=VideoStatus.OBTAINED_METADATA,
             link="http://example.com/video1",
             author="Author 1",
             title="Learn Python Programming",
@@ -31,7 +57,7 @@ def sample_videos() -> list[Video]:
         Video(
             id=2,
             subscription_id=1,
-            status=VideoStatus.COMPLETE,
+            status=VideoStatus.OBTAINED_METADATA,
             link="http://example.com/video2",
             author="Author 2",
             title="TypeScript in 10 minutes",
@@ -44,7 +70,7 @@ def sample_videos() -> list[Video]:
         Video(
             id=3,
             subscription_id=2,
-            status=VideoStatus.PENDING,
+            status=VideoStatus.OBTAINED_METADATA,
             link="http://example.com/video3",
             author="Author 3",
             title="Machine Learning Basics",
@@ -58,48 +84,58 @@ def sample_videos() -> list[Video]:
 
 
 def test_duration_filter(sample_videos: list[Video]) -> None:
-    duration_filter = create_duration_filter("gt", 1800)
+    duration_filter = create_duration_filter("lt", 1801)
     filtered = apply_filters(sample_videos, [duration_filter])
-    assert len(filtered) == 1
-    assert filtered[0].title == "Learn Python Programming"
+    assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 1
+    assert [v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD][0].title == "Learn Python Programming"
+    assert len([v for v in filtered if v.status == VideoStatus.FILTERED]) == 2
 
 
 def test_title_contains_filter(sample_videos: list[Video]) -> None:
     title_filter = create_title_contains_filter("Python")
     filtered = apply_filters(sample_videos, [title_filter])
-    assert len(filtered) == 1
-    assert filtered[0].title == "Learn Python Programming"
+    assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 1
+    assert [v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD][0].title == "Learn Python Programming"
+    assert len([v for v in filtered if v.status == VideoStatus.FILTERED]) == 2
 
 
 def test_description_contains_filter(sample_videos: list[Video]) -> None:
     desc_filter = create_description_contains_filter("machine learning")
     filtered = apply_filters(sample_videos, [desc_filter])
-    assert len(filtered) == 1
-    assert filtered[0].title == "Machine Learning Basics"
+    assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 1
+    assert [v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD][0].title == "Machine Learning Basics"
+    assert len([v for v in filtered if v.status == VideoStatus.FILTERED]) == 2
 
 
 def test_published_after_filter(sample_videos: list[Video]) -> None:
     date_filter = create_published_after_filter("gt", datetime(2023, 2, 1))
     filtered = apply_filters(sample_videos, [date_filter])
-    assert len(filtered) == 2
-    assert [v.title for v in filtered] == ["TypeScript in 10 minutes", "Machine Learning Basics"]
+    assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 2
+    assert [v.title for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD] == [
+        "TypeScript in 10 minutes",
+        "Machine Learning Basics",
+    ]
+    assert len([v for v in filtered if v.status == VideoStatus.FILTERED]) == 1
 
 
 def test_multiple_filters(sample_videos: list[Video]) -> None:
-    duration_filter = create_duration_filter("lt", 1800)
+    duration_filter = create_duration_filter("gt", 1800)
     title_filter = create_title_contains_filter("TypeScript")
     filtered = apply_filters(sample_videos, [duration_filter, title_filter])
-    assert len(filtered) == 1
-    assert filtered[0].title == "TypeScript in 10 minutes"
+    assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 1
+    assert [v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD][0].title == "TypeScript in 10 minutes"
+    assert len([v for v in filtered if v.status == VideoStatus.FILTERED]) == 2
 
 
 def test_no_matching_filters(sample_videos: list[Video]) -> None:
     non_existent_filter = create_title_contains_filter("Rust")
     filtered = apply_filters(sample_videos, [non_existent_filter])
-    assert len(filtered) == 0
+    assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 0
+    assert len([v for v in filtered if v.status == VideoStatus.FILTERED]) == 3
 
 
 def test_all_matching_filters(sample_videos: list[Video]) -> None:
-    all_match_filter = create_duration_filter("gt", 0)
+    all_match_filter = create_duration_filter("lt", 0)
     filtered = apply_filters(sample_videos, [all_match_filter])
-    assert len(filtered) == len(sample_videos)
+    assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == len(sample_videos)
+    assert len([v for v in filtered if v.status == VideoStatus.FILTERED]) == 0

@@ -51,6 +51,7 @@ class VideoStatus(StrEnum):
     OBTAINING_METADATA = "Obtaining Metadata"
     OBTAINED_METADATA = "Obtained Metadata"
     DOWNLOADING = "Downloading"
+    PENDING_DOWNLOAD = "Pending Download"
     FAILED = "Failed"
     DELETED = "Deleted"
     COMPLETE = "Complete"
@@ -135,7 +136,7 @@ class Filter(SQLModel, table=True):
     def _compare_duration(self, duration: int | None) -> bool:
         if duration is None or self.threshold_seconds is None or self.comparison_operator is None:
             return False
-        return self._compare(
+        return not self._compare(
             timedelta(seconds=duration), self.comparison_operator, timedelta(seconds=self.threshold_seconds)
         )
 
