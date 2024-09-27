@@ -50,6 +50,7 @@ class DirectoryBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     title: str
     uuid: str
+    key: int
 
 
 class Directory(DirectoryBase, table=True):

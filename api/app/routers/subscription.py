@@ -97,7 +97,6 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
     results: list[Video] = youtube.fetch_videos_from_rss_feed(subscription.rss_feed_url)
     for video in results:
         existing_video = await session.execute(select(Video).where(Video.video_id == video.video_id))
-        #  TODO: Should we use a hash to check if the video data has changed?
         if not existing_video.scalars().first():
             new_video = Video(
                 title=video.title,
@@ -122,6 +121,6 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
 @router.get("/subscription/{subscription_id}/videos", response_model=list[Video])
 async def get_subscription_videos(subscription_id: int, session: AsyncSession = Depends(get_session)) -> list[Video]:
     result = await session.execute(  # type:ignore
-        select(Video).where(Video.subscription_id == subscription_id).order_by(desc(Video.published))
+        select(Video).where(Video.subscription_id == subscription_id).order_by(desc(Video.published))  # type:ignore
     )
-    return result.scalars().all()
+    return result.scalars().all()  # type:ignore

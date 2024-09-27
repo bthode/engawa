@@ -67,6 +67,7 @@ class Thumbnail(SQLModel, table=True):
     height: str
 
 
+#  TODO: Any reason to add a hash?
 class Video(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     author: str

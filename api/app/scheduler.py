@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import cast
 
+import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import utc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import or_, select
 
 from app.database.session import get_session
+from app.models.plex import Plex
 from app.models.subscription import Subscription, Video, VideoStatus
 from app.routers.subscription import sync_subscription
 from app.yt_downloader import (
@@ -24,24 +26,23 @@ logger = logging.getLogger(__name__)
 SUBSCRIPTION_UPDATE_INTERVAL = 15
 
 
-def update_video_status(video: Video, video_results: MetadataResult) -> None:
+def update_video_status(video: Video, video_results: MetadataResult) -> Video:
     match video_results:
         case MetadataSuccess():
-            video.thumbnail_url = video_results.metadata.thumbnail_url
-            video.duration = video_results.metadata.duration_in_seconds
-            video.status = VideoStatus.OBTAINED_METADATA
+            return Video(
+                **video.model_dump(),
+                thumbnail_url=video_results.metadata.thumbnail_url,
+                duration=video_results.metadata.duration_in_seconds,
+                status=VideoStatus.OBTAINED_METADATA,
+            )
         case MetadataError(error_type=MetadataErrorType.LIVE_EVENT_NOT_STARTED | MetadataErrorType.VIDEO_UNAVAILABLE):
-            video.status = VideoStatus.EXCLUDED
+            return Video(**video.model_dump(), status=VideoStatus.EXCLUDED)
         case MetadataError(error_type=MetadataErrorType.COPYRIGHT_STRIKE):
-            video.status = VideoStatus.COPYRIGHT_STRIKE
+            return Video(**video.model_dump(), status=VideoStatus.COPYRIGHT_STRIKE)
         case MetadataError(error_type=MetadataErrorType.UNKNOWN_ERROR):
-            video.status = VideoStatus.FAILED
-            video.retry_count += 1
-            logger.error("Error processing video %s: %s", video.id, video_results.message)
+            return Video(**video.model_dump(), status=VideoStatus.FAILED, retry_count=video.retry_count + 1)
         case _:
-            video.status = VideoStatus.FAILED
-            video.retry_count += 1
-            logger.error("Unexpected result type: %s", type(video_results))
+            return Video(**video.model_dump(), status=VideoStatus.FAILED, retry_count=video.retry_count + 1)
 
 
 async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscription]:
@@ -53,7 +54,7 @@ async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscriptio
             await session.execute(  # pyright: ignore
                 select(Subscription).where(  # pyright: ignore
                     or_(
-                        Subscription.last_updated == None,  # type:ignore
+                        Subscription.last_updated == None,  # pylint: disable=singleton-comparison  noqa: E712
                         Subscription.last_updated < fifteen_minutes_ago,  # pyright: ignore
                     )
                 )
@@ -104,7 +105,7 @@ async def get_videos_for_subscription(subscription_id: int, status: VideoStatus,
     return results
 
 
-async def handle_subscription(subscription: Subscription, session: AsyncSession) -> None:
+async def handle_videos_for_subscription(subscription: Subscription, session: AsyncSession) -> None:
     await sync_subscription(subscription.id, session)
     videos_with_metadata = await get_videos_for_subscription(subscription.id, VideoStatus.OBTAINED_METADATA, session)
     video_urls = [video.link for video in videos_with_metadata]
@@ -114,7 +115,23 @@ async def handle_subscription(subscription: Subscription, session: AsyncSession)
         video = video_dict[video_results.url]
         update_video_status(video, video_results)
 
-# TODO: We need to act on all vidoes that we've obtained metadata for. 
+
+# TODO: Only use as a reference for how we might refactor
+async def handle_subscription2(subscription_id: int, session: AsyncSession) -> None:
+    await sync_subscription(subscription_id, session)
+    videos_with_metadata = await get_videos_for_subscription(subscription_id, VideoStatus.PENDING, session)
+
+    updated_videos = [
+        update_video_status(video, metadata_result)
+        for video, metadata_result in await get_metadata(videos_with_metadata)
+    ]
+
+    for video in updated_videos:
+        session.add(video)
+    await session.commit()
+
+
+# TODO: We need to act on all vidoes that we've obtained metadata for.
 # Other videos that have failed can likely be excluded without filters
 
 # Update the Subscription
@@ -132,44 +149,65 @@ async def sync_and_update_videos():
         try:
             subscriptions_to_update = await get_subscriptions_to_update(session)
 
+            # region LOGGING
             if len(subscriptions_to_update) < 1:
                 logger.info("No subscriptions to update")
             else:
                 logger.info("Found %d subscriptions to update", len(subscriptions_to_update))
+            # endregion
+
+            updated_videos: list[Video] = []
 
             for subscription in subscriptions_to_update:
                 await sync_subscription(subscription.id, session)
+                videos_to_obtain_metadata = await get_videos_for_subscription(
+                    subscription.id, VideoStatus.PENDING, session
+                )
+                # region LOGGING
+                if not pending_videos:
+                    logger.info("No pending videos")
+                    return
+                else:
+                    logger.info("Found %s pending videos", len(pending_videos))
+                #  endregion
+                updated_videos = [
+                    update_video_status(video, metadata_result)
+                    for video, metadata_result in await get_metadata(videos_to_obtain_metadata)
+                ]
 
-            pending_videos = await get_pending_videos(session)
-
-            if not pending_videos:
-                logger.info("No pending videos")
-                return
-            else:
-                logger.info("Found %s pending videos", len(pending_videos))
-
-            video_urls = [video.link for video in pending_videos]
-            metadata_results: list[MetadataResult] = await get_metadata(video_urls)
-
-            video_dict: dict[str, Video] = {video.link: video for video in pending_videos}
-
-            for video_results in metadata_results:
-                video = video_dict[video_results.url]
-                update_video_status(video, video_results)
+            # updated_video_subscriptions = {video.subscription_id for video in pending_videos}
+            # logger.warning("Acted on videos from subscription ids: %s", updated_video_subscriptions)
+            await update_plex_library(session)
 
             await session.commit()
-
-            # TODO: Need to update the plex library here once we have the library mapped.
-            # Or at least once the videos have been finished downloading.
-            # http://$PLEX_SERVER:32400/library/sections/$library_key/refresh?X-Plex-Token=$PLEX_TOKEN
-            updated_video_subscriptions = {video.subscription_id for video in pending_videos}
-            logger.warning("Acted on videos from subscription ids: %s", updated_video_subscriptions)
-            # TODO: Find set of libraries based on subscription
 
         except Exception as e:
             logger.error("Error in sync_and_update_videos: %s", str(e))
             await session.rollback()
             raise
+
+
+async def update_plex_library(session: AsyncSession) -> None:
+    result = await session.execute(select(Plex).limit(1))
+    plex: Plex | None = result.scalars().first()
+
+    if plex is None:
+        logging.warning("Not refreshing Plex library as no Plex server is added.")
+        return
+
+    plex_endpoint = plex.endpoint
+    plex_token = plex.token
+    plex_port = plex.port
+    library_key = "15"  # TODO: Obtain the real library keys
+
+    url = f"http://{plex_endpoint}:{plex_port}/library/sections/{library_key}/refresh?X-Plex-Token={plex_token}"
+
+    async with httpx.AsyncClient() as http_session:
+        response = await http_session.get(url)
+        if response.status_code == 200:
+            logging.info("Updated Plex Library")
+        else:
+            raise ValueError(f"Failed to fetch data from {url}, status code: {response.status_code}")
 
 
 scheduler = AsyncIOScheduler(timezone=utc)
