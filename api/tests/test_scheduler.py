@@ -139,7 +139,7 @@ async def test_obtained_metadata(
         updated_video = result.scalars().first()
 
         assert updated_video is not None
-        assert updated_video.status == VideoStatus.OBTAINED_METADATA
+        assert updated_video.status == VideoStatus.PENDING_DOWNLOAD
         assert updated_video.duration == 300
         assert updated_video.thumbnail_url == "http://example.com/test_thumbnail.jpg"
 

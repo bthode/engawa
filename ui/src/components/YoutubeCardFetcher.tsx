@@ -98,9 +98,13 @@ const YoutubeCardFetcher: React.FC = () => {
   }, []);
 
   const isDimmed = (publishedDate: string) => {
-    const videoDate = parseISO(publishedDate);
-    const mark = marks.find((mark) => mark.value === selectedDateRange);
-    return mark && differenceInDays(new Date(), videoDate) > mark.days;
+    if (selectedDateRange === 0) return false;
+    else if (selectedDateRange === Infinity) return true;
+    else {
+      const videoDate = parseISO(publishedDate);
+      const mark = marks.find((mark) => mark.value === selectedDateRange);
+      return mark && differenceInDays(new Date(), videoDate) > mark.days;
+    }
   };
 
   const rowContent = (_index: number, video: VideoItem) => (

@@ -49,6 +49,7 @@ async def create_plex_server(plex: PlexServerCreate, session: Annotated[AsyncSes
             Directory(
                 title=directory.title,
                 uuid=directory.uuid,
+                key=directory.key,
                 locations=[
                     (await session.execute(select(Location).where(Location.path == location.path))).scalars().first()
                     or Location(path=location.path)
