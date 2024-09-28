@@ -1,10 +1,12 @@
 import base64
+import logging
 from datetime import datetime
 from typing import Annotated
 
 import requests
 from fastapi import APIRouter, Depends
 from pytz import utc
+from result import Err, Ok
 from sqlalchemy import desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -22,6 +24,9 @@ from app.models.subscription import (
 from app.routers import youtube
 
 router = APIRouter()
+
+
+logger = logging.getLogger(__name__)
 
 
 @router.get("/subscription", response_model=list[Subscription])
@@ -94,28 +99,32 @@ async def delete_subscription(subscription_id: int, session: Annotated[AsyncSess
 @router.post("/subscription/{subscription_id}/sync", response_model=Subscription)
 async def sync_subscription(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
     subscription = await get_subscription(subscription_id, session)
-    results: list[Video] = youtube.fetch_videos_from_rss_feed(subscription.rss_feed_url)
-    for video in results:
-        existing_video = await session.execute(select(Video).where(Video.video_id == video.video_id))
-        if not existing_video.scalars().first():
-            new_video = Video(
-                title=video.title,
-                published=video.published,
-                video_id=video.video_id,
-                link=video.link,
-                author=video.author,
-                thumbnail_url=video.thumbnail_url,
-                description=video.description,
-                subscription_id=subscription.id,
-                status=VideoStatus.PENDING,
-            )
-            session.add(new_video)
+    result: youtube.RssFeedResult = youtube.fetch_videos_from_rss_feed(subscription.rss_feed_url)
+    match result:
+        case Ok(videos):
+            for video in videos:
+                existing_video = await session.execute(select(Video).where(Video.video_id == video.video_id))
+                if not existing_video.scalars().first():
+                    new_video = Video(
+                        title=video.title,
+                        published=video.published,
+                        video_id=video.video_id,
+                        link=video.link,
+                        author=video.author,
+                        thumbnail_url=video.thumbnail_url,
+                        description=video.description,
+                        subscription_id=subscription.id,
+                        status=VideoStatus.PENDING,
+                    )
+                    session.add(new_video)
 
+            subscription.last_updated = datetime.now(utc)  # TODO: Stop updating this in error cases
             session.add(subscription)
-        subscription.last_updated = datetime.now(utc)
-
-    await session.commit()
-    return {"message": "subscription synced"}
+            await session.commit()
+            return {"message": "subscription synced"}
+        case Err(error):
+            logger.error("Error syncing subscription %d: %s - %s", subscription_id, error.error_type, error.message)
+            return {"message": f"Error syncing subscription: {error.error_type}"}
 
 
 @router.get("/subscription/{subscription_id}/videos", response_model=list[Video])

@@ -8,11 +8,11 @@ from app.models.subscription import (
 
 
 def apply_filters(videos: list[Video], filters: list[Filter]) -> list[Video]:
-    filter_callables: list[Callable[[Video], bool]] = [f.to_callable() for f in filters]
+    filter_predicates: list[Callable[[Video], bool]] = [f.to_callable() for f in filters]
 
     for video in videos:
         if video.status == VideoStatus.OBTAINED_METADATA:
-            if all(f(video) for f in filter_callables):
+            if all(f(video) for f in filter_predicates):
                 video.status = VideoStatus.PENDING_DOWNLOAD
             else:
                 video.status = VideoStatus.FILTERED

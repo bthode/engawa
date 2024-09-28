@@ -1,10 +1,12 @@
 import logging
 from collections.abc import Callable
 from datetime import datetime
+from enum import Enum
 
 import requests
 from bs4 import BeautifulSoup, Tag
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from result import Err, Ok, Result
 
 from app.config import TIMEOUT_IN_SECONDS
 from app.models.subscription import ChannelInfo, Video, VideoStatus
@@ -13,6 +15,22 @@ router = APIRouter()
 
 
 logger = logging.getLogger(__name__)
+
+
+class RssFeedErrorType(Enum):
+    NETWORK_ERROR = "Network Error"
+    PARSING_ERROR = "Parsing Error"
+    EMPTY_FEED = "Empty Feed"
+    UNKNOWN_ERROR = "Unknown Error"
+
+
+class RssFeedError:
+    def __init__(self, error_type: RssFeedErrorType, message: str):
+        self.error_type = error_type
+        self.message = message
+
+
+RssFeedResult = Result[list[Video], RssFeedError]
 
 
 @staticmethod
@@ -57,45 +75,38 @@ def fetch_rss_feed(channel_url: str, request_maker: Callable[[str, int], str] = 
 
 
 @staticmethod
-def fetch_videos_from_rss_feed(rss_url: str, request_maker: Callable[[str, int], str] = make_request) -> list[Video]:
+def fetch_videos_from_rss_feed(rss_url: str, request_maker: Callable[[str, int], str] = make_request) -> RssFeedResult:
     try:
         response_content = request_maker(rss_url, TIMEOUT_IN_SECONDS)
         soup = BeautifulSoup(response_content, "xml")
 
         entries = soup.find_all("entry")
+        if not entries:
+            # TODO: Is this actually an error case?
+            return Err(RssFeedError(RssFeedErrorType.EMPTY_FEED, "No entries found in the RSS feed"))
+
         videos: list[Video] = []
         for entry in entries:
-            try:
-                title = entry.find("title")
-                published = entry.find("published")
-                video_id = entry.find("yt:videoId")
-                author = entry.find("author").find("name")
-                link = entry.find("link").get("href")
-                thumbnail_link: str = entry.find("media:thumbnail").get("url")
-                description_tag = entry.find("media:group").find("media:description")
-                description: str = description_tag.text if description_tag else ""
+            video = Video(
+                title=entry.find("title").text,
+                published=datetime.fromisoformat(entry.find("published").text),
+                video_id=entry.find("yt:videoId").text,
+                link=entry.find("link").get("href"),
+                author=entry.find("author").find("name").text,
+                description=(
+                    entry.find("media:group").find("media:description").text if entry.find("media:group") else ""
+                ),
+                thumbnail_url=entry.find("media:thumbnail").get("url"),
+                status=VideoStatus.PENDING,
+            )
+            videos.append(video)
 
-                if title and published and video_id and author:
-                    video: Video = Video(
-                        title=title.text,
-                        published=datetime.fromisoformat(published.text),
-                        video_id=video_id.text,
-                        link=link,
-                        author=author.text,
-                        description=description,
-                        thumbnail_url=thumbnail_link,
-                        status=VideoStatus.PENDING,
-                    )
-                    videos.append(video)
-                else:
-                    logging.warning("Skipping entry due to missing required fields: %s", entry)
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error("Error processing entry: %s", e)
+        return Ok(videos)
 
-        return videos
+    except requests.RequestException as e:
+        return Err(RssFeedError(RssFeedErrorType.NETWORK_ERROR, str(e)))
     except Exception as e:  # pylint: disable=broad-except
-        logging.error("Error fetching videos from RSS feed: %s", e)
-        return []
+        return Err(RssFeedError(RssFeedErrorType.UNKNOWN_ERROR, str(e)))
 
 
 @router.post("/get_channel_info")
@@ -105,4 +116,16 @@ async def fetch_rss_route(channel_url: str) -> ChannelInfo:
 
 @router.get("/get_videos")
 async def get_videos_route(rss_url: str) -> list[Video]:
-    return fetch_videos_from_rss_feed(rss_url)
+    result: RssFeedResult = fetch_videos_from_rss_feed(rss_url)
+
+    match result:
+        case Ok(videos):
+            return videos
+        case Err(error):
+            error_message = f"Failed to fetch videos: {error.error_type.value} - {error.message}"
+            if error.error_type == RssFeedErrorType.NETWORK_ERROR:
+                raise HTTPException(status_code=503, detail=error_message)
+            elif error.error_type == RssFeedErrorType.EMPTY_FEED:
+                return []
+            else:
+                raise HTTPException(status_code=500, detail=error_message)
