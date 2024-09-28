@@ -1,6 +1,6 @@
 from typing import Annotated
 
-import requests
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -37,7 +37,7 @@ async def create_plex_server(plex: PlexServerCreate, session: Annotated[AsyncSes
         raise HTTPException(status_code=400, detail="Plex server already exists")
 
     endpoint = build_path(plex.endpoint, plex.port, plex.token)
-    plex_response: requests.models.Response = requests.get(endpoint, timeout=15)
+    plex_response = httpx.get(endpoint, timeout=15)
     plex_data = parse_plex_data(plex_response.text)
 
     plex_server = Plex(
