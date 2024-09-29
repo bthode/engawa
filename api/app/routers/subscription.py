@@ -96,6 +96,11 @@ async def delete_subscription(subscription_id: int, session: Annotated[AsyncSess
     return {"message": "subscription deleted"}
 
 
+# TODO: Refactor this method to it's own method. We need to know if there was an error in the calling
+# sync_and_update_videos # Ideally we don't invoke any fastapi methods via sync_and_update_videos. Shouldn't really
+# be a fastapi method at all.
+# We might need to be able to invoke this logic when we do the multipart subscription add flow,
+# but it should invoke another seperate method.
 @router.post("/subscription/{subscription_id}/sync", response_model=Subscription)
 async def sync_subscription(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
     subscription = await get_subscription(subscription_id, session)
@@ -118,8 +123,9 @@ async def sync_subscription(subscription_id: int, session: Annotated[AsyncSessio
                     )
                     session.add(new_video)
 
-            subscription.last_updated = datetime.now(utc)  # TODO: Stop updating this in error cases
+            subscription.last_updated = datetime.now(utc)
             session.add(subscription)
+
             await session.commit()
             return {"message": "subscription synced"}
         case Err(error):

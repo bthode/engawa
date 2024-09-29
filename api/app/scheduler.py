@@ -44,7 +44,7 @@ def update_video_status(video: Video, video_results: MetadataResult) -> Video:
         case _:
             updates = {"status": VideoStatus.FAILED, "retry_count": video.retry_count + 1}
 
-    for key, value in updates.items():
+    for key, value in updates.items():  # Assgining already set fields, so can't use dict unpacking.
         setattr(video, key, value)
     return video
 
@@ -57,7 +57,7 @@ async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscriptio
         (
             await session.execute(  # pyright: ignore
                 select(Subscription)
-                .options(selectinload(Subscription.filters))
+                .options(selectinload(Subscription.filters))  # type:ignore
                 .where(  # pyright: ignore
                     or_(
                         Subscription.last_updated == None,  # noqa: E711 pylint: disable=singleton-comparison
