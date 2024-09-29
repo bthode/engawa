@@ -30,10 +30,10 @@ from app.yt_downloader import (
 
 
 async def mock_success_video_data(
-    uploaded: datetime = datetime.now(),  # Default to current datetime
-    duration: int = 3600,  # Default to 1 hour
-    title: str = "Default Title",  # Default title
-    description: str = "Default Description",  # Default description
+    uploaded: datetime = datetime.now(),
+    duration: int = 3600,  # 1 hour
+    title: str = "Default Title",
+    description: str = "Default Description",
 ) -> list[MetadataSuccess]:
     return [
         MetadataSuccess(
@@ -321,7 +321,7 @@ async def test_get_subscriptions_to_update(
             last_updated=datetime.now(utc),
         )
 
-        old_subscription = Subscription(
+        stale_subscription = Subscription(
             title="Old Subscription",
             url="http://example.com/old",
             rss_feed_url="http://example.com/old/rss",
@@ -332,7 +332,7 @@ async def test_get_subscriptions_to_update(
 
         session.add(new_subscription)
         session.add(recent_subscription)
-        session.add(old_subscription)
+        session.add(stale_subscription)
         await session.commit()
 
         subscriptions_to_update = await get_subscriptions_to_update(session)

@@ -84,6 +84,7 @@ async def delete_all_subscriptions():
 async def get_subscription(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
     result = await session.execute(select(Subscription).where(Subscription.id == subscription_id))
     subscription = result.scalars().first()
+    assert subscription is not None and isinstance(subscription, Subscription)
     return subscription
 
 
@@ -100,7 +101,7 @@ async def delete_subscription(subscription_id: int, session: Annotated[AsyncSess
 # sync_and_update_videos # Ideally we don't invoke any fastapi methods via sync_and_update_videos. Shouldn't really
 # be a fastapi method at all.
 # We might need to be able to invoke this logic when we do the multipart subscription add flow,
-# but it should invoke another seperate method.
+# but it should invoke another separate method.
 @router.post("/subscription/{subscription_id}/sync", response_model=Subscription)
 async def sync_subscription(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
     subscription = await get_subscription(subscription_id, session)

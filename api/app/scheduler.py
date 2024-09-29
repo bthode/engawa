@@ -44,7 +44,7 @@ def update_video_status(video: Video, video_results: MetadataResult) -> Video:
         case _:
             updates = {"status": VideoStatus.FAILED, "retry_count": video.retry_count + 1}
 
-    for key, value in updates.items():  # Assgining already set fields, so can't use dict unpacking.
+    for key, value in updates.items():
         setattr(video, key, value)
     return video
 
@@ -137,12 +137,9 @@ async def sync_and_update_videos():
                     updated_video = update_video_status(video, metadata_result)
                     updated_videos.append(updated_video)
 
-                # Apply filters to the updated videos
-                filtered_videos = apply_filters(updated_videos, subscription.filters)
+                apply_filters(updated_videos, subscription.filters)
 
-                for video in filtered_videos:
-                    if video.status == VideoStatus.OBTAINED_METADATA:
-                        video.status = VideoStatus.PENDING_DOWNLOAD
+                for video in updated_videos:
                     session.add(video)
 
                 subscription.last_updated = datetime.now(utc)
