@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from src.engawa.plex.parsing import MediaContainer, parse_plex_data
+from app.plex_parsing import MediaContainer, parse_plex_data
 
 
 class TestMediaContainerParsing(unittest.TestCase):
