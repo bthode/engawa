@@ -14,11 +14,16 @@ from app.models.plex import (
     PlexPublicWithDirectories,
     PlexServerCreate,
 )
-from app.utils import build_path
-from engawa.plex.parsing import parse_plex_data
+from app.plex_parsing import parse_plex_data
 
 router = APIRouter()
 
+# TODO: Missing tests for this file
+
+@staticmethod
+def build_path(host: str, port: str, token: str) -> str:
+    token_prefix = "?X-Plex-Token="
+    return f"http://{host}:{port}/library/sections{token_prefix}{token}"
 
 @router.get("/plex_server", response_model=list[PlexPublicWithDirectories])
 async def plex_server(session: Annotated[AsyncSession, Depends(get_session)]):
