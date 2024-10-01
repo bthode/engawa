@@ -148,20 +148,17 @@ class Filter(SQLModel, table=True):
     def _compare(
         self, value: timedelta | datetime, operator: ComparisonOperator, threshold: timedelta | datetime
     ) -> bool:
-        # if isinstance(value, (datetime, timedelta)) and isinstance(threshold, (datetime, timedelta)):
-        #     if isinstance(value, datetime) and isinstance(threshold, timedelta):
-        #         threshold = datetime.now() + threshold
-        #     elif isinstance(value, timedelta) and isinstance(threshold, datetime):
-        #         value = datetime.now() + value
+        if type(value) is not type(threshold):
+            raise TypeError("The types of 'value' and 'threshold' must be the same.")
         if operator == ComparisonOperator.LT:
-            return value < threshold
+            return value < threshold  # type: ignore
         elif operator == ComparisonOperator.LE:
-            return value <= threshold
+            return value <= threshold  # type: ignore
         elif operator == ComparisonOperator.EQ:
             return value == threshold
         elif operator == ComparisonOperator.NE:
             return value != threshold
         elif operator == ComparisonOperator.GE:
-            return value >= threshold
+            return value >= threshold  # type: ignore
         elif operator == ComparisonOperator.GT:
-            return value > threshold
+            return value > threshold  # type: ignore
