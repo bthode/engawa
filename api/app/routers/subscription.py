@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Annotated
 
 import requests
+from cachetools import TTLCache, cached
 from fastapi import APIRouter, Depends
 from pytz import utc
 from result import Err, Ok
@@ -140,3 +141,23 @@ async def get_subscription_videos(subscription_id: int, session: AsyncSession = 
         select(Video).where(Video.subscription_id == subscription_id).order_by(desc(Video.published))  # type:ignore
     )
     return result.scalars().all()  # type:ignore
+
+
+@cached(cache=TTLCache(maxsize=1024, ttl=600))
+async def get_subscription_data(channel_url: str) -> Subscription:
+    channel_info = youtube.fetch_rss_feed(channel_url)
+    image_link = channel_info.image_link
+
+    image_data = None
+    if image_link:
+        response = requests.get(image_link, timeout=5)
+        if response.status_code == 200:
+            image_data = base64.b64encode(response.content).decode("utf-8")
+
+    return Subscription(
+        title=channel_info.title,
+        url=channel_url,
+        rss_feed_url=channel_info.rss_link,
+        description=channel_info.description,
+        image=image_data if image_data is not None else None,
+    )

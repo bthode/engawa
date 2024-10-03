@@ -129,6 +129,8 @@ async def sync_and_update_videos():
                     subscription.id, VideoStatus.PENDING, session
                 )
 
+                # TODO: Need to retry failed videos
+
                 video_urls = [video.link for video in videos_to_obtain_metadata]
                 metadata_results = await get_metadata(video_urls)
 
