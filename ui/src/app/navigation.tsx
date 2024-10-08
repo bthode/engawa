@@ -33,6 +33,7 @@ const navigationItems = [
   { text: 'Plex Server', icon: <MovieIcon />, href: '/plex' },
   { text: 'Settings', icon: <SettingsIcon />, href: '/settings' },
   { text: 'Card', icon: <SettingsIcon />, href: '/card' },
+  { text: 'sub2', icon: <SettingsIcon />, href: '/sub2' },
 ];
 
 const Layout = ({ children, onSubscriptionsClick }: LayoutProps) => {
