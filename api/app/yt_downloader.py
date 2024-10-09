@@ -76,6 +76,15 @@ async def download_content(video_url: str, output_path: str) -> str:
     return f"{output_path}/example_video.mp4"
 
 
+def obtain_channel_data(channel_url: str) -> dict[str, Any]:
+    ydl_opts: dict[str, Any] = {
+        "logger": logger,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
+        channel_info = ydl.extract_info(channel_url, download=False, process=True)  # pyright: ignore
+    return channel_info
+
+
 def extract_info(url: str) -> MetadataResult:
     try:
         ydl_opts: dict[str, Any] = {

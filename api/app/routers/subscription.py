@@ -4,7 +4,9 @@ from datetime import datetime
 from typing import Annotated
 
 import requests
-from cachetools import TTLCache, cached
+
+# from aiocache import cached
+# from aiocache.serializers import PickleSerializer
 from fastapi import APIRouter, Depends
 from pytz import utc
 from result import Err, Ok
@@ -23,6 +25,7 @@ from app.models.subscription import (
     VideoStatus,
 )
 from app.routers import youtube
+from app.yt_downloader import obtain_channel_data
 
 router = APIRouter()
 
@@ -81,8 +84,21 @@ async def delete_all_subscriptions():
     return {"message": "subscriptions deleted"}
 
 
+@router.get("/youtube_channel_info")
+async def get_youtube_channel_info(channel_url: str):
+    data = obtain_channel_data(channel_url)
+    return data
+
+
+# @cached(
+#     ttl=300,
+#     key_builder=lambda *args, **kwargs: f"subscription:{kwargs['subscription_id']}",  # type:ignore
+#     serializer=PickleSerializer(),
+# )
 @router.get("/subscription/{subscription_id}", response_model=Subscription)
-async def get_subscription(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
+async def get_subscription(
+    subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]
+) -> Subscription:
     result = await session.execute(select(Subscription).where(Subscription.id == subscription_id))
     subscription = result.scalars().first()
     assert subscription is not None and isinstance(subscription, Subscription)
@@ -105,7 +121,8 @@ async def delete_subscription(subscription_id: int, session: Annotated[AsyncSess
 # but it should invoke another separate method.
 @router.post("/subscription/{subscription_id}/sync", response_model=Subscription)
 async def sync_subscription(subscription_id: int, session: Annotated[AsyncSession, Depends(get_session)]):
-    subscription = await get_subscription(subscription_id, session)
+    subscription: Subscription = await get_subscription(subscription_id, session)  # type:ignore
+    assert subscription is not None and isinstance(subscription, Subscription)
     result: youtube.RssFeedResult = youtube.fetch_videos_from_rss_feed(subscription.rss_feed_url)
     match result:
         case Ok(videos):
@@ -143,7 +160,6 @@ async def get_subscription_videos(subscription_id: int, session: AsyncSession = 
     return result.scalars().all()  # type:ignore
 
 
-@cached(cache=TTLCache(maxsize=1024, ttl=600))
 async def get_subscription_data(channel_url: str) -> Subscription:
     channel_info = youtube.fetch_rss_feed(channel_url)
     image_link = channel_info.image_link
