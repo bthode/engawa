@@ -1,5 +1,6 @@
-import { Margin } from '@mui/icons-material';
 import React, { useState } from 'react';
+import SubscriptionVideos from './subvids';
+import { Video } from '@/types/videoTypes';
 
 interface Subscription {
   error_state: string | null;
@@ -15,20 +16,20 @@ interface Subscription {
 
 export type VideoStatus = 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded' | 'Filtered';
 
-interface Video {
-  description: string;
-  id: number;
-  published: string;
-  status: VideoStatus;
-  thumbnail_url: string;
-  video_id: string;
-  duration: number | null;
-  author: string;
-  link: string;
-  retry_count: number;
-  subscription_id: number;
-  title: string;
-}
+// interface Video {
+//   description: string;
+//   id: number;
+//   published: string;
+//   status: VideoStatus;
+//   thumbnail_url: string;
+//   video_id: string;
+//   duration: number | null;
+//   author: string;
+//   link: string;
+//   retry_count: number;
+//   subscription_id: number;
+//   title: string;
+// }
 
 type Operand = '>' | '<' | '>=' | '<=' | '==' | '!=' | 'contains' | '!contains';
 
@@ -38,7 +39,7 @@ interface Filter {
   value: string | number | Date;
 }
 
-type RetentionPolicyType = 'NoPolicy' | 'LastNEntities' | 'EntitiesSince';
+type RetentionPolicyType = 'RetainAll' | 'LastNEntities' | 'EntitiesSince';
 
 interface RetentionPolicy {
   type: RetentionPolicyType;
@@ -67,7 +68,7 @@ const mockVideos: Video[] = [
     status: 'Failed',
     thumbnail_url: 'https://i4.ytimg.com/vi/sU_1XforOp0/hqdefault.jpg',
     video_id: 'sU_1XforOp0',
-    duration: 13489,
+    duration: 5489,
     author: 'E;R',
     link: 'https://www.youtube.com/watch?v=sU_1XforOp0',
     retry_count: 1,
@@ -82,7 +83,7 @@ const mockVideos: Video[] = [
     status: 'Filtered',
     thumbnail_url: 'https://i.ytimg.com/vi/bilJ8RcS7Pc/maxresdefault.jpg',
     video_id: 'bilJ8RcS7Pc',
-    duration: 13489,
+    duration: 1489,
     author: 'E;R',
     link: 'https://www.youtube.com/watch?v=bilJ8RcS7Pc',
     retry_count: 1,
@@ -97,6 +98,14 @@ const formatDuration = (seconds: number | null): string => {
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = seconds % 60;
   return `${hours}h ${minutes}m ${remainingSeconds}s`;
+};
+
+const fetchVideosWithDelay = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(mockVideos);
+    }, 10 * 1000);
+  });
 };
 
 const MultiStepForm: React.FC = () => {
@@ -195,41 +204,25 @@ const MultiStepForm: React.FC = () => {
     </div>
   );
 
-  const videoDisplayStep = () => (
-    <div className="flex flex-col items-center">
-      <table className="w-full max-w-4xl mb-4">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Published</th>
-            <th>Duration</th>
-          </tr>
-        </thead>
-        <tbody>
-          {videos.map((video) => (
-            <tr key={video.id}>
-              <td>{video.title}</td>
-              <td>{video.author}</td>
-              <td>{new Date(video.published).toLocaleDateString()}</td>
-              <td>{formatDuration(video.duration)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="flex justify-between w-full max-w-md">
-        <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-gray-800 rounded">
-          Back
-        </button>
-        <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-gray-800 rounded">
-          Cancel
-        </button>
-        <button onClick={handleNext} className="px-4 py-2 bg-blue-500 text-gray-800 rounded">
-          Next
-        </button>
+  const videoDisplayStep = (videos: Video[], subscriptionTitle: string) => (
+    <div>
+      <SubscriptionVideos videos={videos} subscriptionTitle={subscriptionTitle} />
+      <div className="flex-col items-center">
+        <div className="flex justify-between w-full max-w-md">
+          <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-gray-800 rounded">
+            Back
+          </button>
+          <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-gray-800 rounded">
+            Cancel
+          </button>
+          <button onClick={handleNext} className="px-4 py-2 bg-blue-500 text-gray-800 rounded">
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
+
   const filterStep = () => (
     <div className="flex flex-col items-center">
       <h2 className="text-xl font-bold mb-4">Filters</h2>
@@ -320,9 +313,9 @@ const MultiStepForm: React.FC = () => {
         onChange={(e) => setRetentionPolicy({ type: e.target.value as RetentionPolicyType, value: undefined })}
         className="mb-4 p-2 border rounded text-gray-800 bg-white"
       >
-        <option value="NoPolicy">No Policy</option>
-        <option value="LastNEntities">Last N Entities</option>
-        <option value="EntitiesSince">Entities Since</option>
+        <option value="RetainAll">Keep All Videos</option>
+        <option value="LastNEntities">Keep Last N Videos</option>
+        <option value="EntitiesSince">Keep Videos Since...</option>
       </select>
       {retentionPolicy.type === 'LastNEntities' && (
         <input
@@ -366,29 +359,29 @@ const MultiStepForm: React.FC = () => {
 
   const renderSummary = () => (
     <div className="flex flex-col items-center">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">Summary</h2>
-      <p className="text-gray-800">
+      <h2 className="text-xl font-bold mb-4 text-white">Summary</h2>
+      <p className="text-white">
         <strong>Channel:</strong> {subscription?.title}
       </p>
-      <p className="text-gray-800">
+      <p className="text-white">
         <strong>URL:</strong> {youtubeLink}
       </p>
-      <h3 className="text-lg font-bold mt-4 mb-2 text-gray-800">Filters:</h3>
-      <ul className="list-disc pl-5 text-gray-800">
+      <h3 className="text-lg font-bold mt-4 mb-2 text-white">Filters:</h3>
+      <ul className="list-disc pl-5 text-white">
         {filters.map((filter, index) => (
           <li key={index}>{`${filter.criteria} ${filter.operand} ${filter.value}`}</li>
         ))}
       </ul>
-      <h3 className="text-lg font-bold mt-4 mb-2 text-gray-800">Retention Policy:</h3>
-      <p className="text-gray-800">{`${retentionPolicy.type}${retentionPolicy.value ? `: ${retentionPolicy.value}` : ''}`}</p>
+      <h3 className="text-lg font-bold mt-4 mb-2 text-white">Retention Policy:</h3>
+      <p className="text-white">{`${retentionPolicy.type}${retentionPolicy.value ? `: ${retentionPolicy.value}` : ''}`}</p>
       <div className="flex justify-between w-full max-w-md mt-4">
-        <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-gray-800 rounded">
+        <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-white rounded">
           Back
         </button>
-        <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-gray-800 rounded">
+        <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-white rounded">
           Cancel
         </button>
-        <button onClick={handleSave} className="px-4 py-2 bg-green-500 text-gray-800 rounded">
+        <button onClick={handleSave} className="px-4 py-2 bg-green-500 text-white rounded">
           Save
         </button>
       </div>
@@ -400,7 +393,8 @@ const MultiStepForm: React.FC = () => {
       <h1 className="text-3xl font-bold mb-8 text-center">Add Subscription</h1>
       {currentStage === 1 && linkInputStep()}
       {currentStage === 2 && subscriptioinInfoStep()}
-      {currentStage === 3 && videoDisplayStep()}
+      {currentStage === 3 && videoDisplayStep(mockVideos, 'Title')}
+      {/* TODO: Obtain subscription title */}
       {currentStage === 4 && filterStep()}
       {currentStage === 5 && retentionPolicyStep()}
       {currentStage === 6 && renderSummary()}
