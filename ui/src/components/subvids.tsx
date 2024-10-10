@@ -1,13 +1,13 @@
-import React from 'react';
-import { Typography, Box, Paper } from '@mui/material';
+import { Video, VideoStatus } from '@/types/videoTypes';
+import { Box, Paper, Typography } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import { TableVirtuoso, TableComponents } from 'react-virtuoso';
-import { Video, VideoStatus } from '@/types/videoTypes';
+import React from 'react';
+import { TableComponents, TableVirtuoso } from 'react-virtuoso';
 
 interface SubscriptionVideosProps {
   videos: Video[];
@@ -38,16 +38,6 @@ const columns: ColumnData[] = [
     width: 100,
     label: 'Published',
     dataKey: 'published',
-  },
-  {
-    width: 100,
-    label: 'Link',
-    dataKey: 'link',
-  },
-  {
-    width: 100,
-    label: 'Status',
-    dataKey: 'status',
   },
   {
     width: 100,

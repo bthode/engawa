@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import SubscriptionVideos from './subvids';
 import { Video } from '@/types/videoTypes';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
+import React, { useEffect, useState } from 'react';
+import FilterStep, { Filter } from './FilterStep';
+import SubscriptionVideos from './subvids';
 
 interface Subscription {
   error_state: string | null;
@@ -16,29 +20,6 @@ interface Subscription {
 
 export type VideoStatus = 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded' | 'Filtered';
 
-// interface Video {
-//   description: string;
-//   id: number;
-//   published: string;
-//   status: VideoStatus;
-//   thumbnail_url: string;
-//   video_id: string;
-//   duration: number | null;
-//   author: string;
-//   link: string;
-//   retry_count: number;
-//   subscription_id: number;
-//   title: string;
-// }
-
-type Operand = '>' | '<' | '>=' | '<=' | '==' | '!=' | 'contains' | '!contains';
-
-interface Filter {
-  criteria: 'Duration' | 'Title' | 'Published' | 'Description';
-  operand: Operand;
-  value: string | number | Date;
-}
-
 type RetentionPolicyType = 'RetainAll' | 'LastNEntities' | 'EntitiesSince';
 
 interface RetentionPolicy {
@@ -46,7 +27,17 @@ interface RetentionPolicy {
   value?: number | Date | string;
 }
 
-const mockSubscription: Subscription = {
+enum FormStage {
+  LinkInput = 1,
+  SubscriptionInfo,
+  PendingVideos,
+  VideoDisplay,
+  Filter,
+  RetentionPolicy,
+  Summary,
+}
+
+export const mockSubscription: Subscription = {
   error_state: null,
   id: 1,
   last_updated: '2024-10-08T14:01:37.745954',
@@ -71,7 +62,6 @@ const mockVideos: Video[] = [
     duration: 5489,
     author: 'E;R',
     link: 'https://www.youtube.com/watch?v=sU_1XforOp0',
-    retry_count: 1,
     subscription_id: 1,
     title: "Bustin' (G)hos(ts)",
   },
@@ -86,26 +76,58 @@ const mockVideos: Video[] = [
     duration: 1489,
     author: 'E;R',
     link: 'https://www.youtube.com/watch?v=bilJ8RcS7Pc',
-    retry_count: 1,
     subscription_id: 1,
     title: 'Jurass Is Mine 3',
   },
 ];
 
-const formatDuration = (seconds: number | null): string => {
-  if (seconds === null) return 'N/A';
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-  return `${hours}h ${minutes}m ${remainingSeconds}s`;
+export const obtainSubscription = (url: string): Promise<Subscription> => {
+  console.log(url);
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(mockSubscription);
+    }, 500);
+  });
 };
 
-const fetchVideosWithDelay = () => {
+export const fetchVideoData = (url: string): Promise<Video[]> => {
+  console.log(url);
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(mockVideos);
-    }, 10 * 1000);
+    }, 6 * 1000);
   });
+};
+
+export const transformLastNVideoHelperText = (value: number | Date | string): string => {
+  switch (typeof value) {
+    case 'number':
+      return `Retain the last ${value} videos`;
+    case 'object':
+      if (value instanceof Date) {
+        return `Retain videos until ${value.toDateString()}`;
+      }
+      return 'N/A';
+    case 'string':
+      return 'N/A';
+  }
+};
+
+export const transformRetentionPolicy = (retentionPolicy: RetentionPolicy): string => {
+  switch (retentionPolicy.type) {
+    case 'RetainAll':
+      return 'Retain all videos';
+    case 'LastNEntities':
+      return retentionPolicy.value !== undefined
+        ? transformLastNVideoHelperText(retentionPolicy.value)
+        : 'Invalid value';
+    case 'EntitiesSince':
+      return retentionPolicy.value !== undefined
+        ? transformLastNVideoHelperText(retentionPolicy.value)
+        : 'Invalid value';
+    default:
+      return 'N/A';
+  }
 };
 
 const MultiStepForm: React.FC = () => {
@@ -114,15 +136,38 @@ const MultiStepForm: React.FC = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [filters, setFilters] = useState<Filter[]>([]);
-  const [retentionPolicy, setRetentionPolicy] = useState<RetentionPolicy>({ type: 'NoPolicy' });
+  const [retentionPolicy, setRetentionPolicy] = useState<RetentionPolicy>({ type: 'RetainAll' });
+
+  useEffect(() => {
+    if (currentStage === FormStage.SubscriptionInfo && subscription) {
+      fetchVideoData(subscription.url)
+        .then((fetchedVideos) => {
+          setVideos(fetchedVideos);
+        })
+        .catch((error) => {
+          console.error('Error fetching videos:', error);
+          // Handle error (e.g., show error message to user)
+        });
+    } else if (currentStage === FormStage.PendingVideos && videos.length > 0) {
+      setCurrentStage(FormStage.VideoDisplay);
+    }
+  }, [currentStage, subscription, videos]);
 
   const handleNext = () => {
-    if (currentStage === 1) {
-      setSubscription(mockSubscription);
-    } else if (currentStage === 2) {
-      setVideos(mockVideos);
+    if (currentStage === FormStage.LinkInput) {
+      obtainSubscription(youtubeLink).then((fetchedSubscription) => {
+        setSubscription(fetchedSubscription);
+        setCurrentStage(FormStage.SubscriptionInfo);
+      });
+    } else if (currentStage === FormStage.SubscriptionInfo) {
+      if (videos.length > 0) {
+        setCurrentStage(FormStage.VideoDisplay);
+      } else {
+        setCurrentStage(FormStage.PendingVideos);
+      }
+    } else {
+      setCurrentStage((prev) => prev + 1);
     }
-    setCurrentStage((prev) => prev + 1);
   };
 
   const handleBack = () => {
@@ -130,12 +175,12 @@ const MultiStepForm: React.FC = () => {
   };
 
   const handleCancel = () => {
-    setCurrentStage(1);
+    setCurrentStage(FormStage.LinkInput);
     setYoutubeLink('');
     setSubscription(null);
     setVideos([]);
     setFilters([]);
-    setRetentionPolicy({ type: 'NoPolicy' });
+    setRetentionPolicy({ type: 'RetainAll' });
     // Here you would typically call a function to close the form
   };
 
@@ -167,18 +212,10 @@ const MultiStepForm: React.FC = () => {
         placeholder="Enter YouTube channel link"
         className="w-full max-w-md p-2 mb-4 border rounded"
       />
-      <div className="flex justify-between w-full max-w-md">
-        <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-gray-800 rounded">
-          Cancel
-        </button>
-        <button onClick={handleNext} className="px-4 py-2 bg-blue-500 text-gray-800 rounded">
-          Next
-        </button>
-      </div>
     </div>
   );
 
-  const subscriptioinInfoStep = () => (
+  const subscriptionInfoStep = () => (
     <div className="flex flex-col items-center">
       {subscription && (
         <>
@@ -190,120 +227,95 @@ const MultiStepForm: React.FC = () => {
           </a>
         </>
       )}
-      <div className="flex justify-between w-full max-w-md">
-        <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-gray-800 rounded">
-          Back
-        </button>
-        <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-gray-800 rounded">
-          Cancel
-        </button>
-        <button onClick={handleNext} className="px-4 py-2 bg-blue-500 text-gray-800 rounded">
-          Next
-        </button>
-      </div>
     </div>
+  );
+
+  const loadingStep = () => (
+    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="50vh">
+      <CircularProgress size={60} />
+      <Typography variant="h6" style={{ marginTop: '20px' }}>
+        Loading video data...
+      </Typography>
+    </Box>
   );
 
   const videoDisplayStep = (videos: Video[], subscriptionTitle: string) => (
     <div>
       <SubscriptionVideos videos={videos} subscriptionTitle={subscriptionTitle} />
-      <div className="flex-col items-center">
-        <div className="flex justify-between w-full max-w-md">
-          <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-gray-800 rounded">
-            Back
-          </button>
-          <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-gray-800 rounded">
-            Cancel
-          </button>
-          <button onClick={handleNext} className="px-4 py-2 bg-blue-500 text-gray-800 rounded">
-            Next
-          </button>
-        </div>
-      </div>
+      <div className="flex-col items-center"></div>
     </div>
   );
 
-  const filterStep = () => (
-    <div className="flex flex-col items-center">
-      <h2 className="text-xl font-bold mb-4">Filters</h2>
-      {filters.map((filter, index) => (
-        <div key={index} className="flex mb-2">
-          <select
-            value={filter.criteria}
-            onChange={(e) => {
-              const newFilters = [...filters];
-              newFilters[index].criteria = e.target.value as 'Duration' | 'Title' | 'Published' | 'Description';
-              setFilters(newFilters);
-            }}
-            className="mr-2 p-2 border rounded bg-white text-gray-800"
-          >
-            <option value="Duration">Duration</option>
-            <option value="Title">Title</option>
-            <option value="Published">Published</option>
-            <option value="Description">Description</option>
-          </select>
-          <select
-            value={filter.operand}
-            onChange={(e) => {
-              const newFilters = [...filters];
-              newFilters[index].operand = e.target.value as Operand;
-              setFilters(newFilters);
-            }}
-            className="mr-2 p-2 border rounded bg-white text-gray-800"
-          >
-            {filter.criteria === 'Title' || filter.criteria === 'Description' ? (
-              <>
-                <option value="contains">contains</option>
-                <option value="!contains">does not contain</option>
-              </>
-            ) : (
-              <>
-                <option value=">">{'>'}</option>
-                <option value="<">{'<'}</option>
-                <option value=">=">{'≥'}</option>
-                <option value="<=">{'≤'}</option>
-                <option value="==">{'='}</option>
-                <option value="!=">{'≠'}</option>
-              </>
-            )}
-          </select>
-          <input
-            type={filter.criteria === 'Published' ? 'date' : 'text'}
-            value={filter.value as string}
-            onChange={(e) => {
-              const newFilters = [...filters];
-              newFilters[index].value = e.target.value;
-              setFilters(newFilters);
-            }}
-            className="mr-2 p-2 border rounded text-gray-800 bg-white"
-          />
-          <button
-            onClick={() => setFilters(filters.filter((_, i) => i !== index))}
-            className="px-2 py-1 bg-red-500 text-white rounded"
-          >
-            Remove
-          </button>
-        </div>
-      ))}
-      <button
-        onClick={() => setFilters([...filters, { criteria: 'Title', operand: 'contains', value: '' }])}
-        className="mb-4 px-4 py-2 bg-green-500 text-white rounded"
-      >
-        Add Filter
-      </button>
-      <div className="flex justify-between w-full max-w-md">
-        <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-white rounded">
-          Back
-        </button>
-        <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-white rounded">
-          Cancel
-        </button>
-        <button onClick={handleNext} className="px-4 py-2 bg-blue-500 text-white rounded">
-          Next
-        </button>
-      </div>
-    </div>
-  );
+  // const filterStep = () => (
+  //   <div className="flex flex-col items-center">
+  //     <h2 className="text-xl font-bold mb-4">Filters</h2>
+  //     {filters.map((filter, index) => (
+  //       <div key={index} className="flex mb-2 rounded">
+  //         <select
+  //           value={filter.criteria}
+  //           onChange={(e) => {
+  //             const newFilters = [...filters];
+  //             newFilters[index].criteria = e.target.value as 'Duration' | 'Title' | 'Published' | 'Description';
+  //             setFilters(newFilters);
+  //           }}
+  //           className="mr-2 p-2 border rounded bg-white text-gray-800"
+  //         >
+  //           <option value="Duration">Duration</option>
+  //           <option value="Title">Title</option>
+  //           <option value="Published">Published</option>
+  //           <option value="Description">Description</option>
+  //         </select>
+  //         <select
+  //           value={filter.operand}
+  //           onChange={(e) => {
+  //             const newFilters = [...filters];
+  //             newFilters[index].operand = e.target.value as Operand;
+  //             setFilters(newFilters);
+  //           }}
+  //           className="mr-2 p-2 border rounded bg-white text-gray-800"
+  //         >
+  //           {filter.criteria === 'Title' || filter.criteria === 'Description' ? (
+  //             <>
+  //               <option value="contains">contains</option>
+  //               <option value="!contains">does not contain</option>
+  //             </>
+  //           ) : (
+  //             <>
+  //               <option value=">">{'>'}</option>
+  //               <option value="<">{'<'}</option>
+  //               <option value=">=">{'≥'}</option>
+  //               <option value="<=">{'≤'}</option>
+  //               <option value="==">{'='}</option>
+  //               <option value="!=">{'≠'}</option>
+  //             </>
+  //           )}
+  //         </select>
+  //         <input
+  //           type={filter.criteria === 'Published' ? 'date' : 'text'}
+  //           value={filter.value as string}
+  //           onChange={(e) => {
+  //             const newFilters = [...filters];
+  //             newFilters[index].value = e.target.value;
+  //             setFilters(newFilters);
+  //           }}
+  //           className="mr-2 p-2 border rounded text-gray-800 bg-white"
+  //         />
+  //         <button
+  //           onClick={() => setFilters(filters.filter((_, i) => i !== index))}
+  //           className="px-2 py-1 bg-red-500 text-white rounded"
+  //         >
+  //           Remove
+  //         </button>
+  //       </div>
+  //     ))}
+  //     <button
+  //       onClick={() => setFilters([...filters, { criteria: 'Title', operand: 'contains', value: '' }])}
+  //       className="mb-4 px-4 py-2 bg-green-500 text-white rounded"
+  //     >
+  //       Add Filter
+  //     </button>
+  //   </div>
+  // );
 
   const retentionPolicyStep = () => (
     <div className="flex flex-col items-center">
@@ -343,17 +355,6 @@ const MultiStepForm: React.FC = () => {
           />
         </div>
       )}
-      <div className="flex justify-between w-full max-w-md">
-        <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-gray-800 rounded">
-          Back
-        </button>
-        <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-gray-800 rounded">
-          Cancel
-        </button>
-        <button onClick={handleNext} className="px-4 py-2 bg-blue-500 text-white rounded">
-          Next
-        </button>
-      </div>
     </div>
   );
 
@@ -373,31 +374,39 @@ const MultiStepForm: React.FC = () => {
         ))}
       </ul>
       <h3 className="text-lg font-bold mt-4 mb-2 text-white">Retention Policy:</h3>
-      <p className="text-white">{`${retentionPolicy.type}${retentionPolicy.value ? `: ${retentionPolicy.value}` : ''}`}</p>
-      <div className="flex justify-between w-full max-w-md mt-4">
-        <button onClick={handleBack} className="px-4 py-2 bg-gray-500 text-white rounded">
-          Back
-        </button>
-        <button onClick={handleCancel} className="px-4 py-2 bg-red-500 text-white rounded">
-          Cancel
-        </button>
-        <button onClick={handleSave} className="px-4 py-2 bg-green-500 text-white rounded">
-          Save
-        </button>
-      </div>
+      <p className="text-white">{`${retentionPolicy.type}${retentionPolicy.value ? `: ${transformLastNVideoHelperText(retentionPolicy.value)}` : ''}`}</p>
     </div>
   );
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 snap-center">
       <h1 className="text-3xl font-bold mb-8 text-center">Add Subscription</h1>
-      {currentStage === 1 && linkInputStep()}
-      {currentStage === 2 && subscriptioinInfoStep()}
-      {currentStage === 3 && videoDisplayStep(mockVideos, 'Title')}
-      {/* TODO: Obtain subscription title */}
-      {currentStage === 4 && filterStep()}
-      {currentStage === 5 && retentionPolicyStep()}
-      {currentStage === 6 && renderSummary()}
+      {currentStage === FormStage.LinkInput && linkInputStep()}
+      {currentStage === FormStage.SubscriptionInfo && subscriptionInfoStep()}
+      {currentStage === FormStage.PendingVideos && loadingStep()}
+      {currentStage === FormStage.VideoDisplay && videoDisplayStep(videos, subscription?.title || '')}
+      {currentStage === FormStage.Filter && <FilterStep filters={filters} setFilters={setFilters} />}{' '}
+      {currentStage === FormStage.RetentionPolicy && retentionPolicyStep()}
+      {currentStage === FormStage.Summary && renderSummary()}
+      {currentStage !== FormStage.PendingVideos && (
+        <div className="flex justify-center space-x-4 mt-10">
+          <button onClick={handleBack} className="bg-blue-500 text-white py-2 px-4 rounded-full hover:bg-blue-600">
+            Back
+          </button>
+          <button onClick={handleCancel} className="bg-red-500 text-white py-2 px-4 rounded-full hover:bg-red-600">
+            Cancel
+          </button>
+          {currentStage === FormStage.Summary ? (
+            <button onClick={handleSave} className="bg-blue-500 text-white py-2 px-4 rounded-full hover:bg-blue-600">
+              Save
+            </button>
+          ) : (
+            <button onClick={handleNext} className="bg-green-500 text-white py-2 px-4 rounded-full hover:bg-green-600">
+              Next
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

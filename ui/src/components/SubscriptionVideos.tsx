@@ -1,15 +1,16 @@
-import React from 'react';
-import { Typography, Box, Paper, Button } from '@mui/material';
+import { Subscription } from '@/types/subscriptionTypes';
+import { Video, VideoStatus } from '@/types/videoTypes';
+import { YouTube } from '@mui/icons-material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { Box, Button, Paper, Typography } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import { TableVirtuoso, TableComponents } from 'react-virtuoso';
-import { Video, VideoStatus } from '@/types/videoTypes';
-import { Subscription } from '@/types/subscriptionTypes';
+import React from 'react';
+import { TableComponents, TableVirtuoso } from 'react-virtuoso';
 
 interface SubscriptionVideosProps {
   subscriptionId: string;
@@ -98,7 +99,7 @@ function rowContent(_index: number, row: Video) {
         <TableCell key={column.dataKey} align={column.numeric || false ? 'right' : 'left'}>
           {column.dataKey === 'link' ? (
             <a href={row[column.dataKey]} target="_blank" rel="noopener noreferrer">
-              Watch on YouTube
+              <YouTube />
             </a>
           ) : column.dataKey === 'published' ? (
             new Date(row[column.dataKey]).toLocaleDateString()
