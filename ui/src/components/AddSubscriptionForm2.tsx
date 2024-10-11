@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
+import LocationPicker from './DownloadToPicker';
 import FilterStep, { Filter } from './FilterStep';
 import SubscriptionVideos from './subvids';
 
@@ -113,7 +114,7 @@ export const transformLastNVideoHelperText = (value: number | Date | string): st
   }
 };
 
-export const transformRetentionPolicy = (retentionPolicy: RetentionPolicy): string => {
+export const produceRetentionPolicySummaryText = (retentionPolicy: RetentionPolicy): string => {
   switch (retentionPolicy.type) {
     case 'RetainAll':
       return 'Retain all videos';
@@ -196,7 +197,7 @@ const MultiStepForm: React.FC = () => {
         }),
       });
       if (!response.ok) throw new Error('Failed to save subscription');
-      handleCancel(); // Close the form after saving
+      handleCancel();
     } catch (error) {
       console.error('Error saving subscription:', error);
       // Handle error (e.g., show error message to user)
@@ -234,7 +235,7 @@ const MultiStepForm: React.FC = () => {
     <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="50vh">
       <CircularProgress size={60} />
       <Typography variant="h6" style={{ marginTop: '20px' }}>
-        Loading video data...
+        Fetching video metadata...
       </Typography>
     </Box>
   );
@@ -245,77 +246,6 @@ const MultiStepForm: React.FC = () => {
       <div className="flex-col items-center"></div>
     </div>
   );
-
-  // const filterStep = () => (
-  //   <div className="flex flex-col items-center">
-  //     <h2 className="text-xl font-bold mb-4">Filters</h2>
-  //     {filters.map((filter, index) => (
-  //       <div key={index} className="flex mb-2 rounded">
-  //         <select
-  //           value={filter.criteria}
-  //           onChange={(e) => {
-  //             const newFilters = [...filters];
-  //             newFilters[index].criteria = e.target.value as 'Duration' | 'Title' | 'Published' | 'Description';
-  //             setFilters(newFilters);
-  //           }}
-  //           className="mr-2 p-2 border rounded bg-white text-gray-800"
-  //         >
-  //           <option value="Duration">Duration</option>
-  //           <option value="Title">Title</option>
-  //           <option value="Published">Published</option>
-  //           <option value="Description">Description</option>
-  //         </select>
-  //         <select
-  //           value={filter.operand}
-  //           onChange={(e) => {
-  //             const newFilters = [...filters];
-  //             newFilters[index].operand = e.target.value as Operand;
-  //             setFilters(newFilters);
-  //           }}
-  //           className="mr-2 p-2 border rounded bg-white text-gray-800"
-  //         >
-  //           {filter.criteria === 'Title' || filter.criteria === 'Description' ? (
-  //             <>
-  //               <option value="contains">contains</option>
-  //               <option value="!contains">does not contain</option>
-  //             </>
-  //           ) : (
-  //             <>
-  //               <option value=">">{'>'}</option>
-  //               <option value="<">{'<'}</option>
-  //               <option value=">=">{'≥'}</option>
-  //               <option value="<=">{'≤'}</option>
-  //               <option value="==">{'='}</option>
-  //               <option value="!=">{'≠'}</option>
-  //             </>
-  //           )}
-  //         </select>
-  //         <input
-  //           type={filter.criteria === 'Published' ? 'date' : 'text'}
-  //           value={filter.value as string}
-  //           onChange={(e) => {
-  //             const newFilters = [...filters];
-  //             newFilters[index].value = e.target.value;
-  //             setFilters(newFilters);
-  //           }}
-  //           className="mr-2 p-2 border rounded text-gray-800 bg-white"
-  //         />
-  //         <button
-  //           onClick={() => setFilters(filters.filter((_, i) => i !== index))}
-  //           className="px-2 py-1 bg-red-500 text-white rounded"
-  //         >
-  //           Remove
-  //         </button>
-  //       </div>
-  //     ))}
-  //     <button
-  //       onClick={() => setFilters([...filters, { criteria: 'Title', operand: 'contains', value: '' }])}
-  //       className="mb-4 px-4 py-2 bg-green-500 text-white rounded"
-  //     >
-  //       Add Filter
-  //     </button>
-  //   </div>
-  // );
 
   const retentionPolicyStep = () => (
     <div className="flex flex-col items-center">
@@ -387,6 +317,7 @@ const MultiStepForm: React.FC = () => {
       {currentStage === FormStage.VideoDisplay && videoDisplayStep(videos, subscription?.title || '')}
       {currentStage === FormStage.Filter && <FilterStep filters={filters} setFilters={setFilters} />}{' '}
       {currentStage === FormStage.RetentionPolicy && retentionPolicyStep()}
+      {currentStage === FormStage.RetentionPolicy && <LocationPicker />}
       {currentStage === FormStage.Summary && renderSummary()}
       {currentStage !== FormStage.PendingVideos && (
         <div className="flex justify-center space-x-4 mt-10">
