@@ -1,3 +1,4 @@
+import { Directory } from '@/types/plexTypes';
 import { Video } from '@/types/videoTypes';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -60,7 +61,7 @@ const mockVideos: Video[] = [
     status: 'Failed',
     thumbnail_url: 'https://i4.ytimg.com/vi/sU_1XforOp0/hqdefault.jpg',
     video_id: 'sU_1XforOp0',
-    duration: 5489,
+    duration: 600,
     author: 'E;R',
     link: 'https://www.youtube.com/watch?v=sU_1XforOp0',
     subscription_id: 1,
@@ -74,13 +75,226 @@ const mockVideos: Video[] = [
     status: 'Filtered',
     thumbnail_url: 'https://i.ytimg.com/vi/bilJ8RcS7Pc/maxresdefault.jpg',
     video_id: 'bilJ8RcS7Pc',
-    duration: 1489,
+    duration: 13489,
     author: 'E;R',
     link: 'https://www.youtube.com/watch?v=bilJ8RcS7Pc',
     subscription_id: 1,
     title: 'Jurass Is Mine 3',
   },
+  {
+    description:
+      'I love Netflix and the eerie, statuesque composure with which they can hold a thing against my temple. \n\nPurplE;R model by https://x.com/beams_n\n\nSocials: \nhttps://twitter.com/EsemicolonR\n\nSupport: \nKool Kids: https://www.youtube.com/channel/UC4BZtFgtCuHUt0p8J-XENiA/join\nhttps://www.patreon.com/esemicolonr\nhttps://paypal.me/esemicolonr?country...',
+    id: 1,
+    published: '2024-09-27T23:06:48',
+    status: 'Filtered',
+    thumbnail_url: 'https://i.ytimg.com/vi_webp/gxqTkgoRR-Y/maxresdefault.webp',
+    video_id: 'gxqTkgoRR-Y',
+    duration: 3565,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=gxqTkgoRR-Y',
+    subscription_id: 1,
+    title: 'Avatar: The Netflix Demake',
+  },
+  {
+    description:
+      '10 points from Brokenbuck.\n\nSocials: \nhttps://twitter.com/EsemicolonR\n\nSupport: \nMembE;R klub: https://bit.ly/48E2omy\nhttps://www.patreon.com/esemicolonr\nhttps://paypal.me/esemicolonr?country...\nETH: 0x6B63C144184B98BaEb3f11154d432e82FA558D50',
+    id: 2,
+    published: '2024-04-02T03:45:10',
+    status: 'Filtered',
+    thumbnail_url: 'https://i.ytimg.com/vi/zWv1JwAo48I/maxresdefault.jpg',
+    video_id: 'zWv1JwAo48I',
+    duration: 830,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=zWv1JwAo48I',
+    subscription_id: 1,
+    title: "The American Society of Magical N'augurs",
+  },
+  {
+    description: "Sorry, hopeful Zutarians. She's taken.",
+    id: 3,
+    published: '2024-03-04T21:58:59',
+    status: 'Filtered',
+    thumbnail_url:
+      'https://i.ytimg.com/vi/i5pwFcW-bOA/hqdefault.jpg?sqp=-oaymwEmCOADEOgC8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGHIgQyg7MA8=&rs=AOn4CLAuOHlYYu9uX7hjUmtK2RYZbaw6nQ',
+    video_id: 'i5pwFcW-bOA',
+    duration: 17,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=i5pwFcW-bOA',
+    subscription_id: 1,
+    title: 'Cave of Two Siblings',
+  },
+  {
+    description:
+      'Better late than nevE;R. \n\nSocials: \nhttps://twitter.com/EsemicolonR\n\nSupport: \nMembE;R klub: https://bit.ly/48E2omy\nhttps://www.patreon.com/esemicolonr\nhttps://paypal.me/esemicolonr?country...\nETH: 0x6B63C144184B98BaEb3f11154d432e82FA558D50',
+    id: 4,
+    published: '2024-01-31T17:36:02',
+    status: 'Filtered',
+    thumbnail_url: 'https://i.ytimg.com/vi_webp/q-8TkayFT34/maxresdefault.webp',
+    video_id: 'q-8TkayFT34',
+    duration: 898,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=q-8TkayFT34',
+    subscription_id: 1,
+    title: 'Avatar: The Last Airbender Trailer RE;daction',
+  },
+  {
+    description:
+      "It's a-here.  \n\nSocials: \nhttps://twitter.com/EsemicolonR\n\nSupport: \nMembE;R klub: https://bit.ly/48E2omy\nhttps://www.patreon.com/esemicolonr\nhttps://paypal.me/esemicolonr?country...\nETH: 0x6B63C144184B98BaEb3f11154d432e82FA558D50",
+    id: 5,
+    published: '2023-11-18T05:27:33',
+    status: 'Filtered',
+    thumbnail_url: 'https://i.ytimg.com/vi/Gy1PZkwxfkk/maxresdefault.jpg',
+    video_id: 'Gy1PZkwxfkk',
+    duration: 2128,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=Gy1PZkwxfkk',
+    subscription_id: 1,
+    title: 'TLoW: Book 3 - Well, I think Zaheer BLOWS (Part 5)',
+  },
+  {
+    description:
+      "I said vid drop. Not THE vid drop. I ain't doin nunna that.\n\nReal vid's like thirty minutes out, relax",
+    id: 6,
+    published: '2023-11-18T04:45:51',
+    status: 'Pending Download',
+    thumbnail_url: 'https://i.ytimg.com/vi/bGP0_-qI654/maxresdefault.jpg',
+    video_id: 'bGP0_-qI654',
+    duration: 17,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=bGP0_-qI654',
+    subscription_id: 1,
+    title: 'placeholdE;R meme',
+  },
+  {
+    description: '"Uncle, that\'s what ALL live-action adaptations are."',
+    id: 7,
+    published: '2023-11-11T00:18:51',
+    status: 'Pending Download',
+    thumbnail_url:
+      'https://i.ytimg.com/vi/XYKwiRPpsaI/sd2.jpg?sqp=-oaymwEoCIAFEOAD8quKqQMcGADwAQH4AbYIgAKAD4oCDAgAEAEYciBVKEMwDw==&rs=AOn4CLDCcAx2zvxvAXDbKl5P5CR24KQYQQ',
+    video_id: 'XYKwiRPpsaI',
+    duration: 31,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=XYKwiRPpsaI',
+    subscription_id: 1,
+    title: 'Iroh vs Netflix',
+  },
+  {
+    description: "I didn't forget.",
+    id: 8,
+    published: '2023-09-11T18:55:27',
+    status: 'Pending Download',
+    thumbnail_url:
+      'https://i.ytimg.com/vi/9mtdmdHgnkc/sd2.jpg?sqp=-oaymwEoCIAFEOAD8quKqQMcGADwAQH4AbYIgAKAD4oCDAgAEAEYZSBRKE4wDw==&rs=AOn4CLCXKJY7SbJs8m4noFwKQQLsUQFAeA',
+    video_id: '9mtdmdHgnkc',
+    duration: 18,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=9mtdmdHgnkc',
+    subscription_id: 1,
+    title: 'Leaf Me Alone',
+  },
+  {
+    description:
+      'You know what The Little Mermaid was always missing? Bird rap. \nAnd another 45 minutes.\n\nSocials: \nhttps://twitter.com/EsemicolonR\n\nSupport: \nLimited-time plush boi: https://www.makeship.com/products/shadower-plush\nhttps://www.patreon.com/esemicolonr\nhttps://paypal.me/esemicolonr?country...\nETH: 0x6B63C144184B98BaEb3f11154d432e82FA558D50\n\nTracks (by order of appearance): \nスプラッシュ・オーシャン - Amagi Brilliant Park OST\nチケットぜんぶ30円 - Amagi Brilliant Park OST',
+    id: 9,
+    published: '2023-06-04T19:57:40',
+    status: 'Pending Download',
+    thumbnail_url: 'https://i.ytimg.com/vi_webp/7tg8RkxOXeo/maxresdefault.webp',
+    video_id: '7tg8RkxOXeo',
+    duration: 695,
+    author: 'E;R',
+    link: 'https://www.youtube.com/watch?v=7tg8RkxOXeo',
+    subscription_id: 1,
+    title: 'THE LATER ME;RMAID',
+  },
 ];
+
+export const directories: Directory[] = [
+  {
+    id: 2,
+    title: 'Movies',
+    uuid: '364f2ba8-254e-492d-a8d5-8658cfc90161',
+    key: 3,
+    locations: [
+      {
+        id: 9,
+        path: '/media/Media/Video/Movies',
+      },
+    ],
+  },
+  {
+    id: 4,
+    title: 'Youtube',
+    uuid: '0c717b05-2deb-419c-a2d0-e68cceddea04',
+    key: 7,
+    locations: [
+      {
+        id: 9,
+        path: '/index/YouTube',
+      },
+      {
+        id: 10,
+        path: '/index/media',
+      },
+    ],
+  },
+  {
+    id: 7,
+    title: 'TV Shows',
+    uuid: '50b6e1e0-e274-41e4-ade8-1e71e95c9330',
+    key: 2,
+    locations: [
+      {
+        id: 9,
+        path: '/media/Media/Video/TV',
+      },
+    ],
+  },
+  {
+    id: 9,
+    title: 'Fitness',
+    uuid: 'e32e9e32-b24c-4867-b113-95fc3914e37e',
+    key: 16,
+    locations: [
+      {
+        id: 9,
+        path: '/index/YouTube/reference',
+      },
+    ],
+  },
+  {
+    id: 10,
+    title: 'Misc',
+    uuid: '2c507cdc-36d7-43cc-beee-efbee3644bbd',
+    key: 1,
+    locations: [
+      {
+        id: 9,
+        path: '/media/Media/Video/Video',
+      },
+    ],
+  },
+  {
+    id: 11,
+    title: 'Personal',
+    uuid: '3df269f4-004e-4c00-b522-4acb6c8dfe54',
+    key: 14,
+    locations: [
+      {
+        id: 9,
+        path: '/media/Media/Video/Personal',
+      },
+    ],
+  },
+];
+
+export const fetchPlexLocationData = (): Promise<Directory[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(directories);
+    }, 200);
+  });
+};
 
 export const obtainSubscription = (url: string): Promise<Subscription> => {
   console.log(url);
@@ -96,7 +310,7 @@ export const fetchVideoData = (url: string): Promise<Video[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(mockVideos);
-    }, 6 * 1000);
+    }, 1 * 1000);
   });
 };
 
@@ -138,6 +352,11 @@ const MultiStepForm: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [retentionPolicy, setRetentionPolicy] = useState<RetentionPolicy>({ type: 'RetainAll' });
+  const [directories, setDirectories] = React.useState<Directory[]>([]);
+  const initialValues = {
+    directoryId: 7,
+    locationId: 9,
+  };
 
   useEffect(() => {
     if (currentStage === FormStage.SubscriptionInfo && subscription) {
@@ -149,6 +368,9 @@ const MultiStepForm: React.FC = () => {
           console.error('Error fetching videos:', error);
           // Handle error (e.g., show error message to user)
         });
+      fetchPlexLocationData().then((fetchedDirectories) => {
+        setDirectories(fetchedDirectories);
+      });
     } else if (currentStage === FormStage.PendingVideos && videos.length > 0) {
       setCurrentStage(FormStage.VideoDisplay);
     }
@@ -204,6 +426,22 @@ const MultiStepForm: React.FC = () => {
     }
   };
 
+  const handleSavePlexLocationData = (selectedValues: { directoryId: number | ''; locationId: number | '' }) => {
+    console.log('Selected values:', selectedValues);
+    const updatedDirectories = directories.map((directory) => {
+      if (directory.id === selectedValues.directoryId) {
+        return {
+          ...directory,
+          locations: directory.locations.map((location) =>
+            location.id === selectedValues.locationId ? { ...location, selected: true } : location,
+          ),
+        };
+      }
+      return directory;
+    });
+    setDirectories(updatedDirectories);
+  };
+
   const linkInputStep = () => (
     <div className="flex flex-col items-center">
       <input
@@ -211,7 +449,7 @@ const MultiStepForm: React.FC = () => {
         value={youtubeLink}
         onChange={(e) => setYoutubeLink(e.target.value)}
         placeholder="Enter YouTube channel link"
-        className="w-full max-w-md p-2 mb-4 border rounded"
+        className="w-full max-w-md p-2 mb-4 border rounded text-black bg-white"
       />
     </div>
   );
@@ -305,6 +543,9 @@ const MultiStepForm: React.FC = () => {
       </ul>
       <h3 className="text-lg font-bold mt-4 mb-2 text-white">Retention Policy:</h3>
       <p className="text-white">{`${retentionPolicy.type}${retentionPolicy.value ? `: ${transformLastNVideoHelperText(retentionPolicy.value)}` : ''}`}</p>
+      <h3 className="text-lg font-bold mt-4 mb-2 text-white">Plex Location:</h3>
+      {/* TODO: We should re-lookup the library name + path to display to the user here. */}
+      <p className="text-white">{`${directories.find((dir) => dir.id === initialValues.directoryId)?.title || ''} > ${directories.find((dir) => dir.id === initialValues.locationId)?.title || ''}`}</p>
     </div>
   );
 
@@ -317,7 +558,9 @@ const MultiStepForm: React.FC = () => {
       {currentStage === FormStage.VideoDisplay && videoDisplayStep(videos, subscription?.title || '')}
       {currentStage === FormStage.Filter && <FilterStep filters={filters} setFilters={setFilters} />}{' '}
       {currentStage === FormStage.RetentionPolicy && retentionPolicyStep()}
-      {currentStage === FormStage.RetentionPolicy && <LocationPicker />}
+      {currentStage === FormStage.RetentionPolicy && (
+        <LocationPicker initialValues={initialValues} directories={directories} onSave={handleSavePlexLocationData} />
+      )}
       {currentStage === FormStage.Summary && renderSummary()}
       {currentStage !== FormStage.PendingVideos && (
         <div className="flex justify-center space-x-4 mt-10">

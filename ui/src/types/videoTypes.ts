@@ -1,4 +1,12 @@
-export type VideoStatus = 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded' | 'Filtered';
+export type VideoStatus =
+  | 'Pending'
+  | 'In Progress'
+  | 'Failed'
+  | 'Deleted'
+  | 'Complete'
+  | 'Excluded'
+  | 'Filtered'
+  | 'Pending Download';
 
 export interface Video {
   description: string;
