@@ -1,7 +1,9 @@
-import { Directory } from '@/types/plexTypes';
+import { Directory, SaveToProps } from '@/types/plexTypes';
 import { Video } from '@/types/videoTypes';
+import { List, ListItem, ListItemText, Paper } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import LocationPicker from './DownloadToPicker';
@@ -353,10 +355,10 @@ const MultiStepForm: React.FC = () => {
   const [filters, setFilters] = useState<Filter[]>([]);
   const [retentionPolicy, setRetentionPolicy] = useState<RetentionPolicy>({ type: 'RetainAll' });
   const [directories, setDirectories] = React.useState<Directory[]>([]);
-  const initialValues = {
-    directoryId: 7,
-    locationId: 9,
-  };
+  const [saveToProps, setSaveToProps] = useState<SaveToProps>({
+    directoryId: -1,
+    locationId: -1,
+  });
 
   useEffect(() => {
     if (currentStage === FormStage.SubscriptionInfo && subscription) {
@@ -416,6 +418,7 @@ const MultiStepForm: React.FC = () => {
           url: youtubeLink,
           filters,
           retentionPolicy,
+          saveToProps,
         }),
       });
       if (!response.ok) throw new Error('Failed to save subscription');
@@ -424,22 +427,6 @@ const MultiStepForm: React.FC = () => {
       console.error('Error saving subscription:', error);
       // Handle error (e.g., show error message to user)
     }
-  };
-
-  const handleSavePlexLocationData = (selectedValues: { directoryId: number | ''; locationId: number | '' }) => {
-    console.log('Selected values:', selectedValues);
-    const updatedDirectories = directories.map((directory) => {
-      if (directory.id === selectedValues.directoryId) {
-        return {
-          ...directory,
-          locations: directory.locations.map((location) =>
-            location.id === selectedValues.locationId ? { ...location, selected: true } : location,
-          ),
-        };
-      }
-      return directory;
-    });
-    setDirectories(updatedDirectories);
   };
 
   const linkInputStep = () => (
@@ -526,28 +513,77 @@ const MultiStepForm: React.FC = () => {
     </div>
   );
 
-  const renderSummary = () => (
-    <div className="flex flex-col items-center">
-      <h2 className="text-xl font-bold mb-4 text-white">Summary</h2>
-      <p className="text-white">
-        <strong>Channel:</strong> {subscription?.title}
-      </p>
-      <p className="text-white">
-        <strong>URL:</strong> {youtubeLink}
-      </p>
-      <h3 className="text-lg font-bold mt-4 mb-2 text-white">Filters:</h3>
-      <ul className="list-disc pl-5 text-white">
-        {filters.map((filter, index) => (
-          <li key={index}>{`${filter.criteria} ${filter.operand} ${filter.value}`}</li>
-        ))}
-      </ul>
-      <h3 className="text-lg font-bold mt-4 mb-2 text-white">Retention Policy:</h3>
-      <p className="text-white">{`${retentionPolicy.type}${retentionPolicy.value ? `: ${transformLastNVideoHelperText(retentionPolicy.value)}` : ''}`}</p>
-      <h3 className="text-lg font-bold mt-4 mb-2 text-white">Plex Location:</h3>
-      {/* TODO: We should re-lookup the library name + path to display to the user here. */}
-      <p className="text-white">{`${directories.find((dir) => dir.id === initialValues.directoryId)?.title || ''} > ${directories.find((dir) => dir.id === initialValues.locationId)?.title || ''}`}</p>
-    </div>
-  );
+  const renderSummary = () => {
+    const selectedDirectory = directories.find((dir) => dir.key === saveToProps.directoryId);
+    const selectedLocation = selectedDirectory?.locations.find((loc) => loc.id === saveToProps.locationId);
+
+    const SummarySection = ({ title, content }: { title: string; content: React.ReactNode }) => (
+      <>
+        <Grid>
+          <Typography variant="h6" gutterBottom>
+            {title}
+          </Typography>
+        </Grid>
+        <Grid>{content}</Grid>
+      </>
+    );
+
+    return (
+      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h4" gutterBottom align="center">
+          Subscription Summary
+        </Typography>
+        <Grid container spacing={2}>
+          <SummarySection
+            title="Channel"
+            content={
+              <>
+                <Typography variant="body1">{subscription?.title}</Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {youtubeLink}
+                </Typography>
+              </>
+            }
+          />
+          <SummarySection
+            title="Filters"
+            content={
+              <List dense>
+                {filters.map((filter, index) => (
+                  <ListItem key={index}>
+                    <ListItemText primary={`${filter.criteria} ${filter.operand} ${filter.value}`} />
+                  </ListItem>
+                ))}
+              </List>
+            }
+          />
+          <SummarySection
+            title="Retention Policy"
+            content={<Typography variant="body1">{produceRetentionPolicySummaryText(retentionPolicy)}</Typography>}
+          />
+          <SummarySection
+            title="Plex Location"
+            content={
+              selectedDirectory && selectedLocation ? (
+                <>
+                  <Typography variant="body1">
+                    <strong>Library:</strong> {selectedDirectory.title}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    <strong>Path:</strong> {selectedLocation.path}
+                  </Typography>
+                </>
+              ) : (
+                <Typography variant="body1" color="error">
+                  No Plex location selected
+                </Typography>
+              )
+            }
+          />
+        </Grid>
+      </Paper>
+    );
+  };
 
   return (
     <div className="container mx-auto p-4 snap-center">
@@ -559,7 +595,7 @@ const MultiStepForm: React.FC = () => {
       {currentStage === FormStage.Filter && <FilterStep filters={filters} setFilters={setFilters} />}{' '}
       {currentStage === FormStage.RetentionPolicy && retentionPolicyStep()}
       {currentStage === FormStage.RetentionPolicy && (
-        <LocationPicker initialValues={initialValues} directories={directories} onSave={handleSavePlexLocationData} />
+        <LocationPicker saveToProps={saveToProps} setSaveToProps={setSaveToProps} directories={directories} />
       )}
       {currentStage === FormStage.Summary && renderSummary()}
       {currentStage !== FormStage.PendingVideos && (
