@@ -1,19 +1,18 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
-import React, { useState } from 'react';
 import '@css/subscriptions.css';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SyncIcon from '@mui/icons-material/Sync';
+import { IconButton } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
 import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import React, { useState } from 'react';
 import { useSubscriptions } from './SubscriptionContext';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { IconButton } from '@mui/material';
-import SyncIcon from '@mui/icons-material/Sync';
-import CircularProgress from '@mui/material/CircularProgress';
 
 interface SubscriptionListProps {
   onSubscriptionSelect: (subscriptionId: string) => void;

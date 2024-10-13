@@ -501,7 +501,7 @@ const MultiStepForm: React.FC = () => {
       {retentionPolicy.type === 'LastNEntities' && (
         <Slider
           value={retentionPolicy.value as number}
-          onChange={(e) => setRetentionPolicy({ ...retentionPolicy, value: parseInt(e.target.value) })}
+          onChange={(e, newValue) => setRetentionPolicy({ ...retentionPolicy, value: newValue as number })}
           aria-labelledby="input-slider"
           valueLabelDisplay="on"
         />

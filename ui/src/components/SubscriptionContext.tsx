@@ -1,6 +1,6 @@
 'use client';
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Subscription } from '@/types/subscriptionTypes';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 interface SubscriptionContextType {
   subscriptions: Subscription[];
@@ -35,6 +35,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setSubscriptions(data.sort((a, b) => a.title.localeCompare(b.title)));
       setError(null);
     } catch (error) {
+      console.log(error);
       setError('Failed to fetch subscriptions');
     } finally {
       setLoading(false);
@@ -52,6 +53,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         await fetchSubscriptions();
       } catch (error) {
+        console.log(error);
         setError('Failed to sync subscription');
       }
     },
@@ -73,6 +75,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         await fetchSubscriptions();
       } catch (error) {
+        console.log(error);
         setError('Failed to add subscription');
       }
     },
@@ -91,6 +94,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         await fetchSubscriptions();
       } catch (error) {
+        console.log(error);
         setError('Failed to delete subscription');
       }
     },

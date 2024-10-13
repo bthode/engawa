@@ -6,11 +6,6 @@ import DownloadToPicker from './DownloadToPicker';
 export default {
   title: 'Components/DownloadToPicker',
   component: DownloadToPicker,
-  argTypes: {
-    directories: { control: 'object' },
-    saveToProps: { control: 'object' },
-    setSaveToProps: { control: 'function' },
-  },
 } as Meta;
 
 const directories: Directory[] = [
