@@ -1,4 +1,5 @@
 import { Directory, SaveToProps } from '@/types/plexTypes';
+import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import React from 'react';
@@ -38,43 +39,52 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
 
   return (
     <div>
-      <Select
-        value={saveToProps.directoryId}
-        onChange={handleDirectoryChange}
-        displayEmpty
-        className="min-w-[200px] w-auto"
+      <Box
+        sx={{
+          width: 100,
+          height: 100,
+          borderRadius: 2,
+          alignContent: 'center',
+        }}
       >
-        <MenuItem value="" disabled>
-          Select Directory
-        </MenuItem>
-        {directories.map((directory) => (
-          <MenuItem key={directory.key} value={directory.key}>
-            {directory.title}
-          </MenuItem>
-        ))}
-      </Select>
-
-      <Select
-        value={saveToProps.locationId}
-        onChange={handleLocationChange}
-        displayEmpty
-        className="min-w-[200px] w-auto"
-      >
-        <MenuItem value="" disabled>
-          Select Location
-        </MenuItem>
-        {selectedDirectoryObj ? (
-          selectedDirectoryObj.locations.map((location) => (
-            <MenuItem key={location.id} value={location.id}>
-              {location.path}
-            </MenuItem>
-          ))
-        ) : (
+        <Select
+          value={saveToProps.directoryId}
+          onChange={handleDirectoryChange}
+          displayEmpty
+          className="min-w-[200px] w-auto"
+        >
           <MenuItem value="" disabled>
-            No locations available
+            Select Directory
           </MenuItem>
-        )}
-      </Select>
+          {directories.map((directory) => (
+            <MenuItem key={directory.key} value={directory.key}>
+              {directory.title}
+            </MenuItem>
+          ))}
+        </Select>
+
+        <Select
+          value={saveToProps.locationId}
+          onChange={handleLocationChange}
+          displayEmpty
+          className="min-w-[200px] w-auto"
+        >
+          <MenuItem value="" disabled>
+            Select Location
+          </MenuItem>
+          {selectedDirectoryObj ? (
+            selectedDirectoryObj.locations.map((location) => (
+              <MenuItem key={location.id} value={location.id}>
+                {location.path}
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem value="" disabled>
+              No locations available
+            </MenuItem>
+          )}
+        </Select>
+      </Box>
     </div>
   );
 };

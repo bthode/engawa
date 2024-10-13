@@ -3,7 +3,12 @@ import { Video } from '@/types/videoTypes';
 import { List, ListItem, ListItemText, Paper, Slider } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
 import Grid from '@mui/material/Grid2';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import LocationPicker from './DownloadToPicker';
@@ -475,6 +480,15 @@ const MultiStepForm: React.FC = () => {
   const retentionPolicyStep = () => (
     <div className="flex flex-col items-center">
       <h2 className="text-xl font-bold mb-4">Retention Policy</h2>
+      <FormControl>
+        <FormLabel id="retention-policy-step-label">Retention Policy Step</FormLabel>
+        <RadioGroup row aria-labelledby="retention-policy-step-label" name="retention-policy-step-group">
+          <FormControlLabel value="step1" control={<Radio />} label="All Videos" />
+          <FormControlLabel value="step2" control={<Radio />} label="Last N Videos" />
+          <FormControlLabel value="step3" control={<Radio />} label="Since Date" />
+          <FormControlLabel value="step4" control={<Radio />} label="Relative Date Offset" />
+        </RadioGroup>
+      </FormControl>
       <select
         value={retentionPolicy.type}
         onChange={(e) => setRetentionPolicy({ type: e.target.value as RetentionPolicyType, value: undefined })}
