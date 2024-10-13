@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, AlertTitle, Box, Card, CardContent, Typography, Chip } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { Alert, AlertTitle, Box, Card, CardContent, Chip, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 
 interface Requirement {
   name: string;
@@ -48,7 +48,7 @@ const RequirementsCheck: React.FC = () => {
     <Card>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          System Requirements Check
+          System Requirements Check:
         </Typography>
         {Object.entries(requirements).map(([key, requirement]) => (
           <Box key={key} mb={2}>
@@ -69,7 +69,7 @@ const RequirementsCheck: React.FC = () => {
             {!requirement.available && key === 'ffmpeg' && (
               <Alert severity="warning" sx={{ mt: 1 }}>
                 <AlertTitle>ffmpeg not found</AlertTitle>
-                The downloaded format may not be the best available. Installing ffmpeg is strongly recommended:{' '}
+                Downloaded formats may not be the best available. Installing ffmpeg is strongly recommended. <br />
                 <a
                   href="https://github.com/yt-dlp/yt-dlp#dependencies"
                   target="_blank"
