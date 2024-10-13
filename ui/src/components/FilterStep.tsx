@@ -57,12 +57,10 @@ const FilterStep: React.FC<FilterStepProps> = ({ filters, setFilters }) => {
               </>
             ) : (
               <>
-                <option value=">">{'>'}</option>
-                <option value="<">{'<'}</option>
-                <option value=">=">{'≥'}</option>
-                <option value="<=">{'≤'}</option>
-                <option value="==">{'='}</option>
-                <option value="!=">{'≠'}</option>
+                <option value="lt">{'>'}</option>
+                <option value="gt">{'<'}</option>
+                <option value="eq">{'='}</option>
+                <option value="ne">{'≠'}</option>
               </>
             )}
           </select>

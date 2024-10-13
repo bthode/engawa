@@ -1,6 +1,6 @@
 import { Directory, SaveToProps } from '@/types/plexTypes';
 import { Video } from '@/types/videoTypes';
-import { List, ListItem, ListItemText, Paper } from '@mui/material';
+import { List, ListItem, ListItemText, Paper, Slider } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Grid from '@mui/material/Grid2';
@@ -485,13 +485,19 @@ const MultiStepForm: React.FC = () => {
         <option value="EntitiesSince">Keep Videos Since...</option>
       </select>
       {retentionPolicy.type === 'LastNEntities' && (
-        <input
-          type="number"
+        <Slider
           value={retentionPolicy.value as number}
           onChange={(e) => setRetentionPolicy({ ...retentionPolicy, value: parseInt(e.target.value) })}
-          placeholder="Enter number of entities"
-          className="mb-4 p-2 border rounded text-gray-800 bg-white"
+          aria-labelledby="input-slider"
+          valueLabelDisplay="on"
         />
+        // <input
+        //   type="number"
+        //   value={retentionPolicy.value as number}
+        //   onChange={(e) => setRetentionPolicy({ ...retentionPolicy, value: parseInt(e.target.value) })}
+        //   placeholder="Enter number of entities"
+        //   className="mb-4 p-2 border rounded text-gray-800 bg-white"
+        // />
       )}
       {retentionPolicy.type === 'EntitiesSince' && (
         <div className="flex flex-col items-center">
