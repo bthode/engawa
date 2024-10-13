@@ -1,14 +1,31 @@
 from collections.abc import Callable
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from enum import StrEnum
 
+from pydantic import BaseModel
 from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship, SQLModel  # type:ignore
 
 
-class Retention(StrEnum):
-    DATE_BASED = "Date Based"
-    COUNT_BASED = "Count Based"
+class RetentionType(StrEnum):
+    DATE_SINCE = "DateSince"
+    COUNT = "Count"
+    DELTA = "Delta"
+
+
+class TimeDeltaTypeValue(BaseModel):
+    days: int
+    weeks: int
+    months: int
+    years: int
+
+
+class RetentionPolicyModel(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    type: RetentionType
+    videoCount: int
+    dateBefore: date
+    timeDeltaTypeValue: timedelta
 
 
 class SubscriptionCreate(SQLModel):

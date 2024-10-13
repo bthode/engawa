@@ -64,7 +64,8 @@ class Directory(DirectoryBase, table=True):
 
 
 class LocationBase(SQLModel):
-    path: str = Field(index=True, unique=True)
+    path: str = Field()
+    id: int | None = Field(default=None, primary_key=True)
 
 
 class LocationPublic(LocationBase):

@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Annotated
 
 import requests
+from dateutil.relativedelta import relativedelta
 
 # from aiocache import cached
 # from aiocache.serializers import PickleSerializer
@@ -21,6 +22,7 @@ from app.models.subscription import (
     FilterType,
     Subscription,
     SubscriptionCreate,
+    TimeDeltaTypeValue,
     Video,
     VideoStatus,
 )
@@ -31,6 +33,12 @@ router = APIRouter()
 
 
 logger = logging.getLogger(__name__)
+
+
+def produce_delta(delta: TimeDeltaTypeValue):
+    time_delta = relativedelta(days=delta.days, weeks=delta.weeks, months=delta.months, years=delta.years)
+    now = datetime.now(utc)
+    return now - time_delta
 
 
 @router.get("/subscription", response_model=list[Subscription])

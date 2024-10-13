@@ -3,6 +3,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# from fastapi.responses import FileResponse
+# from fastapi.staticfiles import StaticFiles
 from sqlmodel import SQLModel
 
 from app.database.session import engine
@@ -22,6 +25,7 @@ async def lifespan(_app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
+    # TODO: Re-enable scheduler
     # if not schduler.running:
     # scheduler.start()  # type: ignore
 
@@ -35,6 +39,13 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Engawa", lifespan=lifespan)
 app.include_router(router=router, prefix="/api")
+
+
+# app.mount("/static", StaticFiles(directory="/Users/bthode/Code/engawa/ui"), name="static")
+# @app.get("/{full_path:path}")
+# async def serve_react_app(full_path: str):
+#     return FileResponse("path/to/your/build/index.html")
+
 
 ENDPOINT = "http://localhost"
 PORT = "3000"
