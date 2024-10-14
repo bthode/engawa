@@ -13,8 +13,6 @@ import { directories, mockSubscription, mockVideos } from './JsonMocking';
 import RetentionPolicyStep, { RetentionPolicy } from './RetentionPolicyStep';
 import SubscriptionVideos from './subvids';
 
-export type VideoStatus = 'Pending' | 'In Progress' | 'Failed' | 'Deleted' | 'Complete' | 'Excluded' | 'Filtered';
-
 enum FormStage {
   LinkInput = 1,
   SubscriptionInfo,
@@ -57,7 +55,7 @@ export const transformLastNVideoHelperText = (value: number | Date | string): st
       return `Retain the last ${value} videos`;
     case 'object':
       if (value instanceof Date) {
-        return `Retain videos until ${value.toDateString()}`;
+        return `Retain videos sinc ${value.toDateString()}`;
       }
       return 'N/A';
     case 'string':
@@ -233,12 +231,12 @@ const MultiStepForm: React.FC = () => {
             content={
               <>
                 <Typography variant="body1">{subscription?.title}</Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {youtubeLink}
-                </Typography>
+                <Typography variant="body2">{youtubeLink}</Typography>
               </>
             }
           />
+        </Grid>
+        <Grid>
           <SummarySection
             title="Filters"
             content={
@@ -251,10 +249,14 @@ const MultiStepForm: React.FC = () => {
               </List>
             }
           />
+        </Grid>
+        <Grid>
           <SummarySection
             title="Retention Policy"
             content={<Typography variant="body1">{produceRetentionPolicySummaryText(retentionPolicy)}</Typography>}
           />
+        </Grid>
+        <Grid>
           <SummarySection
             title="Plex Location"
             content={
@@ -263,7 +265,7 @@ const MultiStepForm: React.FC = () => {
                   <Typography variant="body1">
                     <strong>Library:</strong> {selectedDirectory.title}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2">
                     <strong>Path:</strong> {selectedLocation.path}
                   </Typography>
                 </>
