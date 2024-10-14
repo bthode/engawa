@@ -14,11 +14,11 @@ export interface RetentionPolicy {
 }
 
 export interface RetentionPolicypProps {
-  retentionPolicy: RetentionPolicy[];
-  setRetentionPolicy: React.Dispatch<React.SetStateAction<RetentionPolicy[]>>;
+  retentionPolicy: RetentionPolicy;
+  setRetentionPolicy: React.Dispatch<React.SetStateAction<RetentionPolicy>>;
 }
 
-const retentionPolicy: React.FC<RetentionPolicypProps> = ({ retentionPolicy, setRetentionPolicy }) => (
+const RetentionPolicyStep: React.FC<RetentionPolicypProps> = ({ retentionPolicy, setRetentionPolicy }) => (
   <div className="flex flex-col items-center">
     <h2 className="text-xl font-bold mb-4">Retention Policy</h2>
     <FormControl>
@@ -46,13 +46,6 @@ const retentionPolicy: React.FC<RetentionPolicypProps> = ({ retentionPolicy, set
         aria-labelledby="input-slider"
         valueLabelDisplay="on"
       />
-      // <input
-      //   type="number"
-      //   value={retentionPolicy.value as number}
-      //   onChange={(e) => setRetentionPolicy({ ...retentionPolicy, value: parseInt(e.target.value) })}
-      //   placeholder="Enter number of entities"
-      //   className="mb-4 p-2 border rounded text-gray-800 bg-white"
-      // />
     )}
     {retentionPolicy.type === 'EntitiesSince' && (
       <div className="flex flex-col items-center">
@@ -74,4 +67,4 @@ const retentionPolicy: React.FC<RetentionPolicypProps> = ({ retentionPolicy, set
   </div>
 );
 
-export default retentionPolicy;
+export default RetentionPolicyStep;

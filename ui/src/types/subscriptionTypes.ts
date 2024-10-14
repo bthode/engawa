@@ -1,10 +1,22 @@
+// export interface Subscription {
+//   id: string;
+//   title: string;
+//   url: string;
+//   description?: string;
+//   rss_feed_url?: string;
+//   image?: string;
+// }
+
 export interface Subscription {
-  id: string;
+  error_state: string | null;
+  id: number;
+  last_updated: string | null;
   title: string;
   url: string;
-  description?: string;
-  rss_feed_url?: string;
-  image?: string;
+  description: string;
+  image: string;
+  rss_feed_url: string;
+  type: 'Channel' | 'Playlist' | 'Video';
 }
 
 export interface VideoStatus {
