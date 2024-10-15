@@ -1,16 +1,15 @@
 import { Directory, SaveToProps } from '@/types/plexTypes';
 import { Subscription } from '@/types/subscriptionTypes';
 import { Video } from '@/types/videoTypes';
-import { List, ListItem, ListItemText, Paper } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import LocationPicker from './DownloadToPicker';
 import FilterStep, { Filter } from './FilterStep';
 import { directories, mockSubscription, mockVideos } from './JsonMocking';
 import RetentionPolicyStep, { RetentionPolicy } from './RetentionPolicyStep';
+import SubscriptionSummary from './SubscriptionSummary';
 import SubscriptionVideos from './subvids';
 
 enum FormStage {
@@ -47,37 +46,6 @@ export const fetchVideoData = (url: string): Promise<Video[]> => {
       resolve(mockVideos);
     }, 1 * 1000);
   });
-};
-
-export const transformLastNVideoHelperText = (value: number | Date | string): string => {
-  switch (typeof value) {
-    case 'number':
-      return `Retain the last ${value} videos`;
-    case 'object':
-      if (value instanceof Date) {
-        return `Retain videos sinc ${value.toDateString()}`;
-      }
-      return 'N/A';
-    case 'string':
-      return 'N/A';
-  }
-};
-
-export const produceRetentionPolicySummaryText = (retentionPolicy: RetentionPolicy): string => {
-  switch (retentionPolicy.type) {
-    case 'RetainAll':
-      return 'Retain all videos';
-    case 'LastNEntities':
-      return retentionPolicy.value !== undefined
-        ? transformLastNVideoHelperText(retentionPolicy.value)
-        : 'Invalid value';
-    case 'EntitiesSince':
-      return retentionPolicy.value !== undefined
-        ? transformLastNVideoHelperText(retentionPolicy.value)
-        : 'Invalid value';
-    default:
-      return 'N/A';
-  }
 };
 
 const MultiStepForm: React.FC = () => {
@@ -139,7 +107,6 @@ const MultiStepForm: React.FC = () => {
     setVideos([]);
     setFilters([]);
     setRetentionPolicy({ type: 'RetainAll' });
-    // Here you would typically call a function to close the form
   };
 
   const handleSave = async () => {
@@ -158,7 +125,6 @@ const MultiStepForm: React.FC = () => {
       handleCancel();
     } catch (error) {
       console.error('Error saving subscription:', error);
-      // Handle error (e.g., show error message to user)
     }
   };
 
@@ -205,82 +171,6 @@ const MultiStepForm: React.FC = () => {
     </div>
   );
 
-  const renderSummary = () => {
-    const selectedDirectory = directories.find((dir) => dir.key === saveToProps.directoryId);
-    const selectedLocation = selectedDirectory?.locations.find((loc) => loc.id === saveToProps.locationId);
-
-    const SummarySection = ({ title, content }: { title: string; content: React.ReactNode }) => (
-      <>
-        <Grid>
-          <Typography variant="h6" gutterBottom>
-            {title}
-          </Typography>
-        </Grid>
-        <Grid>{content}</Grid>
-      </>
-    );
-
-    return (
-      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h4" gutterBottom align="center">
-          Subscription Summary
-        </Typography>
-        <Grid container spacing={2}>
-          <SummarySection
-            title="Channel"
-            content={
-              <>
-                <Typography variant="body1">{subscription?.title}</Typography>
-                <Typography variant="body2">{youtubeLink}</Typography>
-              </>
-            }
-          />
-        </Grid>
-        <Grid>
-          <SummarySection
-            title="Filters"
-            content={
-              <List dense>
-                {filters.map((filter, index) => (
-                  <ListItem key={index}>
-                    <ListItemText primary={`${filter.criteria} ${filter.operand} ${filter.value}`} />
-                  </ListItem>
-                ))}
-              </List>
-            }
-          />
-        </Grid>
-        <Grid>
-          <SummarySection
-            title="Retention Policy"
-            content={<Typography variant="body1">{produceRetentionPolicySummaryText(retentionPolicy)}</Typography>}
-          />
-        </Grid>
-        <Grid>
-          <SummarySection
-            title="Plex Location"
-            content={
-              selectedDirectory && selectedLocation ? (
-                <>
-                  <Typography variant="body1">
-                    <strong>Library:</strong> {selectedDirectory.title}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Path:</strong> {selectedLocation.path}
-                  </Typography>
-                </>
-              ) : (
-                <Typography variant="body1" color="error">
-                  No Plex location selected
-                </Typography>
-              )
-            }
-          />
-        </Grid>
-      </Paper>
-    );
-  };
-
   return (
     <div className="container mx-auto p-4 snap-center">
       <h1 className="text-3xl font-bold mb-8 text-center">Add Subscription</h1>
@@ -295,7 +185,16 @@ const MultiStepForm: React.FC = () => {
       {currentStage === FormStage.RetentionPolicy && (
         <LocationPicker saveToProps={saveToProps} setSaveToProps={setSaveToProps} directories={directories} />
       )}
-      {currentStage === FormStage.Summary && renderSummary()}
+      {currentStage === FormStage.Summary && (
+        <SubscriptionSummary
+          subscription={subscription}
+          youtubeLink={youtubeLink}
+          filters={filters}
+          retentionPolicy={retentionPolicy}
+          directories={directories}
+          saveToProps={saveToProps}
+        />
+      )}
       {currentStage !== FormStage.PendingVideos && (
         <div className="flex justify-center space-x-4 mt-10">
           <button onClick={handleBack} className="bg-blue-500 text-white py-2 px-4 rounded-full hover:bg-blue-600">

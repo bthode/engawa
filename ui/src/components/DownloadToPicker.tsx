@@ -38,54 +38,52 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
   }
 
   return (
-    <div>
-      <Box
-        sx={{
-          width: 100,
-          height: 100,
-          borderRadius: 2,
-          alignContent: 'center',
-        }}
+    <Box
+      sx={{
+        width: 100,
+        height: 100,
+        borderRadius: 2,
+        alignContent: 'center',
+      }}
+    >
+      <Select
+        value={saveToProps.directoryId}
+        onChange={handleDirectoryChange}
+        displayEmpty
+        className="min-w-[200px] w-auto"
       >
-        <Select
-          value={saveToProps.directoryId}
-          onChange={handleDirectoryChange}
-          displayEmpty
-          className="min-w-[200px] w-auto"
-        >
-          <MenuItem value="" disabled>
-            Select Directory
+        <MenuItem value="" disabled>
+          Select Directory
+        </MenuItem>
+        {directories.map((directory) => (
+          <MenuItem key={directory.key} value={directory.key}>
+            {directory.title}
           </MenuItem>
-          {directories.map((directory) => (
-            <MenuItem key={directory.key} value={directory.key}>
-              {directory.title}
-            </MenuItem>
-          ))}
-        </Select>
+        ))}
+      </Select>
 
-        <Select
-          value={saveToProps.locationId}
-          onChange={handleLocationChange}
-          displayEmpty
-          className="min-w-[200px] w-auto"
-        >
-          <MenuItem value="" disabled>
-            Select Location
-          </MenuItem>
-          {selectedDirectoryObj ? (
-            selectedDirectoryObj.locations.map((location) => (
-              <MenuItem key={location.id} value={location.id}>
-                {location.path}
-              </MenuItem>
-            ))
-          ) : (
-            <MenuItem value="" disabled>
-              No locations available
+      <Select
+        value={saveToProps.locationId}
+        onChange={handleLocationChange}
+        displayEmpty
+        className="min-w-[200px] w-auto"
+      >
+        <MenuItem value="" disabled>
+          Select Location
+        </MenuItem>
+        {selectedDirectoryObj ? (
+          selectedDirectoryObj.locations.map((location) => (
+            <MenuItem key={location.id} value={location.id}>
+              {location.path}
             </MenuItem>
-          )}
-        </Select>
-      </Box>
-    </div>
+          ))
+        ) : (
+          <MenuItem value="" disabled>
+            No locations available
+          </MenuItem>
+        )}
+      </Select>
+    </Box>
   );
 };
 

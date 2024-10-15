@@ -9,6 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import React from 'react';
 import { TableComponents, TableVirtuoso } from 'react-virtuoso';
 
+// TODO: See if we can not duplicate SubscriptionVideos, at least rename this file.
 interface SubscriptionVideosProps {
   videos: Video[];
   subscriptionTitle: string;
