@@ -1,14 +1,19 @@
-import { Directory, SaveToProps } from '@/types/plexTypes';
+import { DirectoryPublic } from '@/api/models';
 import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import React from 'react';
+import { SaveToProps } from './SubscriptionSummary';
 
 interface LocationPickerProps {
-  directories: Directory[];
+  directories: DirectoryPublic[];
   saveToProps: SaveToProps;
   setSaveToProps: React.Dispatch<React.SetStateAction<SaveToProps>>;
 }
+
+// TODO:
+// console.js:288 MUI: You have provided an out-of-range value `-1` for the select component.
+// Consider providing a value that matches one of the available opti
 
 const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProps, setSaveToProps }) => {
   const handleDirectoryChange = (event: SelectChangeEvent<number | ''>) => {
@@ -29,7 +34,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
   };
 
   const selectedDirectoryObj = directories.find((dir) => dir.key === saveToProps.directoryId);
-  if (selectedDirectoryObj && selectedDirectoryObj.locations.length === 1 && !saveToProps.locationId) {
+  if (selectedDirectoryObj && selectedDirectoryObj.locations?.length === 1 && !saveToProps.locationId) {
     const defaultLocation = selectedDirectoryObj.locations[0].id;
     setSaveToProps((prev) => ({
       ...prev,
@@ -72,7 +77,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
           Select Location
         </MenuItem>
         {selectedDirectoryObj ? (
-          selectedDirectoryObj.locations.map((location) => (
+          selectedDirectoryObj.locations?.map((location) => (
             <MenuItem key={location.id} value={location.id}>
               {location.path}
             </MenuItem>

@@ -34,7 +34,8 @@
       "@components/*": ["src/components/*"],
       "@utilities/*": ["src/utilities/*"],
       "@types/*": ["types/index.ts"],
-      "@css/*": ["src/css/*"]
+      "@css/*": ["src/css/*"],
+      "@api/*": ["src/api/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

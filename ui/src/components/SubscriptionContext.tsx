@@ -1,5 +1,7 @@
 'use client';
-import { Subscription } from '@/types/subscriptionTypes';
+import { SubscriptionApi } from '@/api/apis/SubscriptionApi';
+import { Subscription } from '@/api/models/Subscription';
+import { Configuration } from '@/api/runtime';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 interface SubscriptionContextType {
@@ -7,9 +9,9 @@ interface SubscriptionContextType {
   loading: boolean;
   error: string | null;
   addSubscription: (url: string) => Promise<void>;
-  deleteSubscription: (id: string) => Promise<void>;
+  deleteSubscription: (id: number) => Promise<void>;
   fetchSubscriptions: () => Promise<void>;
-  syncSubscription: (id: string) => Promise<void>;
+  syncSubscription: (id: number) => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -30,12 +32,15 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const fetchSubscriptions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/subscription');
-      const data: Subscription[] = await response.json();
-      setSubscriptions(data.sort((a, b) => a.title.localeCompare(b.title)));
+      const config = new Configuration({
+        basePath: 'http://localhost:3000',
+      });
+      const subscriptionApi = new SubscriptionApi(config);
+      const data = await subscriptionApi.getAllSubscriptionApiSubscriptionGet();
+      setSubscriptions(data.sort((a, b) => a.title?.localeCompare(b.title ?? '') ?? 0));
       setError(null);
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching subscriptions:', error);
       setError('Failed to fetch subscriptions');
     } finally {
       setLoading(false);
@@ -45,15 +50,16 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const syncSubscription = useCallback(
     async (id: string) => {
       try {
-        const response = await fetch(`/api/subscription/${id}/sync`, {
-          method: 'POST',
+        const config = new Configuration({
+          basePath: 'http://localhost:3000',
         });
-        if (!response.ok) {
-          throw new Error('Failed to sync subscription');
-        }
+        const subscriptionApi = new SubscriptionApi(config);
+        await subscriptionApi.syncSubscriptionApiSubscriptionSubscriptionIdSyncPost({
+          subscriptionId: parseInt(id, 10),
+        });
         await fetchSubscriptions();
       } catch (error) {
-        console.log(error);
+        console.error('Error syncing subscription:', error);
         setError('Failed to sync subscription');
       }
     },
@@ -63,19 +69,14 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const addSubscription = useCallback(
     async (url: string) => {
       try {
-        const response = await fetch('/api/subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url }),
+        const config = new Configuration({
+          basePath: 'http://localhost:3000',
         });
-        if (!response.ok) {
-          throw new Error('Failed to add subscription');
-        }
+        const subscriptionApi = new SubscriptionApi(config);
+        await subscriptionApi.createSubscriptionApiSubscriptionPost({ subscriptionCreate: { url } });
         await fetchSubscriptions();
       } catch (error) {
-        console.log(error);
+        console.error('Error adding subscription:', error);
         setError('Failed to add subscription');
       }
     },
@@ -86,15 +87,16 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     async (id: string) => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/subscription/${id}`, {
-          method: 'DELETE',
+        const config = new Configuration({
+          basePath: 'http://localhost:3000',
         });
-        if (!response.ok) {
-          throw new Error('Failed to delete subscription');
-        }
+        const subscriptionApi = new SubscriptionApi(config);
+        await subscriptionApi.deleteSubscriptionApiSubscriptionSubscriptionIdDelete({
+          subscriptionId: parseInt(id, 10),
+        });
         await fetchSubscriptions();
       } catch (error) {
-        console.log(error);
+        console.error('Error deleting subscription:', error);
         setError('Failed to delete subscription');
       }
     },

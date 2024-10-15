@@ -1,14 +1,15 @@
-import { Directory, SaveToProps } from '@/types/plexTypes';
+import { DirectoryPublic } from '@/api/models';
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import DownloadToPicker from './DownloadToPicker';
+import { SaveToProps } from './SubscriptionSummary';
 
 export default {
   title: 'Components/DownloadToPicker',
   component: DownloadToPicker,
 } as Meta;
 
-const directories: Directory[] = [
+const directories: DirectoryPublic[] = [
   {
     id: 2,
     title: 'Movies',
@@ -88,7 +89,7 @@ const directories: Directory[] = [
 ];
 
 const Template: StoryFn<{
-  directories: Directory[];
+  directories: DirectoryPublic[];
   saveToProps: SaveToProps;
   setSaveToProps: React.Dispatch<React.SetStateAction<SaveToProps>>;
 }> = (args) => {

@@ -1,6 +1,5 @@
-import { Subscription } from '@/types/subscriptionTypes';
-import { Video, VideoStatus } from '@/types/videoTypes';
-import { YouTube } from '@mui/icons-material';
+import { Video } from '@/api/models/Video';
+import { VideoStatus } from '@/api/models/VideoStatus';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { Box, Button, Paper, Typography } from '@mui/material';
 import Table from '@mui/material/Table';
@@ -98,15 +97,18 @@ function rowContent(_index: number, row: Video) {
       {columns.map((column) => (
         <TableCell key={column.dataKey} align={column.numeric || false ? 'right' : 'left'}>
           {column.dataKey === 'link' ? (
-            <a href={row[column.dataKey]} target="_blank" rel="noopener noreferrer">
-              <YouTube />
+            <a href={row[column.dataKey] as string} target="_blank" rel="noopener noreferrer">
+              Watch on YouTube
             </a>
           ) : column.dataKey === 'published' ? (
-            new Date(row[column.dataKey]).toLocaleDateString()
+            row[column.dataKey] ? (
+              new Date(row[column.dataKey] as Date).toLocaleDateString()
+            ) : (
+              'N/A'
+            )
           ) : column.dataKey === 'duration' ? (
             row[column.dataKey] ? (
-              // Convert the number directly to seconds, then to ISO string
-              new Date(row[column.dataKey] * 1000).toISOString().slice(11, 19)
+              new Date((row[column.dataKey] as number) * 1000).toISOString().slice(11, 19)
             ) : (
               'N/A'
             )

@@ -1,6 +1,6 @@
 'use client';
+import { Alert, Box, Button, Grid, TextField } from '@mui/material';
 import React, { useState } from 'react';
-import { TextField, Button, Grid, Box, Alert } from '@mui/material';
 import { useSubscriptions } from './SubscriptionContext';
 
 const AddSubscriptionForm: React.FC = () => {
@@ -28,7 +28,7 @@ const AddSubscriptionForm: React.FC = () => {
         if (existingSubscription) {
           setErrorMessage('This subscription already exists.');
         } else {
-          await addSubscription(subscriptionUrl);
+          await addSubscription(subscriptionUrl as number);
           setSubscriptionUrl(''); // Clear the input after successful addition
         }
       } catch (error) {

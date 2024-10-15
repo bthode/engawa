@@ -1,6 +1,5 @@
-import { Directory, SaveToProps } from '@/types/plexTypes';
-import { Subscription } from '@/types/subscriptionTypes';
-import { Video } from '@/types/videoTypes';
+import { DirectoryPublic, Video } from '@/api/models';
+import { Subscription } from '@/api/models/Subscription';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
@@ -9,7 +8,7 @@ import LocationPicker from './DownloadToPicker';
 import FilterStep, { Filter } from './FilterStep';
 import { directories, mockSubscription, mockVideos } from './JsonMocking';
 import RetentionPolicyStep, { RetentionPolicy } from './RetentionPolicyStep';
-import SubscriptionSummary from './SubscriptionSummary';
+import SubscriptionSummary, { SaveToProps } from './SubscriptionSummary';
 import SubscriptionVideos from './subvids';
 
 enum FormStage {
@@ -22,7 +21,7 @@ enum FormStage {
   Summary,
 }
 
-export const fetchPlexLocationData = (): Promise<Directory[]> => {
+export const fetchPlexLocationData = (): Promise<DirectoryPublic[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(directories);
@@ -55,7 +54,7 @@ const MultiStepForm: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [retentionPolicy, setRetentionPolicy] = useState<RetentionPolicy>({ type: 'RetainAll' });
-  const [directories, setDirectories] = React.useState<Directory[]>([]);
+  const [directories, setDirectories] = React.useState<DirectoryPublic[]>([]);
   const [saveToProps, setSaveToProps] = useState<SaveToProps>({
     directoryId: -1,
     locationId: -1,
@@ -63,7 +62,7 @@ const MultiStepForm: React.FC = () => {
 
   useEffect(() => {
     if (currentStage === FormStage.SubscriptionInfo && subscription) {
-      fetchVideoData(subscription.url)
+      fetchVideoData(subscription.url || '')
         .then((fetchedVideos) => {
           setVideos(fetchedVideos);
         })
@@ -145,7 +144,7 @@ const MultiStepForm: React.FC = () => {
       {subscription && (
         <>
           <h1 className="text-2xl font-bold mb-4">{subscription.title}</h1>
-          <img src={subscription.image} alt={subscription.title} className="w-64 h-64 object-cover mb-4" />
+          <img src={subscription.image || ''} alt={subscription.title} className="w-64 h-64 object-cover mb-4" />
           <p className="max-w-[50%] min-w-[300px]">{subscription.description}</p>
           <a href={subscription.url} target="_blank" rel="noopener noreferrer" className="mb-4 text-blue-500">
             Visit Channel

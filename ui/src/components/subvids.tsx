@@ -1,4 +1,6 @@
-import { Video, VideoStatus } from '@/types/videoTypes';
+// import { Video, VideoStatus } from '@/types/videoTypes';
+import { Video } from '@/api/models/Video';
+import { VideoStatus } from '@/api/models/VideoStatus';
 import { Box, Paper, Typography } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -10,6 +12,8 @@ import React from 'react';
 import { TableComponents, TableVirtuoso } from 'react-virtuoso';
 
 // TODO: See if we can not duplicate SubscriptionVideos, at least rename this file.
+// We should be able to pass in the rowContent, fixedHeaderContent, and columns as props to the TableVirtuoso component.
+
 interface SubscriptionVideosProps {
   videos: Video[];
   subscriptionTitle: string;
@@ -87,14 +91,18 @@ function rowContent(_index: number, row: Video) {
       {columns.map((column) => (
         <TableCell key={column.dataKey} align={column.numeric || false ? 'right' : 'left'}>
           {column.dataKey === 'link' ? (
-            <a href={row[column.dataKey]} target="_blank" rel="noopener noreferrer">
+            <a href={row[column.dataKey] as string} target="_blank" rel="noopener noreferrer">
               Watch on YouTube
             </a>
           ) : column.dataKey === 'published' ? (
-            new Date(row[column.dataKey]).toLocaleDateString()
+            row[column.dataKey] ? (
+              new Date(row[column.dataKey] as Date).toLocaleDateString()
+            ) : (
+              'N/A'
+            )
           ) : column.dataKey === 'duration' ? (
             row[column.dataKey] ? (
-              new Date(row[column.dataKey] * 1000).toISOString().slice(11, 19)
+              new Date((row[column.dataKey] as number) * 1000).toISOString().slice(11, 19)
             ) : (
               'N/A'
             )

@@ -1,5 +1,5 @@
-import { Directory, SaveToProps } from '@/types/plexTypes';
-import { Subscription } from '@/types/subscriptionTypes';
+import { DirectoryPublic } from '@/api/models';
+import { Subscription } from '@/api/models/Subscription';
 import { List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import React from 'react';
@@ -9,6 +9,11 @@ import { RetentionPolicy } from './RetentionPolicyStep';
 interface SummarySectionProps {
   title: string;
   content: React.ReactNode;
+}
+
+export interface SaveToProps {
+  directoryId: number;
+  locationId: number;
 }
 
 const SummarySection: React.FC<SummarySectionProps> = ({ title, content }) => (
@@ -27,7 +32,7 @@ interface SubscriptionSummaryProps {
   youtubeLink: string;
   filters: Filter[];
   retentionPolicy: RetentionPolicy;
-  directories: Directory[];
+  directories: DirectoryPublic[];
   saveToProps: SaveToProps;
 }
 
@@ -71,7 +76,7 @@ const SubscriptionSummary: React.FC<SubscriptionSummaryProps> = ({
   saveToProps,
 }) => {
   const selectedDirectory = directories.find((dir) => dir.key === saveToProps.directoryId);
-  const selectedLocation = selectedDirectory?.locations.find((loc) => loc.id === saveToProps.locationId);
+  const selectedLocation = selectedDirectory?.locations?.find((loc) => loc.id === saveToProps.locationId);
 
   return (
     <Paper elevation={3} sx={{ p: 3, mt: 3 }}>

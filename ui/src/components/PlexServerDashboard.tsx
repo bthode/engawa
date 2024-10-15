@@ -1,32 +1,32 @@
-import React, { useState } from 'react';
 import {
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Box,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Alert,
-  Tooltip,
-} from '@mui/material';
-import {
-  Movie as MovieIcon,
-  Tv as TvIcon,
-  Photo as PhotoIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
+  Movie as MovieIcon,
+  Photo as PhotoIcon,
+  Tv as TvIcon,
 } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 
-import { PlexServer, Directory } from '@/types/plexTypes';
 import { deletePlexServer, savePlexServer } from '@/actions/savePlexServer';
+import { DirectoryPublic, PlexPublicWithDirectories, PlexServerCreate } from '@/api/models';
 
 const getLibraryIcon = (type: string) => {
   switch (type.toLowerCase()) {
@@ -41,13 +41,13 @@ const getLibraryIcon = (type: string) => {
   }
 };
 
-const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpdate: () => void }> = ({
+const PlexServerDashboard: React.FC<{ plexServer: PlexPublicWithDirectories | null; onServerUpdate: () => void }> = ({
   plexServer,
   onServerUpdate,
 }) => {
-  const [localPlexServer, setLocalPlexServer] = useState<PlexServer | null>(plexServer);
+  const [localPlexServer, setLocalPlexServer] = useState<PlexPublicWithDirectories | null>(plexServer);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newServer, setNewServer] = useState<Partial<PlexServer>>({});
+  const [newServer, setNewServer] = useState<Partial<PlexServerCreate>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleAddServer = () => {
@@ -69,7 +69,7 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
     }
 
     try {
-      const savedServer = await savePlexServer(newServer as PlexServer);
+      const savedServer = await savePlexServer(newServer as PlexServerCreate);
       setLocalPlexServer(savedServer[0]);
       setIsAddModalOpen(false);
       setErrorMessage(null);
@@ -92,7 +92,10 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
     }
   };
 
-  const renderServerForm = (server: Partial<PlexServer>, setServer: React.Dispatch<React.SetStateAction<any>>) => (
+  const renderServerForm = (
+    server: Partial<PlexServerCreate>,
+    setServer: React.Dispatch<React.SetStateAction<Partial<PlexServerCreate>>>,
+  ) => (
     <>
       <TextField
         autoFocus
@@ -157,8 +160,8 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
                 Port: {localPlexServer.port}
               </Typography>
               <Chip
-                label={localPlexServer.error_state ? 'Error' : 'Connected'}
-                color={localPlexServer.error_state ? 'error' : 'success'}
+                label={localPlexServer.errorState ? 'Error' : 'Connected'}
+                color={localPlexServer.errorState ? 'error' : 'success'}
                 sx={{ mt: 1 }}
               />
             </CardContent>
@@ -168,7 +171,7 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
             Libraries
           </Typography>
           <Grid container spacing={3}>
-            {localPlexServer.directories.map((directory: Directory) => (
+            {localPlexServer.directories?.map((directory: DirectoryPublic) => (
               <Grid item xs={12} sm={6} md={4} key={directory.uuid}>
                 <Card
                   component={motion.div}
@@ -185,7 +188,7 @@ const PlexServerDashboard: React.FC<{ plexServer: PlexServer | null; onServerUpd
                     <Typography variant="body2" color="textSecondary">
                       UUID: {directory.uuid}
                     </Typography>
-                    {directory.locations.map((location, index) => (
+                    {directory.locations?.map((location: { path: string }, index: number) => (
                       <Typography key={index} variant="body2" color="textSecondary">
                         Path: {location.path}
                       </Typography>

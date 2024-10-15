@@ -15,12 +15,12 @@ import React, { useState } from 'react';
 import { useSubscriptions } from './SubscriptionContext';
 
 interface SubscriptionListProps {
-  onSubscriptionSelect: (subscriptionId: string) => void;
+  onSubscriptionSelect: (subscriptionId: number) => void;
 }
 
 const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelect }) => {
   const { subscriptions, loading, error, syncSubscription, deleteSubscription } = useSubscriptions();
-  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
+  const [syncingIds, setSyncingIds] = useState<Set<number>>(new Set());
 
   if (loading) {
     return <div>Loading...</div>;
@@ -30,12 +30,12 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelec
     return <div>{error}</div>;
   }
 
-  const handleDelete = async (id: string, event: React.MouseEvent) => {
+  const handleDelete = async (id: number, event: React.MouseEvent) => {
     event.stopPropagation();
     await deleteSubscription(id);
   };
 
-  async function handleSync(id: string, event: React.MouseEvent): Promise<void> {
+  async function handleSync(id: number, event: React.MouseEvent): Promise<void> {
     event.stopPropagation();
     setSyncingIds((prev) => new Set(prev).add(id));
     try {
@@ -65,7 +65,7 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelec
             <TableRow
               key={subscription.id}
               sx={{ '&:last-child td, &:last-child th': { border: 0 }, cursor: 'pointer' }}
-              onClick={() => onSubscriptionSelect(subscription.id)}
+              onClick={() => subscription.id !== undefined && onSubscriptionSelect(subscription.id)}
             >
               <TableCell align="right">
                 <img
@@ -83,14 +83,17 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ onSubscriptionSelec
               <TableCell align="right">
                 <IconButton
                   aria-label="sync"
-                  onClick={(e) => handleSync(subscription.id, e)}
-                  disabled={syncingIds.has(subscription.id)}
+                  onClick={(e) => subscription.id !== undefined && handleSync(subscription.id, e)}
+                  disabled={syncingIds.has(subscription.id ?? -1)}
                 >
-                  {syncingIds.has(subscription.id) ? <CircularProgress size={24} /> : <SyncIcon />}
+                  {syncingIds.has(subscription.id ?? -1) ? <CircularProgress size={24} /> : <SyncIcon />}
                 </IconButton>
               </TableCell>
               <TableCell align="right">
-                <IconButton aria-label="delete" onClick={(e) => handleDelete(subscription.id, e)}>
+                <IconButton
+                  aria-label="delete"
+                  onClick={(e) => subscription.id !== undefined && handleDelete(subscription.id, e)}
+                >
                   <DeleteIcon />
                 </IconButton>
               </TableCell>
