@@ -2,7 +2,7 @@ import { DirectoryPublic } from '@/api/models';
 import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SaveToProps } from './SubscriptionSummary';
 
 interface LocationPickerProps {
@@ -11,21 +11,17 @@ interface LocationPickerProps {
   setSaveToProps: React.Dispatch<React.SetStateAction<SaveToProps>>;
 }
 
-// TODO:
-// console.js:288 MUI: You have provided an out-of-range value `-1` for the select component.
-// Consider providing a value that matches one of the available opti
-
 const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProps, setSaveToProps }) => {
-  const handleDirectoryChange = (event: SelectChangeEvent<number | ''>) => {
+  const handleDirectoryChange = (event: SelectChangeEvent<string | number>) => {
     const newDirectoryId = event.target.value as number;
     setSaveToProps((prev) => ({
       ...prev,
       directoryId: newDirectoryId,
-      locationId: 0,
+      locationId: -1,
     }));
   };
 
-  const handleLocationChange = (event: SelectChangeEvent<number | ''>) => {
+  const handleLocationChange = (event: SelectChangeEvent<string | number>) => {
     const newLocationId = event.target.value as number;
     setSaveToProps((prev) => ({
       ...prev,
@@ -33,14 +29,19 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
     }));
   };
 
-  const selectedDirectoryObj = directories.find((dir) => dir.key === saveToProps.directoryId);
-  if (selectedDirectoryObj && selectedDirectoryObj.locations?.length === 1 && !saveToProps.locationId) {
-    const defaultLocation = selectedDirectoryObj.locations[0].id;
-    setSaveToProps((prev) => ({
-      ...prev,
-      locationId: defaultLocation,
-    }));
-  }
+  // TODO: This code isn't being hit in the debugger, thus we're not seeing the only location value when there's only one location
+  // Even before useEffect was added, I think the invalid locationId in addition to the disabled 'Select Location' value was
+  // inadvertently causing the first location to be selected by default
+  useEffect(() => {
+    const selectedDirectoryObj = directories.find((dir) => dir.key === saveToProps.directoryId);
+    if (selectedDirectoryObj && selectedDirectoryObj.locations?.length === 1 && !saveToProps.locationId) {
+      const defaultLocation = selectedDirectoryObj.locations[0].id as number;
+      setSaveToProps((prev) => ({
+        ...prev,
+        locationId: defaultLocation,
+      }));
+    }
+  }, [directories, saveToProps.directoryId, saveToProps.locationId, setSaveToProps]);
 
   return (
     <Box
@@ -52,12 +53,12 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
       }}
     >
       <Select
-        value={saveToProps.directoryId}
+        value={saveToProps.directoryId ?? ''}
         onChange={handleDirectoryChange}
         displayEmpty
         className="min-w-[200px] w-auto"
       >
-        <MenuItem value="" disabled>
+        <MenuItem value="-1" disabled>
           Select Directory
         </MenuItem>
         {directories.map((directory) => (
@@ -68,21 +69,21 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
       </Select>
 
       <Select
-        value={saveToProps.locationId}
+        value={saveToProps.locationId ?? ''}
         onChange={handleLocationChange}
         displayEmpty
         className="min-w-[200px] w-auto"
       >
-        <MenuItem value="" disabled>
+        <MenuItem value="-1" disabled>
           Select Location
         </MenuItem>
-        {selectedDirectoryObj ? (
-          selectedDirectoryObj.locations?.map((location) => (
-            <MenuItem key={location.id} value={location.id}>
+        {directories
+          .find((dir) => dir.key === saveToProps.directoryId)
+          ?.locations?.map((location) => (
+            <MenuItem key={location.id} value={location.id as number}>
               {location.path}
             </MenuItem>
-          ))
-        ) : (
+          )) || (
           <MenuItem value="" disabled>
             No locations available
           </MenuItem>
