@@ -1,4 +1,3 @@
-/* tslint:disable */
 /* eslint-disable */
 export * from './ChannelInfo';
 export * from './ComparisonOperator';
