@@ -1,5 +1,5 @@
 import { isValidYoutubeUrl } from './urlUtils';
-type TestDataItem = { [key: string]: string };
+export type TestDataItem = Record<string, string>;
 const testData: TestDataItem[] = [
   { 'Channel Id Url': 'https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw' },
   { 'Custom Url': 'https://www.youtube.com/c/YouTubeCreators' },
