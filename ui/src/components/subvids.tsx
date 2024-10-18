@@ -1,4 +1,3 @@
-// import { Video, VideoStatus } from '@/types/videoTypes';
 import { Video } from '@/api/models/Video';
 import { VideoStatus } from '@/api/models/VideoStatus';
 import { Box, Paper, Typography } from '@mui/material';

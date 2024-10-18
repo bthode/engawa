@@ -48,14 +48,14 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const syncSubscription = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       try {
         const config = new Configuration({
           basePath: 'http://localhost:3000',
         });
         const subscriptionApi = new SubscriptionApi(config);
         await subscriptionApi.syncSubscriptionApiSubscriptionSubscriptionIdSyncPost({
-          subscriptionId: parseInt(id, 10),
+          subscriptionId: id,
         });
         await fetchSubscriptions();
       } catch (error) {
@@ -84,7 +84,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   );
 
   const deleteSubscription = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       try {
         setLoading(true);
         const config = new Configuration({
@@ -92,7 +92,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         });
         const subscriptionApi = new SubscriptionApi(config);
         await subscriptionApi.deleteSubscriptionApiSubscriptionSubscriptionIdDelete({
-          subscriptionId: parseInt(id, 10),
+          subscriptionId: id,
         });
         await fetchSubscriptions();
       } catch (error) {

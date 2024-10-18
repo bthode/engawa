@@ -179,3 +179,15 @@ class Filter(SQLModel, table=True):
             return value >= threshold  # type: ignore
         elif operator == ComparisonOperator.GT:
             return value > threshold  # type: ignore
+
+
+class PlexLibraryDestination(SQLModel):
+    locationId: int
+    directoryId: int
+
+
+class SubscriptionCreateV2(BaseModel):
+    url: str
+    filters: list[Filter] = Field(default_factory=list)
+    retentionPolicy: RetentionPolicyModel
+    plexLibraryDestination: PlexLibraryDestination

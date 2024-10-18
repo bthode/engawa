@@ -39,15 +39,18 @@ def make_request(url: str, timeout: int) -> str:
     return response.content.decode("utf-8")
 
 
+# TODO: Make async
 @staticmethod
 def fetch_rss_feed(channel_url: str, request_maker: Callable[[str, int], str] = make_request) -> ChannelInfo:
     response_content = request_maker(channel_url, TIMEOUT_IN_SECONDS)
     soup = BeautifulSoup(response_content, "html.parser")
 
-    # Fetch HTML title
     title = soup.title.string if soup.title else None
     if title is None:
         raise ValueError("Title not found")
+
+    if " - YouTube" in title:
+        title = title.replace(" - YouTube", "")
 
     description = soup.find("meta", attrs={"name": "description"})
     if description is None:

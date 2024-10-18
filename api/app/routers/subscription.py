@@ -22,6 +22,7 @@ from app.models.subscription import (
     FilterType,
     Subscription,
     SubscriptionCreate,
+    SubscriptionCreateV2,
     TimeDeltaTypeValue,
     Video,
     VideoStatus,
@@ -61,6 +62,7 @@ async def create_subscription(create: SubscriptionCreate, session: Annotated[Asy
     if image_link:
         response = requests.get(image_link, timeout=5)
         if response.status_code == 200:
+            #  TODO: We should either store all images encoded or not encoded, not a mix
             image_data = base64.b64encode(response.content).decode("utf-8")
 
     subscription = Subscription(
@@ -185,3 +187,27 @@ async def get_subscription_data(channel_url: str) -> Subscription:
         description=channel_info.description,
         image=image_data if image_data is not None else None,
     )
+
+
+@router.post("/subscription/v2")
+async def create_subscription_v2(subscription: SubscriptionCreateV2):
+    logger.info("Received subscription creation request")
+    logger.info("URL: %s", subscription.url)
+
+    logger.info("Filters:")
+    for idx, filter_model in enumerate(subscription.filters, 1):
+        logger.info("  Filter %d:", idx)
+        logger.info("    Criteria: %s", filter_model.criteria)
+        logger.info("    Operand: %s", filter_model.operand)
+        logger.info("    Value: %s", filter_model.value)
+
+    logger.info("Retention Policy:")
+    logger.info("  Type: %s", subscription.retentionPolicy.type)
+    logger.info("  Value: %s", subscription.retentionPolicy.value)
+
+    logger.info("Save To Props:")
+    logger.info("  Directory ID: %s", subscription.saveToProps.directoryId)
+    logger.info("  Location ID: %s", subscription.saveToProps.locationId)
+
+    # Simulate successful creation
+    return {"message": "Subscription logged successfully", "id": 12345}
