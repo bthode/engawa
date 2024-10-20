@@ -108,6 +108,7 @@ const MultiStepForm: React.FC = () => {
     setRetentionPolicy({ type: 'RetainAll' });
   };
 
+  // TODO: Replace this call with the generated client code
   const handleSave = async () => {
     try {
       const response = await fetch('/api/subscription/v2', {
