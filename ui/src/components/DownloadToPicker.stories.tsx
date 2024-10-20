@@ -2,7 +2,7 @@ import { DirectoryPublic } from '@/api/models';
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import DownloadToPicker from './DownloadToPicker';
-import { SaveToProps } from './SubscriptionSummary';
+import { PlexLibraryDestination } from './SubscriptionSummary';
 
 export default {
   title: 'Components/DownloadToPicker',
@@ -90,18 +90,26 @@ const directories: DirectoryPublic[] = [
 
 const Template: StoryFn<{
   directories: DirectoryPublic[];
-  saveToProps: SaveToProps;
-  setSaveToProps: React.Dispatch<React.SetStateAction<SaveToProps>>;
+  PlexLibraryDestination: PlexLibraryDestination;
+  setPlexLibraryDestination: React.Dispatch<React.SetStateAction<PlexLibraryDestination>>;
 }> = (args) => {
-  const [saveToProps, setSaveToProps] = useState<SaveToProps>(args.saveToProps);
+  const [PlexLibraryDestination, setPlexLibraryDestination] = useState<PlexLibraryDestination>(
+    args.PlexLibraryDestination,
+  );
 
-  return <DownloadToPicker {...args} saveToProps={saveToProps} setSaveToProps={setSaveToProps} />;
+  return (
+    <DownloadToPicker
+      {...args}
+      PlexLibraryDestination={PlexLibraryDestination}
+      setPlexLibraryDestination={setPlexLibraryDestination}
+    />
+  );
 };
 
 export const Default = Template.bind({});
 Default.args = {
   directories,
-  saveToProps: {
+  PlexLibraryDestination: {
     directoryId: -1,
     locationId: -1,
   },
@@ -110,7 +118,7 @@ Default.args = {
 export const WithSelectedDirectory = Template.bind({});
 WithSelectedDirectory.args = {
   directories,
-  saveToProps: {
+  PlexLibraryDestination: {
     directoryId: 7,
     locationId: -1,
   },
@@ -119,7 +127,7 @@ WithSelectedDirectory.args = {
 export const WithSelectedLocation = Template.bind({});
 WithSelectedLocation.args = {
   directories,
-  saveToProps: {
+  PlexLibraryDestination: {
     directoryId: 2,
     locationId: 8,
   },

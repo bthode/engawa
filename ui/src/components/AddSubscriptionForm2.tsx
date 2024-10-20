@@ -8,7 +8,7 @@ import LocationPicker from './DownloadToPicker';
 import FilterStep, { Filter } from './FilterStep';
 import { directories, mockSubscription, mockVideos } from './JsonMocking';
 import RetentionPolicyStep, { RetentionPolicy } from './RetentionPolicyStep';
-import SubscriptionSummary, { SaveToProps } from './SubscriptionSummary';
+import SubscriptionSummary, { PlexLibraryDestination } from './SubscriptionSummary';
 import SubscriptionVideos from './subvids';
 
 enum FormStage {
@@ -55,7 +55,7 @@ const MultiStepForm: React.FC = () => {
   const [filters, setFilters] = useState<Filter[]>([]);
   const [retentionPolicy, setRetentionPolicy] = useState<RetentionPolicy>({ type: 'RetainAll' });
   const [directories, setDirectories] = React.useState<DirectoryPublic[]>([]);
-  const [saveToProps, setSaveToProps] = useState<SaveToProps>({
+  const [plexLibraryDestination, setPlexLibraryDestination] = useState<PlexLibraryDestination>({
     directoryId: -1,
     locationId: -1,
   });
@@ -110,14 +110,14 @@ const MultiStepForm: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('/api/subscription', {
+      const response = await fetch('/api/subscription/v2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: youtubeLink,
           filters,
           retentionPolicy,
-          saveToProps,
+          plexLibraryDestination,
         }),
       });
       if (!response.ok) throw new Error('Failed to save subscription');
@@ -182,7 +182,11 @@ const MultiStepForm: React.FC = () => {
         <RetentionPolicyStep retentionPolicy={retentionPolicy} setRetentionPolicy={setRetentionPolicy} />
       )}
       {currentStage === FormStage.RetentionPolicy && (
-        <LocationPicker saveToProps={saveToProps} setSaveToProps={setSaveToProps} directories={directories} />
+        <LocationPicker
+          PlexLibraryDestination={plexLibraryDestination}
+          setPlexLibraryDestination={setPlexLibraryDestination}
+          directories={directories}
+        />
       )}
       {currentStage === FormStage.Summary && (
         <SubscriptionSummary
@@ -191,7 +195,7 @@ const MultiStepForm: React.FC = () => {
           filters={filters}
           retentionPolicy={retentionPolicy}
           directories={directories}
-          saveToProps={saveToProps}
+          PlexLibraryDestination={plexLibraryDestination}
         />
       )}
       {currentStage !== FormStage.PendingVideos && (

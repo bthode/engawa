@@ -11,7 +11,7 @@ interface SummarySectionProps {
   content: React.ReactNode;
 }
 
-export interface SaveToProps {
+export interface PlexLibraryDestination {
   directoryId: number;
   locationId: number;
 }
@@ -33,7 +33,7 @@ interface SubscriptionSummaryProps {
   filters: Filter[];
   retentionPolicy: RetentionPolicy;
   directories: DirectoryPublic[];
-  saveToProps: SaveToProps;
+  PlexLibraryDestination: PlexLibraryDestination;
 }
 
 const transformLastNVideoHelperText = (value: number | Date | string): string => {
@@ -73,10 +73,10 @@ const SubscriptionSummary: React.FC<SubscriptionSummaryProps> = ({
   filters,
   retentionPolicy,
   directories,
-  saveToProps,
+  PlexLibraryDestination,
 }) => {
-  const selectedDirectory = directories.find((dir) => dir.key === saveToProps.directoryId);
-  const selectedLocation = selectedDirectory?.locations?.find((loc) => loc.id === saveToProps.locationId);
+  const selectedDirectory = directories.find((dir) => dir.key === PlexLibraryDestination.directoryId);
+  const selectedLocation = selectedDirectory?.locations?.find((loc) => loc.id === PlexLibraryDestination.locationId);
 
   return (
     <Paper elevation={3} sx={{ p: 3, mt: 3 }}>

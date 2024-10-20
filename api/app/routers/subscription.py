@@ -20,6 +20,8 @@ from app.models.subscription import (
     ComparisonOperator,
     Filter,
     FilterType,
+    PlexLibraryDestination,
+    RetentionType,
     Subscription,
     SubscriptionCreate,
     SubscriptionCreateV2,
@@ -170,44 +172,57 @@ async def get_subscription_videos(subscription_id: int, session: AsyncSession = 
     return result.scalars().all()  # type:ignore
 
 
-async def get_subscription_data(channel_url: str) -> Subscription:
-    channel_info = youtube.fetch_rss_feed(channel_url)
-    image_link = channel_info.image_link
+# async def get_subscription_data(channel_url: str) -> Subscription:
+#     channel_info = youtube.fetch_rss_feed(channel_url)
+#     image_link = channel_info.image_link
 
-    image_data = None
-    if image_link:
-        response = requests.get(image_link, timeout=5)
-        if response.status_code == 200:
-            image_data = base64.b64encode(response.content).decode("utf-8")
+#     image_data = None
+#     if image_link:
+#         response = requests.get(image_link, timeout=5)
+#         if response.status_code == 200:
+#             image_data = base64.b64encode(response.content).decode("utf-8")
 
-    return Subscription(
-        title=channel_info.title,
-        url=channel_url,
-        rss_feed_url=channel_info.rss_link,
-        description=channel_info.description,
-        image=image_data if image_data is not None else None,
-    )
+#     return Subscription[
+#         title=channel_info.title,
+#         url=channel_url,
+#         rss_feed_url=channel_info.rss_link,
+#         description=channel_info.description,
+#         image=image_data if image_data is not None else None,
+#         ]
 
 
 @router.post("/subscription/v2")
-async def create_subscription_v2(subscription: SubscriptionCreateV2):
+async def create_subscription_v2(new_subscription: SubscriptionCreateV2):
     logger.info("Received subscription creation request")
-    logger.info("URL: %s", subscription.url)
+    logger.info("URL: %s", new_subscription.url)
 
     logger.info("Filters:")
-    for idx, filter_model in enumerate(subscription.filters, 1):
+    for idx, filter_model in enumerate(new_subscription.filters, 1):
         logger.info("  Filter %d:", idx)
-        logger.info("    Criteria: %s", filter_model.criteria)
-        logger.info("    Operand: %s", filter_model.operand)
-        logger.info("    Value: %s", filter_model.value)
+        logger.info("    Criteria: %s", filter_model.comparison_operator)
+        logger.info("    Operand: %s", filter_model.filter_type)
 
     logger.info("Retention Policy:")
-    logger.info("  Type: %s", subscription.retentionPolicy.type)
-    logger.info("  Value: %s", subscription.retentionPolicy.value)
+    logger.info("  Type: %s", new_subscription.retentionPolicy.type)
+
+    match new_subscription.retentionPolicy.type:
+        case RetentionType.DATE_SINCE:
+            logger.info("  Duration: %s", new_subscription.retentionPolicy.dateBefore)
+        case RetentionType.COUNT:
+            logger.info("  Count: %s", new_subscription.retentionPolicy.videoCount)
+        case RetentionType.DELTA:
+            logger.info("  No retention policy")
+
+    # TODO: Validate the location and directory IDs against the plex server
+    plex_desc: PlexLibraryDestination = PlexLibraryDestination(
+        locationId=new_subscription.plexLibraryDestination.locationId,
+        directoryId=new_subscription.plexLibraryDestination.directoryId,
+    )
+    logger.info(plex_desc)
 
     logger.info("Save To Props:")
-    logger.info("  Directory ID: %s", subscription.saveToProps.directoryId)
-    logger.info("  Location ID: %s", subscription.saveToProps.locationId)
+    logger.info("  Directory ID: %s", new_subscription.plexLibraryDestination.directoryId)
+    logger.info("  Location ID: %s", new_subscription.plexLibraryDestination.locationId)
 
     # Simulate successful creation
     return {"message": "Subscription logged successfully", "id": 12345}

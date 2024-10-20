@@ -3,18 +3,22 @@ import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import React, { useEffect } from 'react';
-import { SaveToProps } from './SubscriptionSummary';
+import { PlexLibraryDestination } from './SubscriptionSummary';
 
 interface LocationPickerProps {
   directories: DirectoryPublic[];
-  saveToProps: SaveToProps;
-  setSaveToProps: React.Dispatch<React.SetStateAction<SaveToProps>>;
+  PlexLibraryDestination: PlexLibraryDestination;
+  setPlexLibraryDestination: React.Dispatch<React.SetStateAction<PlexLibraryDestination>>;
 }
 
-const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProps, setSaveToProps }) => {
+const LocationPicker: React.FC<LocationPickerProps> = ({
+  directories,
+  PlexLibraryDestination,
+  setPlexLibraryDestination,
+}) => {
   const handleDirectoryChange = (event: SelectChangeEvent<string | number>) => {
     const newDirectoryId = event.target.value as number;
-    setSaveToProps((prev) => ({
+    setPlexLibraryDestination((prev) => ({
       ...prev,
       directoryId: newDirectoryId,
       locationId: -1,
@@ -23,7 +27,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
 
   const handleLocationChange = (event: SelectChangeEvent<string | number>) => {
     const newLocationId = event.target.value as number;
-    setSaveToProps((prev) => ({
+    setPlexLibraryDestination((prev) => ({
       ...prev,
       locationId: newLocationId,
     }));
@@ -33,15 +37,15 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
   // Even before useEffect was added, I think the invalid locationId in addition to the disabled 'Select Location' value was
   // inadvertently causing the first location to be selected by default
   useEffect(() => {
-    const selectedDirectoryObj = directories.find((dir) => dir.key === saveToProps.directoryId);
-    if (selectedDirectoryObj && selectedDirectoryObj.locations?.length === 1 && !saveToProps.locationId) {
+    const selectedDirectoryObj = directories.find((dir) => dir.key === PlexLibraryDestination.directoryId);
+    if (selectedDirectoryObj && selectedDirectoryObj.locations?.length === 1 && !PlexLibraryDestination.locationId) {
       const defaultLocation = selectedDirectoryObj.locations[0].id as number;
-      setSaveToProps((prev) => ({
+      setPlexLibraryDestination((prev) => ({
         ...prev,
         locationId: defaultLocation,
       }));
     }
-  }, [directories, saveToProps.directoryId, saveToProps.locationId, setSaveToProps]);
+  }, [directories, PlexLibraryDestination.directoryId, PlexLibraryDestination.locationId, setPlexLibraryDestination]);
 
   return (
     <Box
@@ -53,7 +57,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
       }}
     >
       <Select
-        value={saveToProps.directoryId ?? ''}
+        value={PlexLibraryDestination.directoryId ?? ''}
         onChange={handleDirectoryChange}
         displayEmpty
         className="min-w-[200px] w-auto"
@@ -69,7 +73,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
       </Select>
 
       <Select
-        value={saveToProps.locationId ?? ''}
+        value={PlexLibraryDestination.locationId ?? ''}
         onChange={handleLocationChange}
         displayEmpty
         className="min-w-[200px] w-auto"
@@ -78,7 +82,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ directories, saveToProp
           Select Location
         </MenuItem>
         {directories
-          .find((dir) => dir.key === saveToProps.directoryId)
+          .find((dir) => dir.key === PlexLibraryDestination.directoryId)
           ?.locations?.map((location) => (
             <MenuItem key={location.id} value={location.id as number}>
               {location.path}
