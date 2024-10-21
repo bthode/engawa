@@ -5,17 +5,19 @@ from typing import Annotated
 
 import requests
 from dateutil.relativedelta import relativedelta
-
-# from aiocache import cached
-# from aiocache.serializers import PickleSerializer
 from fastapi import APIRouter, Depends
 from pytz import utc
 from result import Err, Ok
 from sqlalchemy import desc
 from sqlalchemy.ext.asyncio import AsyncSession
+
+# from aiocache import cached
+# from aiocache.serializers import PickleSerializer
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
 from app.database.session import get_session
+from app.models.plex import Directory, Location, Plex
 from app.models.subscription import (
     ComparisonOperator,
     Filter,
@@ -192,7 +194,7 @@ async def get_subscription_videos(subscription_id: int, session: AsyncSession = 
 
 
 @router.post("/subscription/v2")
-async def create_subscription_v2(new_subscription: SubscriptionCreateV2):
+async def create_subscription_v2(new_subscription: SubscriptionCreateV2, session: AsyncSession = Depends(get_session)):
     logger.info("Received subscription creation request")
     logger.info("URL: %s", new_subscription.url)
 
@@ -213,14 +215,28 @@ async def create_subscription_v2(new_subscription: SubscriptionCreateV2):
         case RetentionType.DELTA:
             logger.info("  No retention policy")
 
-    # TODO: Validate the location and directory IDs against the plex server
     plex_desc: PlexLibraryDestination = PlexLibraryDestination(
         locationId=new_subscription.plexLibraryDestination.locationId,
         directoryId=new_subscription.plexLibraryDestination.directoryId,
     )
     logger.info(plex_desc)
 
-    logger.info("Save To Props:")
+    result = await session.execute(select(Plex).options(selectinload(Plex.directories)))
+    plex_server = result.scalars().first()
+
+    directories: list[Directory] = plex_server.directories
+
+    directory_id = new_subscription.plexLibraryDestination.directoryId
+    location_id = new_subscription.plexLibraryDestination.locationId
+
+    directory: list[Directory] = [item for item in directories if item.key == directory_id]
+    if len(directory) == 0:
+        return {"message": "Invalid directory"}
+    else:
+        location: list[Location] = [v for v in directory[0].locations if v.id_ == location_id] or []
+        if len(location) == 0:
+            return {"message": "Invalid location"}
+
     logger.info("  Directory ID: %s", new_subscription.plexLibraryDestination.directoryId)
     logger.info("  Location ID: %s", new_subscription.plexLibraryDestination.locationId)
 

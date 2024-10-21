@@ -19,7 +19,6 @@ from app.models.plex import (
 from app.plex_parsing import parse_plex_data
 
 router = APIRouter()
-# TODO: Missing tests for this file
 
 
 @staticmethod
@@ -60,7 +59,7 @@ async def create_plex_server(plex: PlexServerCreate, session: Annotated[AsyncSes
                 key=directory.key,
                 locations=[
                     (await session.execute(select(Location).where(Location.path == location.path))).scalars().first()
-                    or Location(path=location.path)
+                    or Location(path=location.path, id_=location.id_)
                     for location in directory.location
                 ],
             )
@@ -72,7 +71,6 @@ async def create_plex_server(plex: PlexServerCreate, session: Annotated[AsyncSes
     await session.commit()
     await session.refresh(plex_server)
 
-    # Eagerly load directories
     result = await session.execute(
         select(Plex).options(selectinload(Plex.directories)).where(Plex.id == plex_server.id)
     )

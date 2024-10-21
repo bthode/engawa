@@ -93,5 +93,6 @@ class PlexPublicWithDirectories(PlexServerPublic):
 
 class Location(LocationBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    id_: int = Field(default=None)
     directory_id: int = Field(default=None, foreign_key="directory.id")
     directory: Mapped[Directory] = Relationship(back_populates="locations")
