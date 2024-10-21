@@ -1,5 +1,7 @@
-import { DirectoryPublic, Video } from '@/api/models';
+import { PlexApi } from '@/api/apis/PlexApi';
+import { DirectoryPublic, PlexPublicWithDirectories, Video } from '@/api/models';
 import { Subscription } from '@/api/models/Subscription';
+import { Configuration } from '@/api/runtime';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
@@ -47,6 +49,17 @@ export const fetchVideoData = (url: string): Promise<Video[]> => {
   });
 };
 
+export const fetchPlesServerData = (): Promise<PlexPublicWithDirectories[]> => {
+  return new Promise((resolve) => {
+    const config = new Configuration({
+      basePath: 'http://localhost:3000',
+    });
+    const plexApi = new PlexApi(config);
+    const plexData = plexApi.plexServerApiPlexServerGet();
+    resolve(plexData);
+  });
+};
+
 const MultiStepForm: React.FC = () => {
   const [currentStage, setCurrentStage] = useState<number>(1);
   const [youtubeLink, setYoutubeLink] = useState<string>('');
@@ -54,7 +67,7 @@ const MultiStepForm: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [retentionPolicy, setRetentionPolicy] = useState<RetentionPolicy>({ type: 'RetainAll' });
-  const [directories, setDirectories] = React.useState<DirectoryPublic[]>([]);
+  const [directories, setDirectories] = useState<DirectoryPublic[]>([]);
   const [plexLibraryDestination, setPlexLibraryDestination] = useState<PlexLibraryDestination>({
     directoryId: -1,
     locationId: -1,
@@ -62,6 +75,17 @@ const MultiStepForm: React.FC = () => {
 
   useEffect(() => {
     if (currentStage === FormStage.SubscriptionInfo && subscription) {
+      // TODO: Need to error out or block a user from adding a subscription if they don't have a plex server set up
+      fetchPlesServerData()
+        .then((fetchedPlexServers) => {
+          if (fetchedPlexServers[0]?.directories) {
+            setDirectories(fetchedPlexServers[0].directories);
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching plex servers:', error);
+          // Handle error (e.g., show error message to user)
+        });
       fetchVideoData(subscription.url || '')
         .then((fetchedVideos) => {
           setVideos(fetchedVideos);
@@ -70,9 +94,6 @@ const MultiStepForm: React.FC = () => {
           console.error('Error fetching videos:', error);
           // Handle error (e.g., show error message to user)
         });
-      fetchPlexLocationData().then((fetchedDirectories) => {
-        setDirectories(fetchedDirectories);
-      });
     } else if (currentStage === FormStage.PendingVideos && videos.length > 0) {
       setCurrentStage(FormStage.VideoDisplay);
     }
