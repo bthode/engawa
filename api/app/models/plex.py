@@ -65,7 +65,8 @@ class Directory(DirectoryBase, table=True):
 
 class LocationBase(SQLModel):
     path: str = Field()
-    id: int | None = Field(default=None, primary_key=True)
+    # TODO: Would be ideal to be able to return the id_ as id, not sure if SQLModel supports this
+    id_: int | None = Field(default=None, primary_key=True)
 
 
 class LocationPublic(LocationBase):
