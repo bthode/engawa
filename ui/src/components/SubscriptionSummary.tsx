@@ -1,7 +1,7 @@
-import { DirectoryPublic } from '@/api/models';
+import { DirectoryPublic } from '@/api/models/DirectoryPublic';
 import { Subscription } from '@/api/models/Subscription';
-import { List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import { Box, Divider, List, ListItem, ListItemIcon, ListItemText, Paper, Typography } from '@mui/material';
 import React from 'react';
 import { Filter } from './FilterStep';
 import { RetentionPolicy } from './RetentionPolicyStep';
@@ -15,17 +15,6 @@ export interface PlexLibraryDestination {
   directoryId: number;
   locationId: number;
 }
-
-const SummarySection: React.FC<SummarySectionProps> = ({ title, content }) => (
-  <>
-    <Grid>
-      <Typography variant="h6" gutterBottom>
-        {title}
-      </Typography>
-    </Grid>
-    <Grid>{content}</Grid>
-  </>
-);
 
 interface SubscriptionSummaryProps {
   subscription: Subscription | null;
@@ -67,6 +56,15 @@ const produceRetentionPolicySummaryText = (retentionPolicy: RetentionPolicy): st
   }
 };
 
+const SummarySection: React.FC<SummarySectionProps> = ({ title, content }) => (
+  <Box mb={3}>
+    <Typography variant="h6" gutterBottom>
+      {title}
+    </Typography>
+    <Box ml={2}>{content}</Box>
+  </Box>
+);
+
 const SubscriptionSummary: React.FC<SubscriptionSummaryProps> = ({
   subscription,
   youtubeLink,
@@ -79,68 +77,77 @@ const SubscriptionSummary: React.FC<SubscriptionSummaryProps> = ({
   const selectedLocation = selectedDirectory?.locations?.find((loc) => loc.id === PlexLibraryDestination.locationId);
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
-      <Typography variant="h4" gutterBottom align="center">
+    <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+      <Typography variant="h4" gutterBottom align="center" mb={4}>
         Subscription Summary
       </Typography>
-      <Grid container spacing={2}>
-        <SummarySection
-          title="Channel"
-          content={
-            <>
-              <Typography variant="body1">{subscription?.title}</Typography>
-              <Typography variant="body2">{youtubeLink}</Typography>
-            </>
-          }
-        />
-      </Grid>
-      <Grid>
-        <SummarySection
-          title="Filters"
-          content={
-            <List dense>
-              {filters.length === 0 ? (
-                <ListItem>
-                  <ListItemText primary="No filters applied" />
-                </ListItem>
-              ) : (
-                filters.map((filter, index) => (
-                  <ListItem key={index}>
-                    <ListItemText primary={`${filter.criteria} ${filter.operand} ${filter.value}`} />
-                  </ListItem>
-                ))
-              )}
-            </List>
-          }
-        />
-      </Grid>
-      <Grid>
-        <SummarySection
-          title="Retention Policy"
-          content={<Typography variant="body1">{produceRetentionPolicySummaryText(retentionPolicy)}</Typography>}
-        />
-      </Grid>
-      <Grid>
-        <SummarySection
-          title="Plex Location"
-          content={
-            selectedDirectory && selectedLocation ? (
-              <>
-                <Typography variant="body1">
-                  <strong>Library:</strong> {selectedDirectory.title}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Path:</strong> {selectedLocation.path}
-                </Typography>
-              </>
+
+      <SummarySection
+        title="Channel Information"
+        content={
+          <>
+            <Typography variant="body1">
+              <strong>Title:</strong> {subscription?.title}
+            </Typography>
+            <Typography variant="body1" mt={1}>
+              <strong>YouTube Link:</strong> {youtubeLink}
+            </Typography>
+          </>
+        }
+      />
+
+      <Divider sx={{ my: 3 }} />
+
+      <SummarySection
+        title="Applied Filters"
+        content={
+          <List dense disablePadding>
+            {filters.length === 0 ? (
+              <ListItem>
+                <ListItemText primary="No filters applied" />
+              </ListItem>
             ) : (
-              <Typography variant="body1" color="error">
-                No Plex location selected
+              filters.map((filter, index) => (
+                <ListItem key={index}>
+                  <ListItemIcon>
+                    <FiberManualRecordIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary={`${filter.criteria} ${filter.operand} ${filter.value}`} />
+                </ListItem>
+              ))
+            )}
+          </List>
+        }
+      />
+
+      <Divider sx={{ my: 3 }} />
+
+      <SummarySection
+        title="Retention Policy"
+        content={<Typography variant="body1">{produceRetentionPolicySummaryText(retentionPolicy)}</Typography>}
+      />
+
+      <Divider sx={{ my: 3 }} />
+
+      <SummarySection
+        title="Plex Library Destination"
+        content={
+          selectedDirectory && selectedLocation ? (
+            <>
+              <Typography variant="body1">
+                <strong>Library:</strong> {selectedDirectory.title}
               </Typography>
-            )
-          }
-        />
-      </Grid>
+              <Typography variant="body1" mt={1}>
+                <strong>Path:</strong> {selectedLocation.path}
+              </Typography>
+            </>
+          ) : (
+            <Typography variant="body1" color="error">
+              No Plex location selected
+            </Typography>
+          )
+        }
+      />
     </Paper>
   );
 };
