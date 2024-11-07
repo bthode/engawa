@@ -16,7 +16,7 @@ from app.models.plex import Plex
 from app.models.subscription import (
     Filter,
     PlexLibraryDestination,
-    RetentionPolicyModel,
+    RetentionPolicy,
     RetentionType,
     Subscription,
     Video,
@@ -58,7 +58,7 @@ def verify_write_access(dir_path: str) -> bool:
 
 
 async def process_retention_policy(
-    session: AsyncSession, subscription_id: int, retention_policy: RetentionPolicyModel
+    session: AsyncSession, subscription_id: int, retention_policy: RetentionPolicy
 ) -> None:
     match retention_policy.type:
         case RetentionType.COUNT:
@@ -99,7 +99,7 @@ async def process_retention_policy(
 
 
 async def apply_retention_policy(
-    subscription_id: int, retention_policy: RetentionPolicyModel, session: AsyncSession
+    subscription_id: int, retention_policy: RetentionPolicy, session: AsyncSession
 ) -> None:
     """Apply retention policy to videos for a given subscription.
 
@@ -241,30 +241,10 @@ async def handle_videos_for_subscription(subscription: Subscription, session: As
         update_video_status(video, video_results)
 
 
-async def rewrite_sync_and_update_videos():
-    # update_subscriptions()
-    # update_videos()
-    # update_plex_library()
-    pass
-
-
 async def test_invoke():
     logger.info("Test invoke")
 
 
-# Rough [Corrected] outline
-# 1. Get subscriptions to update
-# 2. For each subscription, sync the subscription
-# 3. Get videos for the subscription that are pending metadata
-# 4. Get metadata for the videos
-# 5. Update the video status based on the metadata
-# 6. Apply filters to the videos
-# 7. Apply retention policy to the videos
-# 7.a: Give special treatment to the count retention policy
-# FIXIT: Can we do any early exclusions based on the filters or retention policy?
-# 8. Commit the session
-# 9. Download the videos that are pending download
-# 10. Update Plex library
 async def sync_and_update_videos():
     async for session in get_session():
         try:

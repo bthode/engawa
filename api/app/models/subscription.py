@@ -1,13 +1,14 @@
 from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from enum import StrEnum
+from typing import TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import JSON, Column
 from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship, SQLModel  # type: ignore
 
-# T = TypeVar("T", bound=timedelta | datetime)
+T = TypeVar("T", bound=timedelta | datetime)
 type ComparisonFunc[T: timedelta | datetime] = Callable[[T, T], bool]
 
 
@@ -53,10 +54,10 @@ class PlexLibraryDestination(SQLModel):
     directoryId: int
 
 
-class RetentionPolicyModel(SQLModel, table=True):
+class RetentionPolicy(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
-    parent_id: int = Field(foreign_key="subscription.id", unique=True)
-    parent: "Subscription" = Relationship(back_populates="retention_policy")
+    subscription_id: int | None = Field(default=None, foreign_key="subscription.id")
+    subscription: "Subscription" = Relationship(back_populates="retention")  # TODO: Why the name discrepancy works?
     type: RetentionType
     videoCount: int
     dateBefore: date
@@ -71,7 +72,7 @@ class Subscription(SQLModel, table=True):
     last_updated: datetime | None = Field(default=None, index=True)
     # TODO: Rename this to be more generic as a destination (Not just plex related)
     plex_library_path: PlexLibraryDestination | str = Field(sa_column=Column(JSON))
-    # retention_policy: RetentionPolicyModel = Relationship(back_populates="parent")
+    retention: RetentionPolicy = Relationship(back_populates="subscription")
     rss_feed_url: str = Field(default=None)
     # SubscriptionError: SubscriptionErrorType | None = Field(default=None)
     title: str = Field(default=None)
@@ -159,15 +160,6 @@ class ChannelInfo(SQLModel, table=True):
     description: str
 
 
-# class Filter2(SQLModel, table=True):
-#     id: int | None = Field(default=None, primary_key=True)
-#     criteria: FilterType
-#     comparison_operator: ComparisonOperator = Field(default=None)
-#     text_value: str | None = None
-#     data_value: datetime | None = None
-#     numeric_value: int | None = None
-
-
 class Filter(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     filter_type: FilterType
@@ -178,7 +170,6 @@ class Filter(SQLModel, table=True):
     threshold_date: datetime | None = Field(default=None)
 
     subscription_id: int | None = Field(default=None, foreign_key="subscription.id")
-    # subscription: Mapped[Subscription] = relationship(back_populates="filters")
     subscription: Subscription = Relationship(back_populates="filters")
 
     def to_callable(self) -> Callable[[Video], bool]:
@@ -232,5 +223,5 @@ class Filter(SQLModel, table=True):
 class SubscriptionCreateV2(BaseModel):
     url: str
     filters: list[Filter] = Field(default_factory=list)
-    retentionPolicy: RetentionPolicyModel
+    retentionPolicy: RetentionPolicy
     plexLibraryDestination: PlexLibraryDestination

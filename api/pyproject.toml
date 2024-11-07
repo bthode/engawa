@@ -67,6 +67,15 @@ path = ".venv"
 repository = "https://github.com/bthode/engawa"
 issue_tracker = "https://github.com/bthode/engawa/issues"
 
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_fixture_loop_scope = "fixture"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+console_output_style = "count"
+
 [tool.coverage.run]
 source_pkgs = ["engawa", "tests"]
 branch = true
