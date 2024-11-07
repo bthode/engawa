@@ -81,7 +81,7 @@ def obtain_channel_data(channel_url: str) -> dict[str, Any]:
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
         channel_info = ydl.extract_info(channel_url, download=False, process=True)  # pyright: ignore
-    return channel_info
+    return channel_info  # type: ignore
 
 
 def extract_info(url: str) -> MetadataResult:
