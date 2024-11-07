@@ -26,8 +26,8 @@ async def lifespan(_app: FastAPI):
         await conn.run_sync(SQLModel.metadata.create_all)
 
     # TODO: Re-enable scheduler
-    # if not schduler.running:
-    # scheduler.start()  # type: ignore
+    if not scheduler.running:
+        scheduler.start()  # type: ignore
 
     yield
 

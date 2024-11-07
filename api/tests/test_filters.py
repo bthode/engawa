@@ -84,7 +84,7 @@ def sample_videos() -> list[Video]:
 
 
 def test_duration_filter(sample_videos: list[Video]) -> None:
-    duration_filter = create_duration_filter("lt", 1801)
+    duration_filter = create_duration_filter(ComparisonOperator.LT, 1801)
     filtered = apply_filters(sample_videos, [duration_filter])
     assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 1
     assert [v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD][0].title == "Learn Python Programming"
@@ -108,7 +108,7 @@ def test_description_contains_filter(sample_videos: list[Video]) -> None:
 
 
 def test_published_after_filter(sample_videos: list[Video]) -> None:
-    date_filter = create_published_after_filter("gt", datetime(2023, 2, 1))
+    date_filter = create_published_after_filter(ComparisonOperator.GT, datetime(2023, 2, 1))
     filtered = apply_filters(sample_videos, [date_filter])
     assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 2
     assert [v.title for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD] == [
@@ -119,7 +119,7 @@ def test_published_after_filter(sample_videos: list[Video]) -> None:
 
 
 def test_multiple_filters(sample_videos: list[Video]) -> None:
-    duration_filter = create_duration_filter("gt", 1800)
+    duration_filter = create_duration_filter(ComparisonOperator.GT, 1800)
     title_filter = create_title_contains_filter("TypeScript")
     filtered = apply_filters(sample_videos, [duration_filter, title_filter])
     assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == 1
@@ -135,7 +135,7 @@ def test_no_matching_filters(sample_videos: list[Video]) -> None:
 
 
 def test_all_matching_filters(sample_videos: list[Video]) -> None:
-    all_match_filter = create_duration_filter("lt", 0)
+    all_match_filter = create_duration_filter(ComparisonOperator.LT, 0)
     filtered = apply_filters(sample_videos, [all_match_filter])
     assert len([v for v in filtered if v.status == VideoStatus.PENDING_DOWNLOAD]) == len(sample_videos)
     assert len([v for v in filtered if v.status == VideoStatus.FILTERED]) == 0

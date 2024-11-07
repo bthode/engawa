@@ -7,6 +7,7 @@ from app.models.plex import Location
 from app.models.subscription import Subscription
 
 
+# TODO: This belongs in models
 class SubscriptionLocationMapping(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     subscription_id: int = Field(foreign_key="subscription.id")

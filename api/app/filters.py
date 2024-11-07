@@ -19,3 +19,14 @@ def apply_filters(videos: list[Video], filters: list[Filter]) -> list[Video]:
                 video.status = VideoStatus.FILTERED
 
     return videos
+
+
+def applicable_filters(videos: list[Video], filters: list[Filter]) -> dict[Video, list[Filter]]:
+    result: dict[Video, list[Filter]] = {}
+    for video in videos:
+        applicable = [f for f in filters if f.to_callable()(video)]
+        if applicable:
+            if video not in result:
+                result[video] = []
+            result[video].extend(applicable)
+    return result

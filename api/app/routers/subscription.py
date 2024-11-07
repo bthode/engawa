@@ -75,6 +75,7 @@ async def create_subscription(create: SubscriptionCreate, session: Annotated[Asy
         rss_feed_url=channel_info.rss_link,
         description=channel_info.description,
         image=image_data if image_data is not None else None,
+        plex_library_path="\\some\\path",
     )
 
     session.add(subscription)
@@ -195,6 +196,10 @@ async def get_subscription_videos(subscription_id: int, session: AsyncSession = 
 
 @router.post("/subscription/v2")
 async def create_subscription_v2(new_subscription: SubscriptionCreateV2, session: AsyncSession = Depends(get_session)):
+    existing_subscription = await session.execute(select(Subscription).where(Subscription.url == new_subscription.url))
+    if existing_subscription.scalars().first():
+        return {"message": "subscription already exists"}
+
     logger.info("Received subscription creation request")
     logger.info("URL: %s", new_subscription.url)
 
@@ -203,6 +208,13 @@ async def create_subscription_v2(new_subscription: SubscriptionCreateV2, session
         logger.info("  Filter %d:", idx)
         logger.info("    Criteria: %s", filter_model.comparison_operator)
         logger.info("    Operand: %s", filter_model.filter_type)
+        asdf = Filter(
+            filter_type=filter_model.filter_type,
+            comparison_operator=filter_model.comparison_operator,
+            threshold_seconds=filter_model.threshold_seconds,
+            threshold_date=filter_model.threshold_date,
+        )
+        logger.info(asdf)
 
     logger.info("Retention Policy:")
     logger.info("  Type: %s", new_subscription.retentionPolicy.type)
@@ -240,5 +252,38 @@ async def create_subscription_v2(new_subscription: SubscriptionCreateV2, session
     logger.info("  Directory ID: %s", new_subscription.plexLibraryDestination.directoryId)
     logger.info("  Location ID: %s", new_subscription.plexLibraryDestination.locationId)
 
+    channel_info = youtube.fetch_rss_feed(new_subscription.url)
+    image_link = channel_info.image_link
+
+    image_data = None
+    if image_link:
+        response = requests.get(image_link, timeout=5)
+        if response.status_code == 200:
+            #  TODO: We should either store all images encoded or not encoded, not a mix
+            image_data = base64.b64encode(response.content).decode("utf-8")
+
+    subscription_to_add = Subscription(
+        title=channel_info.title,
+        url=new_subscription.url,
+        rss_feed_url=channel_info.rss_link,
+        description=channel_info.description,
+        image=image_data if image_data is not None else None,
+        plex_library_path="\\some\\path",
+    )
+
+    subscription_to_add.filters = [
+        Filter(
+            filter_type=filter_model.filter_type,
+            comparison_operator=filter_model.comparison_operator,
+            threshold_seconds=filter_model.threshold_seconds,
+            threshold_date=filter_model.threshold_date,
+        )
+        for filter_model in new_subscription.filters
+    ]
+
+    subscription_to_add.retention_policy = new_subscription.retentionPolicy
+
+    session.add(subscription_to_add)
+    await session.commit()
     # Simulate successful creation
     return {"message": "Subscription logged successfully", "id": 12345}

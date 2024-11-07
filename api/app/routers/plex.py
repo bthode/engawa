@@ -20,6 +20,8 @@ from app.plex_parsing import parse_plex_data
 
 router = APIRouter()
 
+# TODO: Use key for both directory and location id values to avoid conflict with python's built-in id function
+
 
 @staticmethod
 def build_path(host: str, port: str, token: str) -> str:

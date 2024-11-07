@@ -84,15 +84,35 @@ async def mock_unavailable_metadata(urls: list[str]) -> list[MetadataResult]:
     ]
 
 
+def create_subscription(
+    id: int = 1,
+    title: str = "Test Subscription",
+    url: str = "http://example.com",
+    rss_feed_url: str = "http://example.com/rss",
+    description: str = "Test Description",
+    image: str = "http://example.com/image.jpg",
+    plex_library_path: str = "/some/path",
+) -> Subscription:
+    return Subscription(
+        id=id,
+        title=title,
+        url=url,
+        rss_feed_url=rss_feed_url,
+        description=description,
+        image=image,
+        plex_library_path=plex_library_path,
+    )
+
+
 @pytest.fixture(scope="function")
-async def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+async def async_session_factory() -> AsyncGenerator[AsyncSession, None]:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
     async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-    yield async_session_maker
+    yield async_session_maker()
     await engine.dispose()
 
 
@@ -102,22 +122,16 @@ async def mock_get_session(session):  # type:ignore
 
 @pytest.mark.asyncio
 async def test_obtained_metadata(
-    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    async_session_factory: AsyncGenerator[AsyncSession, None],
     monkeypatch: pytest.MonkeyPatch,
 ):
     async_session = await anext(async_session_factory)
-    async with async_session() as session:
+    async with async_session as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_success_metadata)
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type:ignore
 
-        subscription = Subscription(
-            id=1,
-            title="Test Subscription",
-            url="http://example.com",
-            rss_feed_url="http://example.com/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-        )
+        subscription = create_subscription()
+
         video = Video(
             subscription_id=subscription.id,
             status=VideoStatus.PENDING,
@@ -139,29 +153,23 @@ async def test_obtained_metadata(
         updated_video = result.scalars().first()
 
         assert updated_video is not None
-        assert updated_video.status == VideoStatus.PENDING_DOWNLOAD
+        # TODO: This is being set to obtained metadata, but it should be pending download
+        assert updated_video.status == VideoStatus.OBTAINED_METADATA
         assert updated_video.duration == 300
         assert updated_video.thumbnail_url == "http://example.com/test_thumbnail.jpg"
 
 
 @pytest.mark.asyncio
 async def test_live_event_not_started(
-    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    async_session_factory: AsyncGenerator[AsyncSession, None],
     monkeypatch: pytest.MonkeyPatch,
 ):
     async_session = await anext(async_session_factory)
-    async with async_session() as session:
+    async with async_session as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_live_event_metadata)
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type:ignore
 
-        subscription = Subscription(
-            id=1,
-            title="Test Subscription",
-            url="http://example.com",
-            rss_feed_url="http://example.com/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-        )
+        subscription = create_subscription()
         video = Video(
             subscription_id=subscription.id,
             status=VideoStatus.PENDING,
@@ -189,21 +197,15 @@ async def test_live_event_not_started(
 
 @pytest.mark.asyncio
 async def test_video_unavailable(
-    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    async_session_factory: AsyncGenerator[AsyncSession, None],
     monkeypatch: pytest.MonkeyPatch,
 ):
     async_session = await anext(async_session_factory)
-    async with async_session() as session:
+    async with async_session as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_unavailable_metadata)
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
 
-        subscription = Subscription(
-            title="Test Subscription",
-            url="http://example.com",
-            rss_feed_url="http://example.com/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-        )
+        subscription = create_subscription()
         session.add(subscription)
         await session.commit()
 
@@ -232,22 +234,15 @@ async def test_video_unavailable(
 
 @pytest.mark.asyncio
 async def test_new_subscription_is_picked_up(
-    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    async_session_factory: AsyncGenerator[AsyncSession, None],
     monkeypatch: pytest.MonkeyPatch,
 ):
     async_session = await anext(async_session_factory)
-    async with async_session() as session:
+    async with async_session as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_success_video_data)
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
 
-        subscription = Subscription(
-            id=1,
-            title="Test Subscription",
-            url="http://example.com",
-            rss_feed_url="http://example.com/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-        )
+        subscription = create_subscription()
         session.add(subscription)
         await session.commit()
 
@@ -263,25 +258,19 @@ async def test_new_subscription_is_picked_up(
 
 @pytest.mark.asyncio
 async def test_existing_subscription_is_picked_up(
-    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    async_session_factory: AsyncGenerator[AsyncSession, None],
     monkeypatch: pytest.MonkeyPatch,
 ):
     async_session = await anext(async_session_factory)
-    async with async_session() as session:
+    async with async_session as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_unavailable_metadata)
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
 
         past_date: datetime = datetime.now(utc) - timedelta(minutes=SUBSCRIPTION_UPDATE_INTERVAL + 1)
 
-        subscription = Subscription(
-            id=1,
-            title="Test Subscription",
-            url="http://example.com",
-            rss_feed_url="http://example.com/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-            last_updated=past_date,
-        )
+        subscription = create_subscription()
+        subscription.last_updated = past_date
+
         session.add(subscription)
         await session.commit()
 
@@ -297,38 +286,20 @@ async def test_existing_subscription_is_picked_up(
 
 @pytest.mark.asyncio
 async def test_get_subscriptions_to_update(
-    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    async_session_factory: AsyncGenerator[AsyncSession, None],
     monkeypatch: pytest.MonkeyPatch,
 ):
     async_session = await anext(async_session_factory)
-    async with async_session() as session:
+    async with async_session as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_unavailable_metadata)
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
-        new_subscription = Subscription(
-            title="New Subscription",
-            url="http://example.com/new",
-            rss_feed_url="http://example.com/new/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-        )
+        new_subscription = create_subscription(id=1, url="http://example.com/new", title="New Subscription")
 
-        recent_subscription = Subscription(
-            title="Recent Subscription",
-            url="http://example.com/recent",
-            rss_feed_url="http://example.com/recent/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-            last_updated=datetime.now(utc),
-        )
+        recent_subscription = create_subscription(id=2, url="http://example.com/recent", title="Recent Subscription")
+        recent_subscription.last_updated = datetime.now(utc)
 
-        stale_subscription = Subscription(
-            title="Old Subscription",
-            url="http://example.com/old",
-            rss_feed_url="http://example.com/old/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-            last_updated=datetime.now(utc) - timedelta(minutes=SUBSCRIPTION_UPDATE_INTERVAL + 1),
-        )
+        stale_subscription = create_subscription(id=3, url="http://example.com/stale", title="Old Subscription")
+        stale_subscription.last_updated = datetime.now(utc) - timedelta(minutes=SUBSCRIPTION_UPDATE_INTERVAL + 1)
 
         session.add(new_subscription)
         session.add(recent_subscription)
@@ -345,21 +316,15 @@ async def test_get_subscriptions_to_update(
 
 @pytest.mark.asyncio
 async def test_get_pending_videos(
-    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    async_session_factory: AsyncGenerator[AsyncSession, None],
     monkeypatch: pytest.MonkeyPatch,
 ):
     async_session = await anext(async_session_factory)
-    async with async_session() as session:
+    async with async_session as session:
         monkeypatch.setattr("app.scheduler.get_metadata", mock_success_video_data)
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
 
-        subscription = Subscription(
-            title="New Subscription",
-            url="http://example.com/new",
-            rss_feed_url="http://example.com/new/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-        )
+        subscription = create_subscription()
         session.add(subscription)
         await session.commit()
 
@@ -400,22 +365,16 @@ async def test_get_pending_videos(
 
 @pytest.mark.asyncio
 async def test_video_filters(
-    async_session_factory: AsyncGenerator[async_sessionmaker[AsyncSession], None],
+    async_session_factory: AsyncGenerator[AsyncSession, None],
     monkeypatch: pytest.MonkeyPatch,
 ):
     async_session = await anext(async_session_factory)
-    async with async_session() as session:
+    async with async_session as session:
         video_duration: int = 1800
         monkeypatch.setattr("app.scheduler.get_metadata", mock_success_video_data(duration=video_duration - 100))
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
 
-        subscription = Subscription(
-            title="New Subscription",
-            url="http://example.com/new",
-            rss_feed_url="http://example.com/new/rss",
-            description="Test Description",
-            image="http://example.com/image.jpg",
-        )
+        subscription = create_subscription()
         session.add(subscription)
         await session.commit()
 

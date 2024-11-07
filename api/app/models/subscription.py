@@ -3,8 +3,12 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 
 from pydantic import BaseModel
+from sqlalchemy import JSON, Column
 from sqlalchemy.orm import Mapped
-from sqlmodel import Field, Relationship, SQLModel  # type:ignore
+from sqlmodel import Field, Relationship, SQLModel  # type: ignore
+
+# T = TypeVar("T", bound=timedelta | datetime)
+type ComparisonFunc[T: timedelta | datetime] = Callable[[T, T], bool]
 
 
 class RetentionType(StrEnum):
@@ -20,14 +24,6 @@ class TimeDeltaTypeValue(BaseModel):
     years: int
 
 
-class RetentionPolicyModel(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    type: RetentionType
-    videoCount: int
-    dateBefore: date
-    timeDeltaTypeValue: timedelta
-
-
 class SubscriptionCreate(SQLModel):
     url: str
 
@@ -38,21 +34,46 @@ class SubscriptionType(StrEnum):
     VIDEO = "Video"
 
 
-class SubscriptionDirectoryError(StrEnum):
-    UNAUTHORIZED = "Unauthorized"
-    TIMEOUT = "Timeout"
-    REFUSED = "Refused"
-    NONEXISTENT = "Nonexistent"
+class SubscriptionError(StrEnum):
+    CHANNEL_NOT_FOUND = "Channel Not Found"  # No user action possible
+    PLAYLIST_NOT_FOUND = "Playlist Not Found"  # No user action possible
+    UNAUTHORIZED = "Unauthorized"  # User action required??
+    TIMEOUT = "Timeout"  # No user action possible, but we can retry
+    REFUSED = "Refused"  # No user action possible, but we can retry
+    NONEXISTENT = "Nonexistent"  # No user action possible
+
+
+class SubscriptionErrorType:
+    error_type: SubscriptionError
+    message: str
+
+
+class PlexLibraryDestination(SQLModel):
+    locationId: int
+    directoryId: int
+
+
+class RetentionPolicyModel(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    parent_id: int = Field(foreign_key="subscription.id", unique=True)
+    parent: "Subscription" = Relationship(back_populates="retention_policy")
+    type: RetentionType
+    videoCount: int
+    dateBefore: date
+    timeDeltaTypeValue: timedelta
 
 
 class Subscription(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
     description: str = Field(default=None)
     filters: list["Filter"] = Relationship(back_populates="subscription")
-    error_state: SubscriptionDirectoryError | None = None
-    id: int = Field(default=None, primary_key=True)
     image: str | None = None
     last_updated: datetime | None = Field(default=None, index=True)
+    # TODO: Rename this to be more generic as a destination (Not just plex related)
+    plex_library_path: PlexLibraryDestination | str = Field(sa_column=Column(JSON))
+    # retention_policy: RetentionPolicyModel = Relationship(back_populates="parent")
     rss_feed_url: str = Field(default=None)
+    # SubscriptionError: SubscriptionErrorType | None = Field(default=None)
     title: str = Field(default=None)
     type: SubscriptionType = Field(default=SubscriptionType.CHANNEL)
     url: str = Field(default=None, unique=True)
@@ -71,11 +92,22 @@ class VideoStatus(StrEnum):
     PENDING_DOWNLOAD = "Pending Download"
     FAILED = "Failed"
     DELETED = "Deleted"
-    COMPLETE = "Complete"
+    DOWNLOADED = "Downloaded"
     EXCLUDED = "Excluded"
     FILTERED = "Filtered"
-    COPYRIGHT_STRIKE = "Copyright Strike"
-    DMCA = "DMCA"
+    RETENTION_SKIPPED = "Retention Skipped"
+    # COPYRIGHT_STRIKE = "Copyright Strike"
+    # DMCA = "DMCA"
+
+
+class MetadataErrorType(StrEnum):
+    # TODO: "Live stream offline"
+    # "Live stream currently offline"
+    LIVE_EVENT_NOT_STARTED = "Live event not started"
+    VIDEO_UNAVAILABLE = "Video unavailable"
+    COPYRIGHT_STRIKE = "Copyright strike"
+    UNKNOWN_ERROR = "Unknown error"
+    AGE_RESTRICTED = "Age restricted"
 
 
 class Thumbnail(SQLModel, table=True):
@@ -85,14 +117,31 @@ class Thumbnail(SQLModel, table=True):
     height: str
 
 
-#  TODO: Any reason to add a hash?
+class FilterType(StrEnum):
+    DURATION = "duration"
+    TITLE_CONTAINS = "title_contains"
+    DESCRIPTION_CONTAINS = "description_contains"
+    PUBLISHED_AFTER = "published_after"
+
+
+class ComparisonOperator(StrEnum):
+    LT = "<"
+    LE = "<="
+    EQ = "=="
+    NE = "!="
+    GE = ">="
+    GT = ">"
+
+
 class Video(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     author: str
     duration: int | None = Field(default=None, alias="duration")
     description: str | None
+    # filtered_reason: list[FilterType] | None = None
     link: str
     published: datetime | None = Field(default=None, index=True)
+    metadata_error: MetadataErrorType | None = Field(default=None)
     retry_count: int = Field(default=0)
     status: VideoStatus = Field(sa_column_kwargs={"default": VideoStatus.PENDING}, index=True)
     subscription_id: int = Field(default=None, foreign_key="subscription.id", index=True)
@@ -110,20 +159,13 @@ class ChannelInfo(SQLModel, table=True):
     description: str
 
 
-class FilterType(StrEnum):
-    DURATION = "duration"
-    TITLE_CONTAINS = "title_contains"
-    DESCRIPTION_CONTAINS = "description_contains"
-    PUBLISHED_AFTER = "published_after"
-
-
-class ComparisonOperator(StrEnum):
-    LT = "lt"
-    LE = "le"
-    EQ = "eq"
-    NE = "ne"
-    GE = "ge"
-    GT = "gt"
+# class Filter2(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     criteria: FilterType
+#     comparison_operator: ComparisonOperator = Field(default=None)
+#     text_value: str | None = None
+#     data_value: datetime | None = None
+#     numeric_value: int | None = None
 
 
 class Filter(SQLModel, table=True):
@@ -136,15 +178,22 @@ class Filter(SQLModel, table=True):
     threshold_date: datetime | None = Field(default=None)
 
     subscription_id: int | None = Field(default=None, foreign_key="subscription.id")
+    # subscription: Mapped[Subscription] = relationship(back_populates="filters")
     subscription: Subscription = Relationship(back_populates="filters")
 
-    def to_callable(self) -> Callable[["Video"], bool]:
+    def to_callable(self) -> Callable[[Video], bool]:
         if self.filter_type == FilterType.DURATION:
             return lambda v: self._compare_duration(v.duration)
         elif self.filter_type == FilterType.TITLE_CONTAINS:
-            return lambda v: self.keyword.lower() in v.title.lower() if self.keyword else False
+            return lambda v: (
+                self.keyword.lower() in v.title.lower() if self.keyword else False  # pylint: disable=no-member
+            )
         elif self.filter_type == FilterType.DESCRIPTION_CONTAINS:
-            return lambda v: self.keyword.lower() in v.description.lower() if self.keyword and v.description else False
+            return lambda v: (
+                self.keyword.lower() in v.description.lower()  # pylint: disable=no-member
+                if self.keyword and v.description
+                else False
+            )
         elif self.filter_type == FilterType.PUBLISHED_AFTER:
             return lambda v: self._compare_datetime(v.published)
         else:
@@ -157,33 +206,27 @@ class Filter(SQLModel, table=True):
             timedelta(seconds=duration), self.comparison_operator, timedelta(seconds=self.threshold_seconds)
         )
 
-    def _compare_datetime(self, date: datetime | None) -> bool:
-        if self.threshold_date is None or self.comparison_operator is None or date is None:
+    def _compare_datetime(self, timestamp: datetime | None) -> bool:
+        if self.threshold_date is None or self.comparison_operator is None or timestamp is None:
             return False
-        return self._compare(date, self.comparison_operator, self.threshold_date)
+        return self._compare(timestamp, self.comparison_operator, self.threshold_date)
 
     def _compare(
-        self, value: timedelta | datetime, operator: ComparisonOperator, threshold: timedelta | datetime
+        self, value: datetime | timedelta, operator: ComparisonOperator, threshold: datetime | timedelta
     ) -> bool:
-        if type(value) is not type(threshold):
-            raise TypeError("The types of 'value' and 'threshold' must be the same.")
-        if operator == ComparisonOperator.LT:
-            return value < threshold  # type: ignore
-        elif operator == ComparisonOperator.LE:
-            return value <= threshold  # type: ignore
-        elif operator == ComparisonOperator.EQ:
-            return value == threshold
-        elif operator == ComparisonOperator.NE:
-            return value != threshold
-        elif operator == ComparisonOperator.GE:
-            return value >= threshold  # type: ignore
-        elif operator == ComparisonOperator.GT:
-            return value > threshold  # type: ignore
+        value_dt = datetime.now() + value if isinstance(value, timedelta) else value
+        threshold_dt = datetime.now() + threshold if isinstance(threshold, timedelta) else threshold
 
+        ops: dict[ComparisonOperator, ComparisonFunc[datetime]] = {
+            ComparisonOperator.LT: lambda x, y: x < y,
+            ComparisonOperator.LE: lambda x, y: x <= y,
+            ComparisonOperator.EQ: lambda x, y: x == y,
+            ComparisonOperator.NE: lambda x, y: x != y,
+            ComparisonOperator.GE: lambda x, y: x >= y,
+            ComparisonOperator.GT: lambda x, y: x > y,
+        }
 
-class PlexLibraryDestination(SQLModel):
-    locationId: int
-    directoryId: int
+        return ops[operator](value_dt, threshold_dt)
 
 
 class SubscriptionCreateV2(BaseModel):

@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+from pathlib import Path
 from typing import cast
 
 import httpx
@@ -7,12 +8,20 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import utc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlmodel import or_, select
+from sqlmodel import desc, or_, select
 
 from app.database.session import get_session
-from app.filters import apply_filters
+from app.filters import applicable_filters
 from app.models.plex import Plex
-from app.models.subscription import Subscription, Video, VideoStatus
+from app.models.subscription import (
+    Filter,
+    PlexLibraryDestination,
+    RetentionPolicyModel,
+    RetentionType,
+    Subscription,
+    Video,
+    VideoStatus,
+)
 from app.routers.subscription import sync_subscription
 from app.yt_downloader import (
     MetadataError,
@@ -20,10 +29,126 @@ from app.yt_downloader import (
     MetadataResult,
     MetadataSuccess,
     get_metadata,
+    mock_download_content,
 )
 
 logger = logging.getLogger(__name__)
 SUBSCRIPTION_UPDATE_INTERVAL = 15
+TEST_FILE_NAME = "test_engawa.tmp"
+
+scheduler = AsyncIOScheduler(timezone=utc)
+
+
+def verify_write_access(dir_path: str) -> bool:
+    test_file = Path(dir_path) / TEST_FILE_NAME
+
+    try:
+        if test_file.exists():
+            test_file.unlink()
+
+        with test_file.open("w") as f:
+            f.write("test")
+
+        test_file.unlink()
+        return True
+
+    except Exception as e:  # pylint: disable=broad-except
+        logger.error("Filesystem write access verification failed: %s", e)
+        return False
+
+
+async def process_retention_policy(
+    session: AsyncSession, subscription_id: int, retention_policy: RetentionPolicyModel
+) -> None:
+    match retention_policy.type:
+        case RetentionType.COUNT:
+            count = retention_policy.videoCount
+            statement = (
+                select(Video)
+                .where(Video.subscription_id == subscription_id)
+                .where(Video.status == VideoStatus.DOWNLOADED)
+                .order_by(desc(Video.published))
+                .offset(count)
+            )
+
+        case RetentionType.DELTA:
+            lookback_date = datetime.now() - retention_policy.timeDeltaTypeValue
+            if lookback_date is None or datetime.now() < lookback_date or lookback_date is not date:
+                return
+            statement = select(Video).where(
+                (Video.subscription_id == subscription_id) & (Video.published < lookback_date)
+            )
+        case RetentionType.DATE_SINCE:
+            cutoff_date = retention_policy.dateBefore
+            if cutoff_date is None or datetime.now() < cutoff_date or cutoff_date is not date:
+                return
+            statement = (
+                select(Video).where(Video.subscription_id == subscription_id).where(Video.published < cutoff_date)
+            )
+
+    # Execute query with proper async context
+    result = await session.execute(statement)
+    videos_to_delete = result.scalars().all()
+
+    # Batch update the videos
+    for video in videos_to_delete:
+        video.status = VideoStatus.DELETED
+
+    # Commit the changes
+    # await session.commit()
+
+
+async def apply_retention_policy(
+    subscription_id: int, retention_policy: RetentionPolicyModel, session: AsyncSession
+) -> None:
+    """Apply retention policy to videos for a given subscription.
+
+    Args:
+        subscription_id: ID of the subscription to apply policy to
+        retention_policy: Retention policy to apply
+        session: Database session
+    """
+
+    statement = None
+
+    match retention_policy.type:
+        case RetentionType.DATE_SINCE:
+            cutoff_date = retention_policy.dateBefore
+            if cutoff_date is None or datetime.now() < cutoff_date or cutoff_date is not date:
+                return
+            statement = (
+                select(Video).where(Video.subscription_id == subscription_id).where(Video.published < cutoff_date)
+            )
+
+        case RetentionType.COUNT:
+            # TODO: How should we handle the count updating if previously failed videos are now successful?
+            count = retention_policy.videoCount
+            statement = (
+                select(Video)
+                .where(Video.subscription_id == subscription_id)
+                .where(Video.status == VideoStatus.DOWNLOADED)
+                .order_by(desc(Video.published))
+                .offset(count)
+            )
+
+        case RetentionType.DELTA:
+            lookback_date = datetime.now() - retention_policy.timeDeltaTypeValue
+            if lookback_date is None or datetime.now() < lookback_date or lookback_date is not date:
+                return
+            statement = (
+                select(Video).where((Video.subscription_id == subscription_id) & (Video.published < lookback_date))
+                # TODO: We have code to produce this delta elsewhere, should be refactored
+            )
+
+    # Mark videos for deletion
+    result = await session.execute(statement)
+    videos_to_delete = result.scalars().all()
+
+    for video in videos_to_delete:
+        video.status = VideoStatus.DELETED
+        session.add(video)
+
+    await session.commit()
 
 
 def update_video_status(video: Video, video_results: MetadataResult) -> Video:
@@ -35,10 +160,13 @@ def update_video_status(video: Video, video_results: MetadataResult) -> Video:
                 "duration": video_results.metadata.duration_in_seconds,
                 "status": VideoStatus.OBTAINED_METADATA,
             }
+            # TODO: Looks like we have some overlap in VideoStatus and MetadataErrorType
         case MetadataError(error_type=MetadataErrorType.LIVE_EVENT_NOT_STARTED | MetadataErrorType.VIDEO_UNAVAILABLE):
             updates = {"status": VideoStatus.EXCLUDED}
         case MetadataError(error_type=MetadataErrorType.COPYRIGHT_STRIKE):
-            updates = {"status": VideoStatus.COPYRIGHT_STRIKE}
+            updates = {"status": VideoStatus.EXCLUDED, "metadata_error": MetadataErrorType.COPYRIGHT_STRIKE}
+        case MetadataError(error_type=MetadataErrorType.AGE_RESTRICTED):
+            updates = {"status": VideoStatus.EXCLUDED, "metadata_error": MetadataErrorType.AGE_RESTRICTED}
         case MetadataError(error_type=MetadataErrorType.UNKNOWN_ERROR):
             updates = {"status": VideoStatus.FAILED, "retry_count": video.retry_count + 1}
         case _:
@@ -113,6 +241,30 @@ async def handle_videos_for_subscription(subscription: Subscription, session: As
         update_video_status(video, video_results)
 
 
+async def rewrite_sync_and_update_videos():
+    # update_subscriptions()
+    # update_videos()
+    # update_plex_library()
+    pass
+
+
+async def test_invoke():
+    logger.info("Test invoke")
+
+
+# Rough [Corrected] outline
+# 1. Get subscriptions to update
+# 2. For each subscription, sync the subscription
+# 3. Get videos for the subscription that are pending metadata
+# 4. Get metadata for the videos
+# 5. Update the video status based on the metadata
+# 6. Apply filters to the videos
+# 7. Apply retention policy to the videos
+# 7.a: Give special treatment to the count retention policy
+# FIXIT: Can we do any early exclusions based on the filters or retention policy?
+# 8. Commit the session
+# 9. Download the videos that are pending download
+# 10. Update Plex library
 async def sync_and_update_videos():
     async for session in get_session():
         try:
@@ -130,29 +282,72 @@ async def sync_and_update_videos():
                 )
 
                 # TODO: Need to retry failed videos
+                # TODO: We shouldn't download videos if the retention policy is set to delete them
 
                 video_urls = [video.link for video in videos_to_obtain_metadata]
                 metadata_results = await get_metadata(video_urls)
 
                 updated_videos: list[Video] = []
                 for video, metadata_result in zip(videos_to_obtain_metadata, metadata_results):
+                    # TODO: Update the video failure status here with MetadataErrorType
+
                     updated_video = update_video_status(video, metadata_result)
                     updated_videos.append(updated_video)
 
-                apply_filters(updated_videos, subscription.filters)
-
+                asdf: dict[Video, list[Filter]] = applicable_filters(updated_videos, subscription.filters)
+                logger.info("Applicable filters: %s", asdf)
                 for video in updated_videos:
                     session.add(video)
 
+                # TODO: This call is what is breaking greenlet await code
+                # await process_retention_policy(session, subscription.id, subscription.retention_policy)
+                # await apply_retention_policy(
+                #     subscription_id=subscription.id, retention_policy=subscription.retention_policy, session=session
+                # )
+
+                to_download: list[Video] = await get_pending_videos(session)
+
+                plex_results = await session.execute(select(Plex).options(selectinload(Plex.directories)))
+                plex_server = plex_results.scalars().first()
+
+                if plex_server is None:
+                    logging.error("No Plex server found")
+
+                download_path = (
+                    await compute_library_path(plex_server, subscription.plex_library_path)
+                    if isinstance(subscription.plex_library_path, PlexLibraryDestination)
+                    else subscription.plex_library_path
+                )
+
+                if not verify_write_access(download_path):
+                    logger.error("Write access verification failed for %s", download_path)
+                    continue
+
+                for video in to_download:
+                    await mock_download_content(video.link, download_path)
+
                 subscription.last_updated = datetime.now(utc)
                 session.add(subscription)
+                session.add(updated_videos)
 
+            logger.info("Finished sync and update job")
             await session.commit()
+            scheduler.add_job(test_invoke)  # type: ignore
 
         except Exception as e:
             logger.error("Error in sync_and_update_videos: %s", str(e))
             await session.rollback()
             raise
+
+
+async def compute_library_path(plex_server: Plex | None, plex_library_path: PlexLibraryDestination) -> str:
+    # TODO: Before we download any videos, ensure we can write to the download directory
+    # In the error case, put the subscription in an error state and log the error
+    directories = plex_server.directories
+    directory = next((dir for dir in directories if dir.id == plex_library_path.directoryId), None)
+    if directory is None:
+        raise ValueError(f"Directory with id {plex_library_path.directoryId} not found")
+    return directory.locations[0].path
 
 
 async def update_plex_library(session: AsyncSession) -> None:
@@ -179,8 +374,6 @@ async def update_plex_library(session: AsyncSession) -> None:
         else:
             raise ValueError(f"Failed to fetch data from {url}, status code: {response.status_code}")
 
-
-scheduler = AsyncIOScheduler(timezone=utc)
 
 scheduler.add_job(  # type: ignore
     sync_and_update_videos,

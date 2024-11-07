@@ -3,10 +3,11 @@ import concurrent.futures
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
 from typing import Any
 
 import yt_dlp
+
+from app.models.subscription import MetadataErrorType
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +35,6 @@ class VideoMetadata:
     thumbnail_url: str | None
 
 
-class MetadataErrorType(Enum):
-    LIVE_EVENT_NOT_STARTED = "Live event not started"
-    VIDEO_UNAVAILABLE = "Video unavailable"
-    COPYRIGHT_STRIKE = "Copyright strike"
-    UNKNOWN_ERROR = "Unknown error"
-
-
 @dataclass
 class MetadataError:
     url: str
@@ -57,12 +51,17 @@ class MetadataSuccess:
 MetadataResult = MetadataSuccess | MetadataError
 
 
+async def mock_download_content(video_url: str, output_path: str) -> str:
+    print(f"Downloading content from {video_url} to {output_path}")
+    return f"{output_path}/example_video.mp4"
+
+
 async def download_content(video_url: str, output_path: str) -> str:
     print(f"Downloading content from {video_url} to {output_path}")
     ydl_opts: dict[str, Any] = {
         "outtmpl": f"{output_path}/%(title)s.%(ext)s",
         "format": "best",
-        "postprocessors": [
+        "postprocessing": [
             {
                 "key": "FFmpegVideoConvert",
                 "preferredquality": "135",
@@ -112,6 +111,8 @@ def extract_info(url: str) -> MetadataResult:
             return MetadataError(url, MetadataErrorType.VIDEO_UNAVAILABLE, error_message)
         if "This video contains content from" in error_message:
             return MetadataError(url, MetadataErrorType.COPYRIGHT_STRIKE, error_message)
+        if "inappropriate for some users" in error_message:
+            return MetadataError(url, MetadataErrorType.AGE_RESTRICTED, error_message)
         else:
             return MetadataError(url, MetadataErrorType.UNKNOWN_ERROR, error_message)
     except Exception as e:  # pylint: disable=broad-except
