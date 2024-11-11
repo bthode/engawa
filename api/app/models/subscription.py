@@ -134,6 +134,16 @@ class ComparisonOperator(StrEnum):
     GT = ">"
 
 
+ops: dict[ComparisonOperator, ComparisonFunc[datetime]] = {
+    ComparisonOperator.LT: lambda x, y: x < y,
+    ComparisonOperator.LE: lambda x, y: x <= y,
+    ComparisonOperator.EQ: lambda x, y: x == y,
+    ComparisonOperator.NE: lambda x, y: x != y,
+    ComparisonOperator.GE: lambda x, y: x >= y,
+    ComparisonOperator.GT: lambda x, y: x > y,
+}
+
+
 class Video(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     author: str
@@ -207,15 +217,6 @@ class Filter(SQLModel, table=True):
     ) -> bool:
         value_dt = datetime.now() + value if isinstance(value, timedelta) else value
         threshold_dt = datetime.now() + threshold if isinstance(threshold, timedelta) else threshold
-
-        ops: dict[ComparisonOperator, ComparisonFunc[datetime]] = {
-            ComparisonOperator.LT: lambda x, y: x < y,
-            ComparisonOperator.LE: lambda x, y: x <= y,
-            ComparisonOperator.EQ: lambda x, y: x == y,
-            ComparisonOperator.NE: lambda x, y: x != y,
-            ComparisonOperator.GE: lambda x, y: x >= y,
-            ComparisonOperator.GT: lambda x, y: x > y,
-        }
 
         return ops[operator](value_dt, threshold_dt)
 

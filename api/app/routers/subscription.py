@@ -281,7 +281,7 @@ async def create_subscription_v2(new_subscription: SubscriptionCreateV2, session
         for filter_model in new_subscription.filters
     ]
 
-    subscription_to_add.retention_policy = new_subscription.retentionPolicy
+    subscription_to_add.retention = new_subscription.retentionPolicy
 
     session.add(subscription_to_add)
     await session.commit()
