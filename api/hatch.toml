@@ -11,4 +11,5 @@ watch = "ptw tests {args}"
 test = "pytest {args}"
 dev = "uvicorn app.main:app --port 8000 --reload"
 debug = "python -Xfrozen_modules=off -m debugpy --listen 5678 --wait-for-client -m uvicorn app.main:app --reload"
+type-watch = "find . -name '*.py' | entr -c hatch run pyright ."
 all = ["style", "typing"]

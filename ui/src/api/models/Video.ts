@@ -12,6 +12,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { MetadataErrorType } from './MetadataErrorType';
+import {
+    MetadataErrorTypeFromJSON,
+    MetadataErrorTypeFromJSONTyped,
+    MetadataErrorTypeToJSON,
+    MetadataErrorTypeToJSONTyped,
+} from './MetadataErrorType';
 import type { VideoStatus } from './VideoStatus';
 import {
     VideoStatusFromJSON,
@@ -62,6 +69,12 @@ export interface Video {
      * @memberof Video
      */
     published?: Date | null;
+    /**
+     * 
+     * @type {MetadataErrorType}
+     * @memberof Video
+     */
+    metadataError?: MetadataErrorType | null;
     /**
      * 
      * @type {number}
@@ -131,6 +144,7 @@ export function VideoFromJSONTyped(json: any, ignoreDiscriminator: boolean): Vid
         'description': json['description'],
         'link': json['link'],
         'published': json['published'] == null ? undefined : (new Date(json['published'])),
+        'metadataError': json['metadata_error'] == null ? undefined : MetadataErrorTypeFromJSON(json['metadata_error']),
         'retryCount': json['retry_count'] == null ? undefined : json['retry_count'],
         'status': VideoStatusFromJSON(json['status']),
         'subscriptionId': json['subscription_id'] == null ? undefined : json['subscription_id'],
@@ -157,6 +171,7 @@ export function VideoFromJSONTyped(json: any, ignoreDiscriminator: boolean): Vid
         'description': value['description'],
         'link': value['link'],
         'published': value['published'] == null ? undefined : ((value['published'] as any).toISOString()),
+        'metadata_error': MetadataErrorTypeToJSON(value['metadataError']),
         'retry_count': value['retryCount'],
         'status': VideoStatusToJSON(value['status']),
         'subscription_id': value['subscriptionId'],

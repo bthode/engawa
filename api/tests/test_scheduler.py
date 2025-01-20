@@ -371,7 +371,6 @@ async def test_video_filters(
     async_session = await anext(async_session_factory)
     async with async_session as session:
         video_duration: int = 1800
-        monkeypatch.setattr("app.scheduler.get_metadata", mock_success_video_data(duration=video_duration - 100))
         monkeypatch.setattr("app.scheduler.get_session", lambda: mock_get_session(session))  # type: ignore
 
         subscription = create_subscription()

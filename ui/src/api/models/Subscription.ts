@@ -19,13 +19,6 @@ import {
     SubscriptionTypeToJSON,
     SubscriptionTypeToJSONTyped,
 } from './SubscriptionType';
-import type { SubscriptionDirectoryError } from './SubscriptionDirectoryError';
-import {
-    SubscriptionDirectoryErrorFromJSON,
-    SubscriptionDirectoryErrorFromJSONTyped,
-    SubscriptionDirectoryErrorToJSON,
-    SubscriptionDirectoryErrorToJSONTyped,
-} from './SubscriptionDirectoryError';
 
 /**
  * 
@@ -35,22 +28,16 @@ import {
 export interface Subscription {
     /**
      * 
-     * @type {string}
-     * @memberof Subscription
-     */
-    description?: string;
-    /**
-     * 
-     * @type {SubscriptionDirectoryError}
-     * @memberof Subscription
-     */
-    errorState?: SubscriptionDirectoryError | null;
-    /**
-     * 
      * @type {number}
      * @memberof Subscription
      */
     id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof Subscription
+     */
+    description?: string;
     /**
      * 
      * @type {string}
@@ -69,6 +56,12 @@ export interface Subscription {
      * @memberof Subscription
      */
     rssFeedUrl?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Subscription
+     */
+    subscriptionError?: string | null;
     /**
      * 
      * @type {string}
@@ -108,12 +101,12 @@ export function SubscriptionFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'description': json['description'] == null ? undefined : json['description'],
-        'errorState': json['error_state'] == null ? undefined : SubscriptionDirectoryErrorFromJSON(json['error_state']),
         'id': json['id'] == null ? undefined : json['id'],
+        'description': json['description'] == null ? undefined : json['description'],
         'image': json['image'] == null ? undefined : json['image'],
         'lastUpdated': json['last_updated'] == null ? undefined : (new Date(json['last_updated'])),
         'rssFeedUrl': json['rss_feed_url'] == null ? undefined : json['rss_feed_url'],
+        'subscriptionError': json['SubscriptionError'] == null ? undefined : json['SubscriptionError'],
         'title': json['title'] == null ? undefined : json['title'],
         'type': json['type'] == null ? undefined : SubscriptionTypeFromJSON(json['type']),
         'url': json['url'] == null ? undefined : json['url'],
@@ -131,12 +124,12 @@ export function SubscriptionFromJSONTyped(json: any, ignoreDiscriminator: boolea
 
     return {
         
-        'description': value['description'],
-        'error_state': SubscriptionDirectoryErrorToJSON(value['errorState']),
         'id': value['id'],
+        'description': value['description'],
         'image': value['image'],
         'last_updated': value['lastUpdated'] == null ? undefined : ((value['lastUpdated'] as any).toISOString()),
         'rss_feed_url': value['rssFeedUrl'],
+        'SubscriptionError': value['subscriptionError'],
         'title': value['title'],
         'type': SubscriptionTypeToJSON(value['type']),
         'url': value['url'],

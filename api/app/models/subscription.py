@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from enum import StrEnum
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import JSON, Column
@@ -226,3 +226,24 @@ class SubscriptionCreateV2(BaseModel):
     filters: list[Filter] = Field(default_factory=list)
     retentionPolicy: RetentionPolicy
     plexLibraryDestination: PlexLibraryDestination
+
+
+class Cat(SQLModel):
+    pet_type: Literal["cat"]
+    meows: int
+
+
+class Dog(SQLModel):
+    pet_type: Literal["dog"]
+    barks: float
+
+
+class Lizard(SQLModel):
+    pet_type: Literal["reptile", "lizard"]
+    scales: bool
+
+
+class Model(SQLModel):
+    pet: Cat | Dog | Lizard = Field(..., discriminator="pet_type")
+    test: Cat | Dog
+    n: int

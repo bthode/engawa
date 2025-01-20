@@ -1,7 +1,11 @@
+import { SubscriptionApi } from '@/api/apis/SubscriptionApi';
+import { Subscription } from '@/api/models/Subscription';
 import { Video } from '@/api/models/Video';
 import { VideoStatus } from '@/api/models/VideoStatus';
+import { Configuration } from '@/api/runtime';
+import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { Box, Button, Paper, Typography } from '@mui/material';
+import { Box, Button, Paper, Tooltip, Typography } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -12,7 +16,7 @@ import React from 'react';
 import { TableComponents, TableVirtuoso } from 'react-virtuoso';
 
 interface SubscriptionVideosProps {
-  subscriptionId: string;
+  subscriptionId: number;
 }
 
 interface ColumnData {
@@ -112,6 +116,25 @@ function rowContent(_index: number, row: Video) {
             ) : (
               'N/A'
             )
+          ) : (column.dataKey === 'status' && row.status === VideoStatus.Failed) ||
+            (column.dataKey === 'status' && row.status === VideoStatus.Excluded) ? (
+            <Box>
+              {row.status}
+              <Tooltip title={row.metadataError} arrow>
+                <InfoIcon color="error" fontSize="small" style={{ marginLeft: 8 }} />
+              </Tooltip>
+            </Box>
+          ) : column.dataKey === 'status' ? (
+            row.status === VideoStatus.Filtered ? (
+              <Box>
+                {row.status}
+                <Tooltip title={row.title} arrow>
+                  <InfoIcon color="warning" fontSize="small" style={{ marginLeft: 8 }} />
+                </Tooltip>
+              </Box>
+            ) : (
+              row.status
+            )
           ) : (
             row[column.dataKey]
           )}
@@ -127,21 +150,28 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Function to fetch subscription and video data
   const fetchSubscriptionAndVideos = React.useCallback(async () => {
+    const config = new Configuration({
+      basePath: 'http://localhost:3000',
+    });
+    const subscriptionApi = new SubscriptionApi(config);
     try {
       setLoading(true);
       const [subscriptionResponse, videosResponse] = await Promise.all([
-        fetch(`/api/subscription/${subscriptionId}`),
-        fetch(`/api/subscription/${subscriptionId}/videos`),
+        subscriptionApi.getSubscriptionApiSubscriptionSubscriptionIdGet({
+          subscriptionId,
+        }),
+        subscriptionApi.getSubscriptionVideosApiSubscriptionSubscriptionIdVideosGet({
+          subscriptionId,
+        }),
       ]);
 
-      if (!subscriptionResponse.ok || !videosResponse.ok) {
+      if (!subscriptionResponse || !videosResponse) {
         throw new Error('Failed to fetch data');
       }
 
-      const subscriptionData: Subscription = await subscriptionResponse.json();
-      const videosData: Video[] = await videosResponse.json();
+      const subscriptionData: Subscription = subscriptionResponse;
+      const videosData: Video[] = videosResponse;
 
       setSubscription(subscriptionData);
       setVideos(videosData);
@@ -154,12 +184,10 @@ const SubscriptionVideos: React.FC<SubscriptionVideosProps> = ({ subscriptionId 
     }
   }, [subscriptionId]);
 
-  // Initial data fetch
   React.useEffect(() => {
     fetchSubscriptionAndVideos();
   }, [fetchSubscriptionAndVideos]);
 
-  // Refresh button handler
   const handleRefresh = () => {
     fetchSubscriptionAndVideos();
   };

@@ -69,7 +69,8 @@ issue_tracker = "https://github.com/bthode/engawa/issues"
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
-asyncio_fixture_loop_scope = "fixture"
+# asyncio_fixture_loop_scope = "fixture"
+asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
