@@ -21,7 +21,7 @@
     "pythonVersion": "3.13",
     "useLibraryCodeForTypes": true,
     "typeCheckingMode": "strict",
-    "exclude": ["**/node_modules", "**/__pycache__"],
+    "exclude": ["**/node_modules", "**/__pycache__", ".venv"],
     "ignore": ["^import", "^from", "^def", "^class", "^with", "^if", "^elif", "^else"],
     "maxLineLength": 120
 }
