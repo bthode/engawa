@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MediaContainer size="10" allowSync="0" title1="Plex Library">
+<Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/12/composite/1678276690" filters="1" refreshing="0" thumb="/:/resources/movie.png" key="12" type="movie" title="Anime Movies" agent="tv.plex.agents.movie" scanner="Plex Movie" language="en-US" uuid="5401a1c5-962d-4a4c-a496-0021139479ae" updatedAt="1678276676" createdAt="1678276676" scannedAt="1678276690" content="1" directory="1" contentChangedAt="743145" hidden="0">
+<Location id="13" path="/media/Media/Video/Anime Movies" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/3/composite/1686100533" filters="1" refreshing="0" thumb="/:/resources/movie.png" key="3" type="movie" title="Movies" agent="tv.plex.agents.movie" scanner="Plex Movie" language="en-US" uuid="364f2ba8-254e-492d-a8d5-8658cfc90161" updatedAt="1662601802" createdAt="1662601802" scannedAt="1686100533" content="1" directory="1" contentChangedAt="688787" hidden="0">
+<Location id="3" path="/media/Media/Video/Movies" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/7/composite/1717303833" filters="1" refreshing="0" thumb="/:/resources/movie.png" key="7" type="movie" title="Youtube" agent="com.plexapp.agents.sicktube" scanner="Plex Movie Scanner" language="en" uuid="0c717b05-2deb-419c-a2d0-e68cceddea04" updatedAt="1686965178" createdAt="1674232261" scannedAt="1717303833" content="1" directory="1" contentChangedAt="1468235" hidden="0">
+<Location id="17" path="/index/YouTube" />
+<Location id="7" path="/index/media" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/show-fanart.jpg" composite="/library/sections/9/composite/1689978052" filters="1" refreshing="0" thumb="/:/resources/show.png" key="9" type="show" title="Anime" agent="tv.plex.agents.series" scanner="Plex TV Series" language="en-US" uuid="9a2feef1-b312-41bf-89c9-8d8d9103dec5" updatedAt="1677123016" createdAt="1676686353" scannedAt="1689978052" content="1" directory="1" contentChangedAt="844276" hidden="1">
+<Location id="9" path="/media/Media/Video/Anime/Complete" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/show-fanart.jpg" composite="/library/sections/10/composite/1677479645" filters="1" refreshing="0" thumb="/:/resources/show.png" key="10" type="show" title="Anime (Incomplete) " agent="tv.plex.agents.series" scanner="Plex TV Series" language="en-US" uuid="a824068d-9e38-4e91-9f9d-54fab174ce86" updatedAt="1677123007" createdAt="1676686415" scannedAt="1677479645" content="1" directory="1" contentChangedAt="675074" hidden="1">
+<Location id="10" path="/media/Media/Video/Anime/Incomplete" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/show-fanart.jpg" composite="/library/sections/2/composite/1732981814" filters="1" refreshing="0" thumb="/:/resources/show.png" key="2" type="show" title="TV Shows" agent="tv.plex.agents.series" scanner="Plex TV Series" language="en-US" uuid="50b6e1e0-e274-41e4-ade8-1e71e95c9330" updatedAt="1732981772" createdAt="1662601579" scannedAt="1732981814" content="1" directory="1" contentChangedAt="1531670" hidden="0">
+<Location id="20" path="/mnt/external/media/Media/Video/TV" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/4/composite/1716120826" filters="1" refreshing="0" thumb="/:/resources/video.png" key="4" type="movie" title="Children&#39;s " agent="com.plexapp.agents.none" scanner="Plex Video Files Scanner" language="xn" uuid="52ab3d2c-5c73-4387-bb22-046dc7a065f6" updatedAt="1716120666" createdAt="1669998072" scannedAt="1716120826" content="1" directory="1" contentChangedAt="1434064" hidden="0">
+<Location id="19" path="/index/media/bluey" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/16/composite/1699800551" filters="1" refreshing="0" thumb="/:/resources/video.png" key="16" type="movie" title="Fitness" agent="com.plexapp.agents.none" scanner="Plex Video Files Scanner" language="xn" uuid="e32e9e32-b24c-4867-b113-95fc3914e37e" updatedAt="1699800551" createdAt="1699800540" scannedAt="1699800551" content="1" directory="1" contentChangedAt="1230670" hidden="0">
+<Location id="18" path="/index/YouTube/reference" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/1/composite/1684548569" filters="1" refreshing="0" thumb="/:/resources/video.png" key="1" type="movie" title="Misc" agent="com.plexapp.agents.none" scanner="Plex Video Files Scanner" language="xn" uuid="2c507cdc-36d7-43cc-beee-efbee3644bbd" updatedAt="1662599894" createdAt="1662599894" scannedAt="1684548569" content="1" directory="1" contentChangedAt="918787" hidden="0">
+<Location id="1" path="/media/Media/Video/Video" />
+</Directory>
+<Directory allowSync="1" art="/:/resources/movie-fanart.jpg" composite="/library/sections/14/composite/1681156395" filters="1" refreshing="0" thumb="/:/resources/video.png" key="14" type="movie" title="Personal" agent="com.plexapp.agents.none" scanner="Plex Video Files Scanner" language="xn" uuid="3df269f4-004e-4c00-b522-4acb6c8dfe54" updatedAt="1681156395" createdAt="1681156395" scannedAt="1681156395" content="1" directory="1" contentChangedAt="881273" hidden="0">
+<Location id="15" path="/media/Media/Video/Personal" />
+</Directory>
+</MediaContainer>

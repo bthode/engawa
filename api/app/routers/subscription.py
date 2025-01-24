@@ -217,29 +217,30 @@ async def create_subscription_v2(new_subscription: SubscriptionCreateV2, session
         logger.info(asdf)
 
     logger.info("Retention Policy:")
-    logger.info("  Type: %s", new_subscription.retentionPolicy.type)
+    logger.info("  Type: %s", new_subscription.retention_policy.type)
 
-    match new_subscription.retentionPolicy.type:
+    match new_subscription.retention_policy.type:
         case RetentionType.DATE_SINCE:
-            logger.info("  Duration: %s", new_subscription.retentionPolicy.dateBefore)
+            logger.info("  Duration: %s", new_subscription.retention_policy.dateBefore)
         case RetentionType.COUNT:
-            logger.info("  Count: %s", new_subscription.retentionPolicy.videoCount)
+            logger.info("  Count: %s", new_subscription.retention_policy.videoCount)
         case RetentionType.DELTA:
             logger.info("  No retention policy")
 
     plex_desc: PlexLibraryDestination = PlexLibraryDestination(
-        locationId=new_subscription.plexLibraryDestination.locationId,
-        directoryId=new_subscription.plexLibraryDestination.directoryId,
+        locationId=new_subscription.plex_library.locationId,
+        directoryId=new_subscription.plex_library.directoryId,
     )
     logger.info(plex_desc)
 
     result = await session.execute(select(Plex).options(selectinload(Plex.directories)))
     plex_server = result.scalars().first()
 
+    # TODO: This is
     directories: list[Directory] = plex_server.directories
 
-    directory_id = new_subscription.plexLibraryDestination.directoryId
-    location_id = new_subscription.plexLibraryDestination.locationId
+    directory_id = new_subscription.plex_library.directoryId
+    location_id = new_subscription.plex_library.locationId
 
     directory: list[Directory] = [item for item in directories if item.key == directory_id]
     if len(directory) == 0:
@@ -249,8 +250,8 @@ async def create_subscription_v2(new_subscription: SubscriptionCreateV2, session
         if len(location) == 0:
             return {"message": "Invalid location"}
 
-    logger.info("  Directory ID: %s", new_subscription.plexLibraryDestination.directoryId)
-    logger.info("  Location ID: %s", new_subscription.plexLibraryDestination.locationId)
+    logger.info("  Directory ID: %s", new_subscription.plex_library.directoryId)
+    logger.info("  Location ID: %s", new_subscription.plex_library.locationId)
 
     channel_info = youtube.fetch_rss_feed(new_subscription.url)
     image_link = channel_info.image_link
@@ -281,7 +282,7 @@ async def create_subscription_v2(new_subscription: SubscriptionCreateV2, session
         for filter_model in new_subscription.filters
     ]
 
-    subscription_to_add.retention = new_subscription.retentionPolicy
+    subscription_to_add.retention = new_subscription.retention_policy
 
     session.add(subscription_to_add)
     await session.commit()

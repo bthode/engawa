@@ -186,6 +186,7 @@ async def get_subscriptions_to_update(session: AsyncSession) -> list[Subscriptio
             await session.execute(  # pyright: ignore
                 select(Subscription)
                 .options(selectinload(Subscription.filters))  # type:ignore
+                .options(selectinload(Subscription.retention))  # type:ignore
                 .where(  # pyright: ignore
                     or_(
                         Subscription.last_updated == None,  # noqa: E711 pylint: disable=singleton-comparison
@@ -274,8 +275,8 @@ async def sync_and_update_videos():
                     updated_video = update_video_status(video, metadata_result)
                     updated_videos.append(updated_video)
 
-                asdf: dict[Video, list[Filter]] = applicable_filters(updated_videos, subscription.filters)
-                logger.info("Applicable filters: %s", asdf)
+                filters: dict[Video, list[Filter]] = applicable_filters(updated_videos, subscription.filters)
+                logger.info("Applicable filters: %s", filters)
                 for video in updated_videos:
                     session.add(video)
 

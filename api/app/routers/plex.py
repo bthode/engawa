@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 import httpx
@@ -49,25 +50,36 @@ async def create_plex_server(plex: PlexServerCreate, session: Annotated[AsyncSes
     plex_response = httpx.get(endpoint, timeout=15)
     plex_data = parse_plex_data(plex_response.text)
 
-    plex_server = Plex(
-        name=plex.name,
-        endpoint=plex.endpoint,
-        port=plex.port,
-        token=plex.token,
-        directories=[
-            Directory(
-                title=directory.title,
-                uuid=directory.uuid,
-                key=directory.key,
-                locations=[
-                    (await session.execute(select(Location).where(Location.path == location.path))).scalars().first()
-                    or Location(path=location.path, id_=location.id_)
-                    for location in directory.location
-                ],
+    logger = logging.getLogger(__name__)
+
+    plex_server = Plex(name=plex.name, endpoint=plex.endpoint, port=plex.port, token=plex.token, directories=[])
+
+    for directory in plex_data.directories:
+        existing_directory = (
+            (await session.execute(select(Directory).where(Directory.key == directory.key))).scalars().first()
+        )
+        if existing_directory:
+            logger.info(f"Found existing directory: {existing_directory}")
+        else:
+            logger.info(f"Creating new directory: {directory.title}")
+
+        new_directory = existing_directory or Directory(
+            title=directory.title, uuid=directory.uuid, key=directory.key, locations=[]
+        )
+
+        for location in directory.location:
+            existing_location = (
+                (await session.execute(select(Location).where(Location.path == location.path))).scalars().first()
             )
-            for directory in plex_data.directories
-        ],
-    )
+            if existing_location:
+                logger.info(f"Found existing location: {existing_location}")
+            else:
+                logger.info(f"Creating new location: {location.path}")
+
+            new_location = existing_location or Location(path=location.path, id_=location.id_)
+            new_directory.locations.append(new_location)
+
+        plex_server.directories.append(new_directory)
 
     session.add(plex_server)
     await session.commit()

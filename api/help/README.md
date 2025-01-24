@@ -1,0 +1,1 @@
+Non source code files or notes that are still useful for development.

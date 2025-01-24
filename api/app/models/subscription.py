@@ -224,8 +224,8 @@ class Filter(SQLModel, table=True):
 class SubscriptionCreateV2(BaseModel):
     url: str
     filters: list[Filter] = Field(default_factory=list)
-    retentionPolicy: RetentionPolicy
-    plexLibraryDestination: PlexLibraryDestination
+    retention_policy: RetentionPolicy
+    plex_library: PlexLibraryDestination
 
 
 class Cat(SQLModel):

@@ -10,7 +10,11 @@ from app.models.subscription import (
     ComparisonOperator,
     Filter,
     FilterType,
+    PlexLibraryDestination,
+    RetentionPolicy,
+    RetentionType,
     Subscription,
+    SubscriptionCreateV2,
     Video,
     VideoStatus,
 )
@@ -411,3 +415,71 @@ async def test_video_filters(
             )
             == 1
         )
+
+
+@pytest.mark.asyncio
+async def test_new_subscription_v2(
+    async_session_factory: AsyncGenerator[AsyncSession, None],
+):
+    async_session = await anext(async_session_factory)
+    async with async_session as session:
+        retention_policy = RetentionPolicy(
+            type=RetentionType.COUNT,
+            videoCount=1,
+            dateBefore=datetime.now(),
+            timeDeltaTypeValue=timedelta(days=1),
+        )
+
+        filters: list[Filter] = [
+            Filter(filter_type=FilterType.DURATION, comparison_operator=ComparisonOperator.GT, threshold_seconds=1800)
+        ]
+
+        subscription_data = SubscriptionCreateV2(
+            url="http://example.com",
+            filters=filters,
+            retention_policy=retention_policy,
+            plex_library=PlexLibraryDestination(locationId=1, directoryId=1),
+        )
+
+        # Create a proper Subscription instance
+        subscription = Subscription(
+            title="Test Subscription",
+            url=subscription_data.url,
+            rss_feed_url="http://example.com/rss",
+            description="Test Description",
+            image="http://example.com/image.jpg",
+            plex_library_path="/some/path",
+            filters=filters,
+            retention=retention_policy,
+        )
+
+        # Add the retention policy
+        retention_policy.subscription_id = subscription.id
+        session.add(subscription)
+        session.add(retention_policy)
+
+        # Add the filters to the subscription
+        for filter_data in subscription_data.filters:
+            filter_instance = Filter(
+                subscription_id=subscription.id,
+                filter_type=filter_data.filter_type,
+                comparison_operator=filter_data.comparison_operator,
+                threshold_seconds=filter_data.threshold_seconds,
+            )
+            session.add(filter_instance)
+
+        await session.commit()
+
+        asdf: PlexLibraryDestination = PlexLibraryDestination(locationId=1, directoryId=1)
+        v2 = SubscriptionCreateV2(url="url", filters=filters, retention_policy=retention_policy, plex_library=asdf)
+
+        print(v2)
+
+        subscriptions_to_be_updated: list[Subscription] = await get_subscriptions_to_update(session)
+        assert len(subscriptions_to_be_updated) == 1
+        assert subscriptions_to_be_updated[0].id == 1
+        assert subscriptions_to_be_updated[0].title == "Test Subscription"
+        assert subscriptions_to_be_updated[0].url == "http://example.com"
+        assert subscriptions_to_be_updated[0].rss_feed_url == "http://example.com/rss"
+        assert subscriptions_to_be_updated[0].description == "Test Description"
+        assert subscriptions_to_be_updated[0].image == "http://example.com/image.jpg"
